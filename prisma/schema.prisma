@@ -1,0 +1,113 @@
+// Prisma schema — GymLog
+// Le générateur "prisma-client" (Prisma 7) produit un client ESM dans src/generated/prisma.
+// L'URL de connexion vit dans prisma.config.ts (chargée depuis DATABASE_URL), jamais ici.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  exercises        Exercise[]
+  workoutTemplates WorkoutTemplate[]
+  workoutSessions  WorkoutSession[]
+}
+
+model Exercise {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  name         String
+  muscle       String
+  targetWeight Float
+  targetReps   Int
+  description  String?
+  isArchived   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workoutExercises WorkoutExercise[]
+  workoutSets      WorkoutSet[]
+
+  @@index([userId])
+}
+
+model WorkoutTemplate {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  description String?
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  exercises WorkoutExercise[]
+  sessions  WorkoutSession[]
+  schedules WorkoutSchedule[]
+
+  @@index([userId])
+}
+
+model WorkoutExercise {
+  id                String          @id @default(cuid())
+  workoutTemplateId String
+  workoutTemplate   WorkoutTemplate @relation(fields: [workoutTemplateId], references: [id], onDelete: Cascade)
+  exerciseId        String
+  exercise          Exercise        @relation(fields: [exerciseId], references: [id])
+  order             Int
+
+  @@index([workoutTemplateId])
+  @@index([exerciseId])
+}
+
+model WorkoutSchedule {
+  id                String          @id @default(cuid())
+  workoutTemplateId String
+  workoutTemplate   WorkoutTemplate @relation(fields: [workoutTemplateId], references: [id], onDelete: Cascade)
+  dayOfWeek         Int // 0 = dimanche ... 6 = samedi
+
+  @@index([workoutTemplateId])
+}
+
+model WorkoutSession {
+  id                String           @id @default(cuid())
+  userId            String
+  user              User             @relation(fields: [userId], references: [id])
+  workoutTemplateId String?
+  workoutTemplate   WorkoutTemplate? @relation(fields: [workoutTemplateId], references: [id])
+  name              String
+  startedAt         DateTime         @default(now())
+  completedAt       DateTime?
+  note              String?
+
+  sets WorkoutSet[]
+
+  @@index([userId])
+  @@index([workoutTemplateId])
+}
+
+model WorkoutSet {
+  id               String         @id @default(cuid())
+  workoutSessionId String
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exerciseId       String
+  exercise         Exercise       @relation(fields: [exerciseId], references: [id])
+  exerciseOrder    Int
+  setNumber        Int
+  actualWeight     Float?
+  actualReps       Int?
+  note             String?
+  completed        Boolean        @default(false)
+
+  @@index([workoutSessionId])
+  @@index([exerciseId])
+}
