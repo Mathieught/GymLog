@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
+import { getActiveExercises } from "@/lib/queries/exercises";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/nav/page-header";
 import { Card } from "@/components/ui/card";
@@ -12,10 +12,7 @@ import { cn } from "@/lib/utils";
 export default async function ExercisesPage({ searchParams }: PageProps<"/exercises">) {
   const { muscle: selectedMuscleRaw } = await searchParams;
   const userId = await getCurrentUserId();
-  const exercises = await prisma.exercise.findMany({
-    where: { userId, isArchived: false },
-    orderBy: { name: "asc" },
-  });
+  const exercises = await getActiveExercises(userId);
 
   const availableMuscles = MUSCLE_GROUPS.filter((muscle) =>
     exercises.some((exercise) => exercise.muscle === muscle)

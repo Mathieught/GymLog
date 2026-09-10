@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
@@ -29,6 +29,7 @@ export async function createExercise(
   });
 
   revalidatePath("/exercises");
+  updateTag("exercises");
   redirect("/exercises");
 }
 
@@ -54,6 +55,7 @@ export async function updateExercise(
   });
 
   revalidatePath("/exercises");
+  updateTag("exercises");
   revalidatePath(`/exercises/${exerciseId}`);
   redirect(`/exercises/${exerciseId}`);
 }
@@ -95,6 +97,7 @@ export async function createExerciseInline(
   });
 
   revalidatePath("/exercises");
+  updateTag("exercises");
   return {
     exercise: {
       id: exercise.id,
@@ -113,5 +116,6 @@ export async function archiveExercise(exerciseId: string) {
     data: { isArchived: true },
   });
   revalidatePath("/exercises");
+  updateTag("exercises");
   redirect("/exercises");
 }

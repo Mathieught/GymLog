@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
@@ -52,6 +52,7 @@ export async function createWorkoutTemplate(
   });
 
   revalidatePath("/workouts");
+  updateTag("workout-templates");
   redirect("/workouts");
 }
 
@@ -87,6 +88,7 @@ export async function updateWorkoutTemplate(
   ]);
 
   revalidatePath("/workouts");
+  updateTag("workout-templates");
   revalidatePath(`/workouts/${templateId}`);
   redirect(`/workouts/${templateId}`);
 }
@@ -97,5 +99,6 @@ export async function archiveWorkoutTemplate(templateId: string) {
     data: { isArchived: true },
   });
   revalidatePath("/workouts");
+  updateTag("workout-templates");
   redirect("/workouts");
 }

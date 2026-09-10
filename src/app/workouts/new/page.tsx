@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
+import { getActiveExercises } from "@/lib/queries/exercises";
 import { WorkoutTemplateForm } from "@/components/workouts/workout-template-form";
 import { createWorkoutTemplate } from "@/lib/actions/workout-templates";
 import { PageHeader } from "@/components/nav/page-header";
@@ -7,10 +7,7 @@ import { Container } from "@/components/ui/container";
 
 export default async function NewWorkoutPage() {
   const userId = await getCurrentUserId();
-  const exercises = await prisma.exercise.findMany({
-    where: { userId, isArchived: false },
-    orderBy: { name: "asc" },
-  });
+  const exercises = await getActiveExercises(userId);
 
   return (
     <>

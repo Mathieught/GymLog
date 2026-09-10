@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
+import { getActiveExercises } from "@/lib/queries/exercises";
 import { WorkoutTemplateForm } from "@/components/workouts/workout-template-form";
 import { updateWorkoutTemplate } from "@/lib/actions/workout-templates";
 import { PageHeader } from "@/components/nav/page-header";
@@ -20,7 +21,7 @@ export default async function EditWorkoutPage({
         schedules: true,
       },
     }),
-    prisma.exercise.findMany({ where: { userId, isArchived: false }, orderBy: { name: "asc" } }),
+    getActiveExercises(userId),
   ]);
   if (!template || template.isArchived) notFound();
 

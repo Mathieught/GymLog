@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
+import { getActiveWorkoutTemplates } from "@/lib/queries/workout-templates";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/nav/page-header";
 import { Card } from "@/components/ui/card";
@@ -10,14 +10,7 @@ import { formatScheduleDays } from "@/lib/constants";
 
 export default async function WorkoutsPage() {
   const userId = await getCurrentUserId();
-  const templates = await prisma.workoutTemplate.findMany({
-    where: { userId, isArchived: false },
-    include: {
-      _count: { select: { exercises: true } },
-      schedules: true,
-    },
-    orderBy: { name: "asc" },
-  });
+  const templates = await getActiveWorkoutTemplates(userId);
 
   return (
     <>
