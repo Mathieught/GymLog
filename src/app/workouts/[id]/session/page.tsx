@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
-import { getExerciseHistory } from "@/lib/queries/exercise-history";
+import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { SessionTracker, type SessionTrackerGroup } from "@/components/sessions/session-tracker";
@@ -48,7 +48,10 @@ export default async function WorkoutTemplateSessionPreviewPage({
       : groups[0].exerciseId;
 
   const userId = await getCurrentUserId();
-  const history = await getExerciseHistory(userId, activeExerciseId);
+  const history = await getExerciseHistoryForExercises(
+    userId,
+    groups.map((g) => g.exerciseId)
+  );
 
   return (
     <SessionTracker

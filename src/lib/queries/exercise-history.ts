@@ -41,3 +41,18 @@ export async function getExerciseHistory(
 
   return sessions.map((session) => ({ sessionDate: session.startedAt, sets: session.sets }));
 }
+
+// Même chose que getExerciseHistory, mais pour tous les exercices d'une séance en une seule
+// vague de requêtes parallèles : évite un aller-retour base à chaque changement d'exercice
+// (le carrousel de la séance a besoin de l'historique de tous les exercices dès le chargement).
+export async function getExerciseHistoryForExercises(
+  userId: string,
+  exerciseIds: string[],
+  excludeSessionId?: string
+): Promise<Record<string, PreviousPerformance[]>> {
+  const uniqueIds = [...new Set(exerciseIds)];
+  const results = await Promise.all(
+    uniqueIds.map((exerciseId) => getExerciseHistory(userId, exerciseId, excludeSessionId))
+  );
+  return Object.fromEntries(uniqueIds.map((exerciseId, i) => [exerciseId, results[i]]));
+}

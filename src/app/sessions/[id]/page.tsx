@@ -4,7 +4,7 @@ import { fr } from "date-fns/locale";
 import { Check } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SESSION_EDIT_GRACE_MS } from "@/lib/constants";
-import { getExerciseHistory } from "@/lib/queries/exercise-history";
+import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
@@ -119,7 +119,11 @@ export default async function SessionDetailPage({
       ? requestedExerciseId
       : groups[0].exerciseId;
 
-  const history = await getExerciseHistory(session.userId, activeExerciseId, session.id);
+  const history = await getExerciseHistoryForExercises(
+    session.userId,
+    groups.map((g) => g.exerciseId),
+    session.id
+  );
 
   return (
     <SessionTracker
