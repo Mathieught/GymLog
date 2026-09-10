@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Check } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { SESSION_EDIT_GRACE_MS } from "@/lib/constants";
 import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
 import { PageHeader } from "@/components/nav/page-header";
@@ -131,28 +130,22 @@ export default async function SessionDetailPage({
       basePath={`/sessions/${session.id}`}
       backHref="/history"
       addSetArg={session.id}
+      sessionId={session.id}
       groups={groups}
       activeExerciseId={activeExerciseId}
       allowRemove
       history={history}
       headerRight={
-        completedAt ? (
-          <p className="text-xs text-neutral-400">
-            Terminée · modifiable jusqu&apos;à{" "}
-            {format(new Date(completedAt.getTime() + SESSION_EDIT_GRACE_MS), "HH:mm")}
-          </p>
-        ) : (
-          <form action={completeSession.bind(null, session.id)}>
-            <ConfirmSubmitButton
-              type="submit"
-              variant="secondary"
-              size="sm"
-              confirmMessage="Terminer la séance ? Vous ne pourrez plus modifier les séries après."
-            >
-              Terminer
-            </ConfirmSubmitButton>
-          </form>
-        )
+        <form action={completeSession.bind(null, session.id)}>
+          <ConfirmSubmitButton
+            type="submit"
+            variant="secondary"
+            size="sm"
+            confirmMessage="Terminer la séance ? Vous ne pourrez plus modifier les séries après."
+          >
+            Terminer
+          </ConfirmSubmitButton>
+        </form>
       }
     />
   );

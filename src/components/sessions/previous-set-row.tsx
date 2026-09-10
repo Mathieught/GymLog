@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { Check } from "lucide-react";
+import { useActionState, useRef, useState } from "react";
 import { logSet } from "@/lib/actions/sessions";
 import { initialActionState } from "@/lib/action-state";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
@@ -13,8 +12,9 @@ type PreviousSetForRow = {
 };
 
 // Suggestion pour une série pas encore réalisée cette séance, pré-remplie avec la performance de
-// la dernière fois : modifiable si l'on progresse, ou validable telle quelle si le poids ne
-// change pas. Verrouillée (affichage seul) tant que la série précédente n'est pas validée.
+// la dernière fois : la toucher ouvre la même popup que pour une série déjà enregistrée, et
+// "Valider" la crée directement comme terminée. Verrouillée (affichage seul) tant que la série
+// précédente n'est pas validée.
 export function PreviousSetRow({
   previousSet,
   addSetArg,
@@ -32,9 +32,15 @@ export function PreviousSetRow({
     logSet.bind(null, addSetArg, exerciseId, exerciseOrder),
     initialActionState
   );
+  const formRef = useRef<HTMLFormElement>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [weight, setWeight] = useState(previousSet.actualWeight ?? 0);
   const [reps, setReps] = useState(previousSet.actualReps ?? 0);
+
+  function validate() {
+    setSheetOpen(false);
+    formRef.current?.requestSubmit();
+  }
 
   if (locked) {
     return (
@@ -55,6 +61,7 @@ export function PreviousSetRow({
   return (
     <>
       <form
+        ref={formRef}
         action={formAction}
         className="flex items-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-3"
       >
@@ -72,20 +79,7 @@ export function PreviousSetRow({
           <span className="text-xs font-normal text-neutral-400">kg ×</span>
           <span>{reps}</span>
         </button>
-        <button
-          type="button"
-          onClick={() => setSheetOpen(true)}
-          className="text-[11px] text-neutral-400 hover:text-neutral-600"
-        >
-          dernière fois
-        </button>
-        <button
-          type="submit"
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-white hover:bg-neutral-700"
-          aria-label="Valider cette série"
-        >
-          <Check className="h-4 w-4" />
-        </button>
+        <span className="text-[11px] text-neutral-400">dernière fois</span>
         {state.fieldErrors && (
           <p className="w-full text-xs text-red-600">
             {Object.values(state.fieldErrors).flat()[0]}
@@ -101,6 +95,7 @@ export function PreviousSetRow({
         onChangeWeight={setWeight}
         onChangeReps={setReps}
         onClose={() => setSheetOpen(false)}
+        onValidate={validate}
       />
     </>
   );

@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { SESSION_AUTO_CLOSE_MS, SESSION_EDIT_GRACE_MS } from "@/lib/constants";
+import { SESSION_AUTO_CLOSE_MS } from "@/lib/constants";
 
-// Détermine si une séance doit être considérée comme terminée (fermeture automatique après
-// `SESSION_AUTO_CLOSE_MS` d'inactivité, en plus de la fermeture manuelle/à la complétion des
-// séries) et si la fenêtre de modification post-fermeture (`SESSION_EDIT_GRACE_MS`) est passée.
+// Détermine si une séance doit être considérée comme terminée : fermeture automatique après
+// `SESSION_AUTO_CLOSE_MS` d'inactivité (abandon), en plus de la fermeture manuelle ou depuis la
+// popup de fin de séance. Une fois terminée (peu importe la raison), la séance passe aussitôt en
+// lecture seule — elle n'apparaît et ne se modifie que depuis l'historique en consultation.
 // Calculée à la volée à chaque chargement, faute de tâche planifiée côté serveur.
 export async function resolveSessionCompletion(session: {
   id: string;
@@ -20,7 +21,5 @@ export async function resolveSessionCompletion(session: {
     });
   }
 
-  const isReadOnly = completedAt !== null && Date.now() - completedAt.getTime() >= SESSION_EDIT_GRACE_MS;
-
-  return { completedAt, isReadOnly };
+  return { completedAt, isReadOnly: completedAt !== null };
 }

@@ -13,6 +13,8 @@ function formatWeight(value: number) {
 
 // Popup mobile-friendly pour saisir poids/reps : remonte du bas de l'écran, prend 1/4 de la
 // hauteur, deux molettes (reps à gauche, poids à droite) qu'on fait défiler pour choisir la valeur.
+// Une seule action possible : "Valider" enregistre la série (avec le poids/reps affichés) et la
+// marque terminée. Toucher le fond ferme sans rien enregistrer.
 export function SetValueSheet({
   open,
   label,
@@ -21,6 +23,7 @@ export function SetValueSheet({
   onChangeWeight,
   onChangeReps,
   onClose,
+  onValidate,
 }: {
   open: boolean;
   label: string;
@@ -29,6 +32,7 @@ export function SetValueSheet({
   onChangeWeight: (value: number) => void;
   onChangeReps: (value: number) => void;
   onClose: () => void;
+  onValidate: () => void;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -54,10 +58,10 @@ export function SetValueSheet({
           <span className="text-sm font-medium text-neutral-500">{label}</span>
           <button
             type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-1 text-sm font-semibold text-neutral-900 hover:bg-neutral-100"
+            onClick={onValidate}
+            className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-neutral-700"
           >
-            OK
+            Valider
           </button>
         </div>
         <div className="flex min-h-0 flex-1 divide-x divide-neutral-100">

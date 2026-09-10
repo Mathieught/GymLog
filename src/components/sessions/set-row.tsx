@@ -20,6 +20,8 @@ type PreviousSetForRow = {
   actualReps: number | null;
 };
 
+// Une série existante se modifie en la touchant : la popup s'ouvre pré-remplie, et "Valider"
+// l'enregistre (marquée terminée) en un seul geste — plus de case à cocher séparée.
 export function SetRow({
   set,
   canRemove,
@@ -37,7 +39,7 @@ export function SetRow({
   const [weight, setWeight] = useState(set.actualWeight ?? previousSet?.actualWeight ?? 0);
   const [reps, setReps] = useState(set.actualReps ?? previousSet?.actualReps ?? 0);
 
-  function closeSheet() {
+  function validate() {
     setSheetOpen(false);
     formRef.current?.requestSubmit();
   }
@@ -49,7 +51,7 @@ export function SetRow({
         action={formAction}
         className={cn(
           "flex items-center gap-2 rounded-xl border bg-white p-3",
-          set.completed ? "border-neutral-900" : "border-neutral-200"
+          set.completed ? "border-neutral-900" : "border-dashed border-neutral-300"
         )}
       >
         <span className="w-5 text-center text-sm font-medium text-neutral-400">
@@ -57,6 +59,7 @@ export function SetRow({
         </span>
         <input type="hidden" name="actualWeight" value={weight} />
         <input type="hidden" name="actualReps" value={reps} />
+        <input type="hidden" name="completed" value="true" />
         {locked ? (
           <span className="flex h-11 flex-1 items-center justify-center gap-1 text-sm font-medium tabular-nums text-neutral-400">
             <span>{weight}</span>
@@ -73,19 +76,6 @@ export function SetRow({
             <span className="text-xs font-normal text-neutral-400">kg ×</span>
             <span>{reps}</span>
           </button>
-        )}
-        {!locked && (
-          <label className="ml-auto flex items-center">
-            <input
-              type="checkbox"
-              name="completed"
-              value="true"
-              defaultChecked={set.completed}
-              onChange={() => formRef.current?.requestSubmit()}
-              className="h-5 w-5 rounded border-neutral-300 accent-neutral-900"
-              aria-label="Série terminée"
-            />
-          </label>
         )}
         <button
           type="button"
@@ -109,7 +99,8 @@ export function SetRow({
           reps={reps}
           onChangeWeight={setWeight}
           onChangeReps={setReps}
-          onClose={closeSheet}
+          onClose={() => setSheetOpen(false)}
+          onValidate={validate}
         />
       )}
     </>

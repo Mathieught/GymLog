@@ -12,6 +12,7 @@ export function SessionTracker({
   basePath,
   backHref,
   addSetArg,
+  sessionId,
   groups,
   activeExerciseId,
   allowRemove,
@@ -22,6 +23,9 @@ export function SessionTracker({
   basePath: string;
   backHref: string;
   addSetArg: string;
+  // Uniquement pour une vraie séance (pas l'aperçu de modèle) : active la popup de fin de séance
+  // automatique dès que toutes les séries sont validées.
+  sessionId?: string;
   groups: SessionTrackerGroup[];
   activeExerciseId: string;
   allowRemove: boolean;
@@ -42,6 +46,7 @@ export function SessionTracker({
         <SessionCarousel
           basePath={basePath}
           addSetArg={addSetArg}
+          sessionId={sessionId}
           allowRemove={allowRemove}
           groups={groups}
           history={history}

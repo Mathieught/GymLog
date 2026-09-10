@@ -17,8 +17,10 @@ function formatSessionDate(date: Date): string {
 
 export default async function HistoryPage() {
   const userId = await getCurrentUserId();
+  // Vue consultation uniquement : une séance n'apparaît ici qu'une fois terminée (elle devient
+  // alors en lecture seule, voir resolveSessionCompletion) — une séance en cours ne s'y trouve pas.
   const sessions = await prisma.workoutSession.findMany({
-    where: { userId },
+    where: { userId, completedAt: { not: null } },
     orderBy: { startedAt: "desc" },
     include: {
       sets: { select: { exerciseId: true, completed: true } },
@@ -46,18 +48,7 @@ export default async function HistoryPage() {
                 <li key={session.id}>
                   <Link href={`/sessions/${session.id}`}>
                     <Card className="transition-colors hover:border-neutral-400">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium">{session.name}</p>
-                        {session.completedAt ? (
-                          <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600">
-                            Terminée
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-                            En cours
-                          </span>
-                        )}
-                      </div>
+                      <p className="font-medium">{session.name}</p>
                       <p className="mt-1 text-sm text-neutral-500">
                         {formatSessionDate(session.startedAt)} · {exerciseCount} exercice
                         {exerciseCount > 1 ? "s" : ""} · {completedSets} série

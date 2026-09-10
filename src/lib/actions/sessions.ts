@@ -7,35 +7,6 @@ import { getCurrentUserId } from "@/lib/current-user";
 import { setLogSchema, setValuesSchema } from "@/lib/validations/session";
 import type { ActionState } from "@/lib/action-state";
 
-// Ferme automatiquement la séance dès que toutes les séries de tous les exercices du modèle sont
-// validées — pas besoin de cliquer sur "Terminer" quand la séance est déjà entièrement faite.
-async function maybeAutoCompleteSession(sessionId: string) {
-  const session = await prisma.workoutSession.findUnique({
-    where: { id: sessionId },
-    select: {
-      completedAt: true,
-      workoutTemplate: { select: { exercises: { select: { exerciseId: true } } } },
-      sets: { select: { exerciseId: true, completed: true } },
-    },
-  });
-  if (!session || session.completedAt) return;
-
-  const exerciseIds = session.workoutTemplate?.exercises.map((e) => e.exerciseId) ?? [];
-  if (exerciseIds.length === 0) return;
-
-  const allDone = exerciseIds.every((exerciseId) => {
-    const sets = session.sets.filter((s) => s.exerciseId === exerciseId);
-    return sets.length > 0 && sets.every((s) => s.completed);
-  });
-
-  if (allDone) {
-    await prisma.workoutSession.update({
-      where: { id: sessionId },
-      data: { completedAt: new Date() },
-    });
-  }
-}
-
 // Une séance n'est créée en base qu'au premier enregistrement d'une série (voir addSet
 // ci-dessous) : tant qu'aucune donnée n'a été renseignée, la page ne montre qu'un aperçu du
 // modèle, sans aucune série pré-remplie (ni nombre de séries, ni poids/reps prévus à l'avance).
@@ -73,10 +44,6 @@ export async function updateSet(
     },
     select: { workoutSessionId: true },
   });
-
-  if (parsed.data.completed) {
-    await maybeAutoCompleteSession(set.workoutSessionId);
-  }
 
   revalidatePath(`/sessions/${set.workoutSessionId}`);
   return {};
@@ -151,8 +118,6 @@ export async function logSet(
     },
   });
 
-  await maybeAutoCompleteSession(sessionId);
-
   if (isNewSession) {
     redirect(`/sessions/${sessionId}?exercise=${exerciseId}`);
   }
@@ -185,5 +150,6 @@ export async function completeSession(sessionId: string) {
     data: { completedAt: new Date() },
   });
   revalidatePath(`/sessions/${sessionId}`);
-  redirect("/workouts");
+  revalidatePath("/history");
+  redirect("/history");
 }

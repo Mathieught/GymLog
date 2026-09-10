@@ -8,6 +8,7 @@ import { SessionExerciseStepper } from "@/components/sessions/session-exercise-s
 import { SetRow } from "@/components/sessions/set-row";
 import { PreviousSetRow } from "@/components/sessions/previous-set-row";
 import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
+import { SessionCompletionPrompt } from "@/components/sessions/session-completion-prompt";
 import { addSet } from "@/lib/actions/sessions";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
@@ -25,6 +26,7 @@ const INDICATOR_DURATION_MS = 1200;
 export function SessionCarousel({
   basePath,
   addSetArg,
+  sessionId,
   allowRemove,
   groups,
   history,
@@ -32,6 +34,7 @@ export function SessionCarousel({
 }: {
   basePath: string;
   addSetArg: string;
+  sessionId?: string;
   allowRemove: boolean;
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
@@ -42,6 +45,22 @@ export function SessionCarousel({
     groups.findIndex((g) => g.exerciseId === initialActiveExerciseId)
   );
   const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
+
+  // Détecte la transition vers "toutes les séries validées" pour proposer la popup de fin de
+  // séance une seule fois par passage à l'état complet, plutôt que de clôturer automatiquement en
+  // silence. Ajusté pendant le rendu (pattern React recommandé pour réagir à un changement de
+  // props sans passer par un effect) : pas de ref, juste de l'état comparé à son ancienne valeur.
+  const [prevGroups, setPrevGroups] = useState(groups);
+  const [wasAllDone, setWasAllDone] = useState(false);
+  if (groups !== prevGroups) {
+    setPrevGroups(groups);
+    const allDone = groups.every((g) => g.sets.length > 0 && g.sets.every((s) => s.completed));
+    if (sessionId && allDone && !wasAllDone) {
+      setShowCompletionPrompt(true);
+    }
+    setWasAllDone(allDone);
+  }
 
   const trackRef = useRef<HTMLDivElement>(null);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
@@ -173,6 +192,13 @@ export function SessionCarousel({
           <span />
         )}
       </div>
+
+      {sessionId && showCompletionPrompt && (
+        <SessionCompletionPrompt
+          sessionId={sessionId}
+          onContinue={() => setShowCompletionPrompt(false)}
+        />
+      )}
     </div>
   );
 }
