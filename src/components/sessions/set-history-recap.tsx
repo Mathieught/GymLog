@@ -7,18 +7,19 @@ type HistoryEntry = {
   actualReps: number | null;
 };
 
-// Petit récap sous chaque série : ce qui a été fait sur ce même numéro de série lors des
-// dernières séances (jusqu'à 3), de la plus récente à la plus ancienne.
+// Petit récap : ce qui a été fait sur ce même numéro de série lors des dernières séances
+// (jusqu'à 3), de la plus récente à la plus ancienne. Rendu à l'intérieur du bloc de la série
+// concernée (par le composant appelant), jamais comme une ligne flottante entre deux séries.
 export function SetHistoryRecap({ entries }: { entries: HistoryEntry[] }) {
   if (entries.length === 0) return null;
 
   return (
-    <p className="mt-1 px-1 text-[11px] text-neutral-400">
+    <p className="text-[11px] text-neutral-400">
       {entries.map((entry, index) => (
         <span key={index}>
           {index > 0 && " · "}
           <span className="tabular-nums">
-            {entry.actualWeight ?? "—"}×{entry.actualReps ?? "—"}
+            {entry.actualReps ?? "—"}×{entry.actualWeight ?? "—"}kg
           </span>{" "}
           <span className="text-neutral-300">
             ({format(entry.sessionDate, "d/MM", { locale: fr })})

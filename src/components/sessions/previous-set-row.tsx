@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { logSet } from "@/lib/actions/sessions";
 import { initialActionState } from "@/lib/action-state";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
+import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
 
 type PreviousSetForRow = {
   setNumber: number;
@@ -11,21 +12,26 @@ type PreviousSetForRow = {
   actualReps: number | null;
 };
 
+type RecapEntry = { sessionDate: Date; actualWeight: number | null; actualReps: number | null };
+
 // Suggestion pour une série pas encore réalisée cette séance, pré-remplie avec la performance de
 // la dernière fois : la toucher ouvre la même popup que pour une série déjà enregistrée, et
 // "Valider" la crée directement comme terminée. Verrouillée (affichage seul) tant que la série
-// précédente n'est pas validée.
+// précédente n'est pas validée. Le récap (recap) est rendu dans ce même bloc, séparé par un
+// filet, jamais en ligne flottante entre deux séries.
 export function PreviousSetRow({
   previousSet,
   addSetArg,
   exerciseId,
   exerciseOrder,
+  recap,
   locked = false,
 }: {
   previousSet: PreviousSetForRow;
   addSetArg: string;
   exerciseId: string;
   exerciseOrder: number;
+  recap: RecapEntry[];
   locked?: boolean;
 }) {
   const [state, formAction] = useActionState(
@@ -44,16 +50,22 @@ export function PreviousSetRow({
 
   if (locked) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-dashed border-neutral-200 bg-neutral-50 p-3">
-        <span className="w-5 text-center text-sm font-medium text-neutral-300">
-          {previousSet.setNumber}
-        </span>
-        <span className="flex h-11 flex-1 items-center justify-center gap-1 text-sm font-medium tabular-nums text-neutral-300">
-          <span>{weight}</span>
-          <span className="text-xs font-normal text-neutral-300">kg ×</span>
-          <span>{reps}</span>
-        </span>
-        <span className="text-[11px] text-neutral-300">dernière fois</span>
+      <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50">
+        <div className="flex h-14 items-center gap-3 px-3">
+          <span className="w-5 shrink-0 text-center text-sm font-medium text-neutral-300">
+            {previousSet.setNumber}
+          </span>
+          <span className="flex-1 text-sm font-medium tabular-nums text-neutral-300">
+            {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
+            <span className="text-xs font-normal text-neutral-300">kg</span>
+          </span>
+          <span className="shrink-0 text-[11px] text-neutral-300">dernière fois</span>
+        </div>
+        {recap.length > 0 && (
+          <div className="border-t border-neutral-200 px-3 py-1.5">
+            <SetHistoryRecap entries={recap} />
+          </div>
+        )}
       </div>
     );
   }
@@ -63,27 +75,33 @@ export function PreviousSetRow({
       <form
         ref={formRef}
         action={formAction}
-        className="flex items-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-3"
+        className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:bg-neutral-100 active:bg-neutral-200"
       >
-        <span className="w-5 text-center text-sm font-medium text-neutral-400">
-          {previousSet.setNumber}
-        </span>
-        <input type="hidden" name="actualWeight" value={weight} />
-        <input type="hidden" name="actualReps" value={reps} />
-        <button
-          type="button"
-          onClick={() => setSheetOpen(true)}
-          className="flex h-11 flex-1 items-center justify-center gap-1 rounded-xl border border-neutral-200 bg-white text-sm font-medium tabular-nums outline-none hover:border-neutral-400 focus:border-neutral-900"
-        >
-          <span>{weight}</span>
-          <span className="text-xs font-normal text-neutral-400">kg ×</span>
-          <span>{reps}</span>
-        </button>
-        <span className="text-[11px] text-neutral-400">dernière fois</span>
+        <div className="flex h-14 items-center gap-3 px-3">
+          <span className="w-5 shrink-0 text-center text-sm font-medium text-neutral-400">
+            {previousSet.setNumber}
+          </span>
+          <input type="hidden" name="actualWeight" value={weight} />
+          <input type="hidden" name="actualReps" value={reps} />
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            className="h-full flex-1 text-left text-sm font-medium tabular-nums outline-none"
+          >
+            {reps} <span className="text-xs font-normal text-neutral-400">×</span> {weight}{" "}
+            <span className="text-xs font-normal text-neutral-400">kg</span>
+          </button>
+          <span className="shrink-0 text-[11px] text-neutral-400">dernière fois</span>
+        </div>
         {state.fieldErrors && (
-          <p className="w-full text-xs text-red-600">
+          <p className="px-3 pb-1.5 text-xs text-red-600">
             {Object.values(state.fieldErrors).flat()[0]}
           </p>
+        )}
+        {recap.length > 0 && (
+          <div className="border-t border-neutral-200 px-3 py-1.5">
+            <SetHistoryRecap entries={recap} />
+          </div>
         )}
       </form>
 

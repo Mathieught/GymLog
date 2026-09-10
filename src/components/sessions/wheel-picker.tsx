@@ -43,6 +43,17 @@ export function WheelPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Alternative au défilement : toucher directement un chiffre l'amène au centre et le retient
+  // aussitôt (retour visuel immédiat), l'animation de la molette suit ensuite pour confirmer.
+  function selectIndex(index: number) {
+    const el = containerRef.current;
+    if (!el) return;
+    const clamped = Math.min(Math.max(index, 0), values.length - 1);
+    setCenterIndex(clamped);
+    onChange(values[clamped]);
+    el.scrollTo({ top: clamped * ITEM_HEIGHT, behavior: "smooth" });
+  }
+
   function handleScroll() {
     const el = containerRef.current;
     if (!el) return;
@@ -78,15 +89,24 @@ export function WheelPicker({
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative z-20 h-full overflow-y-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <div style={{ height: ITEM_HEIGHT * PADDING_ITEMS }} aria-hidden />
         {values.map((v, index) => (
           <div
             key={v}
+            role="button"
+            tabIndex={0}
+            onClick={() => selectIndex(index)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                selectIndex(index);
+              }
+            }}
             style={{ height: ITEM_HEIGHT }}
             className={cn(
-              "flex items-center justify-center text-base tabular-nums transition-colors",
+              "flex cursor-pointer items-center justify-center text-base tabular-nums transition-colors",
               index === centerIndex ? "font-semibold text-neutral-900" : "text-neutral-400"
             )}
           >

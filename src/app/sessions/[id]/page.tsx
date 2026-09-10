@@ -98,7 +98,7 @@ export default async function SessionDetailPage({
                       >
                         <span className="text-neutral-500">Série {set.setNumber}</span>
                         <span className="font-medium">
-                          {set.actualWeight ?? "—"} kg × {set.actualReps ?? "—"} reps
+                          {set.actualReps ?? "—"} × {set.actualWeight ?? "—"} kg
                         </span>
                         {set.completed && <Check className="h-4 w-4 text-neutral-900" />}
                       </li>

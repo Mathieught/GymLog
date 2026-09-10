@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { SessionExerciseStepper } from "@/components/sessions/session-exercise-stepper";
 import { SetRow } from "@/components/sessions/set-row";
 import { PreviousSetRow } from "@/components/sessions/previous-set-row";
-import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
 import { SessionCompletionPrompt } from "@/components/sessions/session-completion-prompt";
 import { addSet } from "@/lib/actions/sessions";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
@@ -47,19 +46,19 @@ export function SessionCarousel({
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
 
-  // Détecte la transition vers "toutes les séries validées" pour proposer la popup de fin de
-  // séance une seule fois par passage à l'état complet, plutôt que de clôturer automatiquement en
-  // silence. Ajusté pendant le rendu (pattern React recommandé pour réagir à un changement de
+  // Propose la popup de fin de séance à chaque série (re)validée tant que tout est complet — pas
+  // seulement au moment où le dernier "trou" se remplit : si l'utilisateur avait choisi
+  // "Continuer" puis retouche une série (correction d'une erreur, ou simplement re-valider sans
+  // rien changer), il a de nouveau explicitement confirmé quelque chose et veut probablement
+  // clôturer. Ajusté pendant le rendu (pattern React recommandé pour réagir à un changement de
   // props sans passer par un effect) : pas de ref, juste de l'état comparé à son ancienne valeur.
   const [prevGroups, setPrevGroups] = useState(groups);
-  const [wasAllDone, setWasAllDone] = useState(false);
   if (groups !== prevGroups) {
     setPrevGroups(groups);
     const allDone = groups.every((g) => g.sets.length > 0 && g.sets.every((s) => s.completed));
-    if (sessionId && allDone && !wasAllDone) {
+    if (sessionId && allDone) {
       setShowCompletionPrompt(true);
     }
-    setWasAllDone(allDone);
   }
 
   const trackRef = useRef<HTMLDivElement>(null);
@@ -251,16 +250,15 @@ function ExercisePanel({
 
   return (
     <div className="pr-1">
-      <div className="mb-3">
+      <div className="mb-4 border-b border-neutral-100 pb-3">
         <p className="font-medium">{group.exercise.name}</p>
         <p className="text-sm text-neutral-500">{group.exercise.muscle}</p>
+        {previousPerformance && previousPerformance.sets.length > 0 && (
+          <p className="mt-1.5 text-xs text-neutral-400">
+            Dernière fois · {format(previousPerformance.sessionDate, "EEEE d MMMM", { locale: fr })}
+          </p>
+        )}
       </div>
-
-      {previousPerformance && previousPerformance.sets.length > 0 && (
-        <p className="mb-2 text-xs text-neutral-400">
-          Dernière fois · {format(previousPerformance.sessionDate, "EEEE d MMMM", { locale: fr })}
-        </p>
-      )}
 
       {rows.length === 0 ? (
         <p className="text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
@@ -273,9 +271,9 @@ function ExercisePanel({
                   set={row.current}
                   canRemove={allowRemove}
                   previousSet={row.previous}
+                  recap={row.recap}
                   locked={!row.unlocked}
                 />
-                <SetHistoryRecap entries={row.recap} />
               </li>
             ) : (
               <li key={`previous-${row.setNumber}`}>
@@ -284,9 +282,9 @@ function ExercisePanel({
                   addSetArg={addSetArg}
                   exerciseId={group.exerciseId}
                   exerciseOrder={group.exerciseOrder}
+                  recap={row.recap}
                   locked={!row.unlocked}
                 />
-                <SetHistoryRecap entries={row.recap} />
               </li>
             )
           )}
