@@ -31,8 +31,10 @@ const outboxOpSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("updateSet"),
     setId: id,
-    actualWeight,
-    actualReps,
+    // Nullable : resetSet (annuler le résultat d'une série) renvoie explicitement à vide plutôt
+    // que de renvoyer une valeur bidon.
+    actualWeight: actualWeight.nullable(),
+    actualReps: actualReps.nullable(),
     completed: z.boolean(),
   }),
   z.object({ type: z.literal("removeSet"), setId: id, sessionId: id, exerciseId: id }),

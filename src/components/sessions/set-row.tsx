@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
@@ -33,6 +33,7 @@ export function SetRow({
   recap,
   locked = false,
   onUpdate,
+  onReset,
   onRemove,
 }: {
   set: SetForRow;
@@ -41,6 +42,7 @@ export function SetRow({
   recap: RecapEntry[];
   locked?: boolean;
   onUpdate: (setId: string, actualWeight: number, actualReps: number) => void;
+  onReset: (setId: string) => void;
   onRemove: (setId: string) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -52,13 +54,20 @@ export function SetRow({
     onUpdate(set.id, weight, reps);
   }
 
-  // Une série jamais renseignée (juste ajoutée, valeurs par défaut) se supprime sans rien
-  // demander — annuler l'ajout, rien à perdre. Une série déjà validée contient un vrai résultat :
-  // sa suppression demande confirmation.
-  function handleRemove() {
-    if (set.completed && !window.confirm("Supprimer cette série ? Le résultat sera perdu.")) {
+  // Deux gestes différents derrière ce bouton, selon qu'il y a déjà un résultat à perdre :
+  // - série déjà validée : on annule juste le résultat (retour à l'historique, ou vierge s'il n'y
+  //   en a pas) — la série reste à sa place, prête à être resaisie. Pas de confirmation : c'est
+  //   réversible, il suffit de la resaisir.
+  // - série jamais renseignée (juste ajoutée) : rien à perdre en valeur, mais la retirer change la
+  //   structure de la séance (renumérotation) — ça, ça se confirme.
+  function handleAction() {
+    if (set.completed) {
+      setWeight(previousSet?.actualWeight ?? 0);
+      setReps(previousSet?.actualReps ?? 0);
+      onReset(set.id);
       return;
     }
+    if (!window.confirm("Supprimer cette série de la séance ?")) return;
     onRemove(set.id);
   }
 
@@ -92,17 +101,19 @@ export function SetRow({
           )}
           <button
             type="button"
-            onClick={handleRemove}
+            onClick={handleAction}
             disabled={!canRemove}
             className={cn(
               "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-400",
-              "hover:bg-red-50 hover:text-red-600 active:bg-red-100",
+              set.completed
+                ? "hover:bg-neutral-100 hover:text-neutral-700 active:bg-neutral-200"
+                : "hover:bg-red-50 hover:text-red-600 active:bg-red-100",
               "disabled:pointer-events-none disabled:opacity-30",
               locked && "ml-auto"
             )}
-            aria-label="Supprimer la série"
+            aria-label={set.completed ? "Annuler le résultat de cette série" : "Supprimer cette série"}
           >
-            <Trash2 className="h-[18px] w-[18px]" />
+            {set.completed ? <RotateCcw className="h-[18px] w-[18px]" /> : <Trash2 className="h-[18px] w-[18px]" />}
           </button>
         </div>
 

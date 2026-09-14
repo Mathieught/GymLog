@@ -10,22 +10,24 @@ type HistoryEntry = {
 // Petit récap : ce qui a été fait sur ce même numéro de série lors des dernières séances
 // (jusqu'à 3), de la plus récente à la plus ancienne. Rendu à l'intérieur du bloc de la série
 // concernée (par le composant appelant), jamais comme une ligne flottante entre deux séries.
+// Une puce par séance (plutôt qu'une ligne de texte séparée par des points) : plus facile à
+// scanner d'un coup d'œil, surtout à 3 entrées.
 export function SetHistoryRecap({ entries }: { entries: HistoryEntry[] }) {
   if (entries.length === 0) return null;
 
   return (
-    <p className="text-[11px] text-neutral-400">
+    <ul className="flex flex-wrap gap-1">
       {entries.map((entry, index) => (
-        <span key={index}>
-          {index > 0 && " · "}
-          <span className="tabular-nums">
+        <li
+          key={index}
+          className="flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[11px] tabular-nums text-neutral-500"
+        >
+          <span className="font-medium text-neutral-600">
             {entry.actualReps ?? "—"}×{entry.actualWeight ?? "—"}kg
-          </span>{" "}
-          <span className="text-neutral-300">
-            ({format(entry.sessionDate, "d/MM", { locale: fr })})
           </span>
-        </span>
+          <span className="text-neutral-400">{format(entry.sessionDate, "d/MM", { locale: fr })}</span>
+        </li>
       ))}
-    </p>
+    </ul>
   );
 }

@@ -196,6 +196,26 @@ export function useSessionEngine(seed: SessionSeed) {
     [applyMutation]
   );
 
+  // Annule le résultat d'une série déjà validée : redevient une série vierge (pré-remplie par
+  // l'historique côté UI, voir SetRow), sans changer sa place ni renuméroter les autres — à la
+  // différence de removeSet, qui retire vraiment la série de la liste.
+  const resetSet = useCallback(
+    (setId: string) => {
+      void applyMutation((current) => {
+        const groups = current.groups.map((g) => ({
+          ...g,
+          sets: g.sets.map((s) => (s.id === setId ? { ...s, actualWeight: null, actualReps: null, completed: false } : s)),
+        }));
+        return {
+          next: { ...current, groups },
+          ops: [{ type: "updateSet" as const, setId, actualWeight: null, actualReps: null, completed: false }],
+          sessionId: current.sessionId,
+        };
+      });
+    },
+    [applyMutation]
+  );
+
   const removeSet = useCallback(
     (setId: string) => {
       void applyMutation((current) => {
@@ -243,6 +263,7 @@ export function useSessionEngine(seed: SessionSeed) {
     addSet,
     logSet,
     updateSet,
+    resetSet,
     removeSet,
     completeSession,
   };

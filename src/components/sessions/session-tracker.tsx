@@ -83,6 +83,7 @@ export function SessionTracker({
           onAddSet={engine.addSet}
           onLogSet={engine.logSet}
           onUpdateSet={engine.updateSet}
+          onResetSet={engine.resetSet}
           onRemoveSet={engine.removeSet}
           onCompleteSession={handleComplete}
         />

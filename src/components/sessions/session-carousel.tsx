@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { SessionExerciseStepper } from "@/components/sessions/session-exercise-stepper";
 import { SetRow } from "@/components/sessions/set-row";
@@ -32,6 +30,7 @@ export function SessionCarousel({
   onAddSet,
   onLogSet,
   onUpdateSet,
+  onResetSet,
   onRemoveSet,
   onCompleteSession,
 }: {
@@ -48,6 +47,7 @@ export function SessionCarousel({
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
+  onResetSet: (setId: string) => void;
   onRemoveSet: (setId: string) => void;
   onCompleteSession: () => void;
 }) {
@@ -192,6 +192,7 @@ export function SessionCarousel({
                 onAddSet={onAddSet}
                 onLogSet={onLogSet}
                 onUpdateSet={onUpdateSet}
+                onResetSet={onResetSet}
                 onRemoveSet={onRemoveSet}
               />
             </div>
@@ -266,6 +267,7 @@ function ExercisePanel({
   onAddSet,
   onLogSet,
   onUpdateSet,
+  onResetSet,
   onRemoveSet,
 }: {
   group: SessionRowGroup;
@@ -275,21 +277,16 @@ function ExercisePanel({
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
+  onResetSet: (setId: string) => void;
   onRemoveSet: (setId: string) => void;
 }) {
   const rows = buildSessionRows(group, history);
-  const previousPerformance = history[0];
 
   return (
     <div className="pr-1">
       <div className="mb-4 border-b border-neutral-100 pb-3">
         <p className="font-medium">{group.exercise.name}</p>
         <p className="text-sm text-neutral-500">{group.exercise.muscle}</p>
-        {previousPerformance && previousPerformance.sets.length > 0 && (
-          <p className="mt-1.5 text-xs text-neutral-400">
-            Dernière fois · {format(previousPerformance.sessionDate, "EEEE d MMMM", { locale: fr })}
-          </p>
-        )}
       </div>
 
       {rows.length === 0 ? (
@@ -306,6 +303,7 @@ function ExercisePanel({
                   recap={row.recap}
                   locked={readOnly || !row.unlocked}
                   onUpdate={onUpdateSet}
+                  onReset={onResetSet}
                   onRemove={onRemoveSet}
                 />
               </li>

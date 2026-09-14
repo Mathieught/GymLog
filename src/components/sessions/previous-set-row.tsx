@@ -52,7 +52,6 @@ export function PreviousSetRow({
             {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
             <span className="text-xs font-normal text-neutral-300">kg</span>
           </span>
-          <span className="shrink-0 text-[11px] text-neutral-300">dernière fois</span>
         </div>
         {recap.length > 0 && (
           <div className="border-t border-neutral-200 px-3 py-1.5">
@@ -78,7 +77,6 @@ export function PreviousSetRow({
             {reps} <span className="text-xs font-normal text-neutral-400">×</span> {weight}{" "}
             <span className="text-xs font-normal text-neutral-400">kg</span>
           </button>
-          <span className="shrink-0 text-[11px] text-neutral-400">dernière fois</span>
         </div>
         {recap.length > 0 && (
           <div className="border-t border-neutral-200 px-3 py-1.5">
