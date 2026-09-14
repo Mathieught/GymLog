@@ -60,6 +60,15 @@ export async function removeFromOutbox(seqs: number[]) {
   await tx.done;
 }
 
+// Signal "s'est déjà connecté au moins une fois avec du réseau" : tant qu'aucune séance ni
+// historique n'a jamais été mis en cache, l'appareil n'a pas encore de compte associé — se
+// connecter est alors impossible hors ligne (voir src/app/~offline/page.tsx).
+export async function hasAnyLocalData() {
+  const db = await getDb();
+  const [sessionsCount, historyCount] = await Promise.all([db.count("sessions"), db.count("history")]);
+  return sessionsCount > 0 || historyCount > 0;
+}
+
 export async function setMeta(key: string, value: unknown) {
   await (await getDb()).put("meta", { key, value });
 }
