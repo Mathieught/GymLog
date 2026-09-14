@@ -21,8 +21,15 @@ export function BottomNav() {
   if (pathname === "/login") return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200 bg-white/95 py-2 backdrop-blur">
-      <div className="mx-auto flex max-w-lg items-center gap-0.5 rounded-full bg-neutral-200/70 p-0.5">
+    // Le conteneur lui-même n'a aucun arrière-plan : seule la pastille flottante en a un, pour
+    // se poser sur le fond de la page plutôt que sur une barre blanche pleine largeur. Le padding
+    // bas suit l'encoche de sécurité du téléphone (barre de gestes/home indicator) pour ne
+    // jamais coller au bord ni passer dessous.
+    <nav
+      className="fixed inset-x-0 bottom-0 z-10 flex justify-center px-4"
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+    >
+      <div className="flex w-full max-w-lg items-center gap-0.5 rounded-full border border-neutral-200/80 bg-neutral-100/90 p-0.5 shadow-lg shadow-black/5 backdrop-blur-md">
         {navItems.map((item) => (
           <NavItem key={item.href} {...item} active={isActive(item.href)} />
         ))}
