@@ -7,9 +7,9 @@ import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
-import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
-import { SessionTracker, type SessionTrackerGroup } from "@/components/sessions/session-tracker";
-import { completeSession } from "@/lib/actions/sessions";
+import { SessionTracker } from "@/components/sessions/session-tracker";
+import type { SessionSeed } from "@/lib/offline/session-engine";
+import type { SessionRowGroup } from "@/lib/session-rows";
 
 type SetForGrouping = {
   id: string;
@@ -50,7 +50,7 @@ export default async function SessionDetailPage({
   // Les exercices viennent du modèle (source de vérité), pas des séries : un exercice reste
   // visible même tant qu'aucune série n'y a encore été enregistrée (ou après suppression de la
   // dernière).
-  const groups: SessionTrackerGroup[] = (session.workoutTemplate?.exercises ?? []).map(
+  const groups: SessionRowGroup[] = (session.workoutTemplate?.exercises ?? []).map(
     (workoutExercise, exerciseOrder) => ({
       exerciseId: workoutExercise.exerciseId,
       exerciseOrder,
@@ -124,29 +124,16 @@ export default async function SessionDetailPage({
     session.id
   );
 
+  const seed: SessionSeed = {
+    sessionId: session.id,
+    workoutTemplateId: session.workoutTemplateId ?? "",
+    templateName: session.name,
+    groups,
+    history,
+    completedAt: null,
+  };
+
   return (
-    <SessionTracker
-      title={session.name}
-      basePath={`/sessions/${session.id}`}
-      backHref="/history"
-      addSetArg={session.id}
-      sessionId={session.id}
-      groups={groups}
-      activeExerciseId={activeExerciseId}
-      allowRemove
-      history={history}
-      headerRight={
-        <form action={completeSession.bind(null, session.id)}>
-          <ConfirmSubmitButton
-            type="submit"
-            variant="secondary"
-            size="sm"
-            confirmMessage="Terminer la séance ? Vous ne pourrez plus modifier les séries après."
-          >
-            Terminer
-          </ConfirmSubmitButton>
-        </form>
-      }
-    />
+    <SessionTracker backHref="/history" seed={seed} activeExerciseId={activeExerciseId} allowRemove />
   );
 }

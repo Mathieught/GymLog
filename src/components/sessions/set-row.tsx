@@ -1,9 +1,7 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { updateSet, removeSet } from "@/lib/actions/sessions";
-import { initialActionState } from "@/lib/action-state";
 import { cn } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
@@ -34,29 +32,29 @@ export function SetRow({
   previousSet,
   recap,
   locked = false,
+  onUpdate,
+  onRemove,
 }: {
   set: SetForRow;
   canRemove: boolean;
   previousSet?: PreviousSetForRow;
   recap: RecapEntry[];
   locked?: boolean;
+  onUpdate: (setId: string, actualWeight: number, actualReps: number) => void;
+  onRemove: (setId: string) => void;
 }) {
-  const [, formAction] = useActionState(updateSet.bind(null, set.id), initialActionState);
-  const formRef = useRef<HTMLFormElement>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [weight, setWeight] = useState(set.actualWeight ?? previousSet?.actualWeight ?? 0);
   const [reps, setReps] = useState(set.actualReps ?? previousSet?.actualReps ?? 0);
 
   function validate() {
     setSheetOpen(false);
-    formRef.current?.requestSubmit();
+    onUpdate(set.id, weight, reps);
   }
 
   return (
     <>
-      <form
-        ref={formRef}
-        action={formAction}
+      <div
         className={cn(
           "rounded-xl border bg-white transition-colors",
           set.completed ? "border-neutral-900" : "border-dashed border-neutral-300",
@@ -67,9 +65,6 @@ export function SetRow({
           <span className="w-5 shrink-0 text-center text-sm font-medium text-neutral-400">
             {set.setNumber}
           </span>
-          <input type="hidden" name="actualWeight" value={weight} />
-          <input type="hidden" name="actualReps" value={reps} />
-          <input type="hidden" name="completed" value="true" />
           {locked ? (
             <span className="flex-1 text-sm font-medium tabular-nums text-neutral-400">
               {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
@@ -87,7 +82,7 @@ export function SetRow({
           )}
           <button
             type="button"
-            onClick={() => removeSet(set.id)}
+            onClick={() => onRemove(set.id)}
             disabled={!canRemove}
             className={cn(
               "shrink-0 text-neutral-400 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30",
@@ -104,7 +99,7 @@ export function SetRow({
             <SetHistoryRecap entries={recap} />
           </div>
         )}
-      </form>
+      </div>
 
       {!locked && (
         <SetValueSheet

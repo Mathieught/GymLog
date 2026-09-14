@@ -1,0 +1,57 @@
+import type { SessionRowGroup } from "@/lib/session-rows";
+import type { PreviousPerformance } from "@/lib/queries/exercise-history";
+import type { LocalSession } from "@/lib/offline/types";
+import { getLocalHistory } from "@/lib/offline/db";
+import type { SessionSeed } from "@/lib/offline/session-engine";
+
+export function seedToLocalSession(seed: SessionSeed, sessionId: string): LocalSession {
+  return {
+    id: sessionId,
+    workoutTemplateId: seed.workoutTemplateId,
+    name: seed.templateName,
+    completedAt: seed.completedAt,
+    exercises: seed.groups.map((g) => ({
+      exerciseId: g.exerciseId,
+      exerciseOrder: g.exerciseOrder,
+      exercise: g.exercise,
+    })),
+    sets: seed.groups.flatMap((g) =>
+      g.sets.map((s) => ({ ...s, workoutSessionId: sessionId, exerciseId: g.exerciseId, exerciseOrder: g.exerciseOrder }))
+    ),
+    updatedAt: Date.now(),
+  };
+}
+
+export function localSessionToGroups(local: LocalSession): SessionRowGroup[] {
+  return local.exercises
+    .slice()
+    .sort((a, b) => a.exerciseOrder - b.exerciseOrder)
+    .map((e) => ({
+      exerciseId: e.exerciseId,
+      exerciseOrder: e.exerciseOrder,
+      exercise: e.exercise,
+      sets: local.sets
+        .filter((s) => s.exerciseId === e.exerciseId)
+        .sort((a, b) => a.setNumber - b.setNumber),
+    }));
+}
+
+// Reconstruit un seed complet (pour SessionTracker) à partir d'une séance IndexedDB seule —
+// utilisé par la page de secours /~offline, quand aucun rendu serveur n'est disponible.
+export async function localSessionToSeed(local: LocalSession): Promise<SessionSeed> {
+  const groups = localSessionToGroups(local);
+  const historyMap = await getLocalHistory(groups.map((g) => g.exerciseId));
+  const history: Record<string, PreviousPerformance[]> = {};
+  for (const group of groups) {
+    history[group.exerciseId] = historyMap.get(group.exerciseId)?.performances ?? [];
+  }
+
+  return {
+    sessionId: local.id,
+    workoutTemplateId: local.workoutTemplateId,
+    templateName: local.name,
+    groups,
+    history,
+    completedAt: local.completedAt,
+  };
+}

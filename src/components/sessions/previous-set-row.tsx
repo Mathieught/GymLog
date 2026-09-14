@@ -1,8 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
-import { logSet } from "@/lib/actions/sessions";
-import { initialActionState } from "@/lib/action-state";
+import { useState } from "react";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
 
@@ -21,31 +19,26 @@ type RecapEntry = { sessionDate: Date; actualWeight: number | null; actualReps: 
 // filet, jamais en ligne flottante entre deux séries.
 export function PreviousSetRow({
   previousSet,
-  addSetArg,
   exerciseId,
   exerciseOrder,
   recap,
   locked = false,
+  onLog,
 }: {
   previousSet: PreviousSetForRow;
-  addSetArg: string;
   exerciseId: string;
   exerciseOrder: number;
   recap: RecapEntry[];
   locked?: boolean;
+  onLog: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
 }) {
-  const [state, formAction] = useActionState(
-    logSet.bind(null, addSetArg, exerciseId, exerciseOrder),
-    initialActionState
-  );
-  const formRef = useRef<HTMLFormElement>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [weight, setWeight] = useState(previousSet.actualWeight ?? 0);
   const [reps, setReps] = useState(previousSet.actualReps ?? 0);
 
   function validate() {
     setSheetOpen(false);
-    formRef.current?.requestSubmit();
+    onLog(exerciseId, exerciseOrder, weight, reps);
   }
 
   if (locked) {
@@ -72,17 +65,11 @@ export function PreviousSetRow({
 
   return (
     <>
-      <form
-        ref={formRef}
-        action={formAction}
-        className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:bg-neutral-100 active:bg-neutral-200"
-      >
+      <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:bg-neutral-100 active:bg-neutral-200">
         <div className="flex h-14 items-center gap-3 px-3">
           <span className="w-5 shrink-0 text-center text-sm font-medium text-neutral-400">
             {previousSet.setNumber}
           </span>
-          <input type="hidden" name="actualWeight" value={weight} />
-          <input type="hidden" name="actualReps" value={reps} />
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
@@ -93,17 +80,12 @@ export function PreviousSetRow({
           </button>
           <span className="shrink-0 text-[11px] text-neutral-400">dernière fois</span>
         </div>
-        {state.fieldErrors && (
-          <p className="px-3 pb-1.5 text-xs text-red-600">
-            {Object.values(state.fieldErrors).flat()[0]}
-          </p>
-        )}
         {recap.length > 0 && (
           <div className="border-t border-neutral-200 px-3 py-1.5">
             <SetHistoryRecap entries={recap} />
           </div>
         )}
-      </form>
+      </div>
 
       <SetValueSheet
         open={sheetOpen}

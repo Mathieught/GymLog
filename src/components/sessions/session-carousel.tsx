@@ -8,7 +8,6 @@ import { SessionExerciseStepper } from "@/components/sessions/session-exercise-s
 import { SetRow } from "@/components/sessions/set-row";
 import { PreviousSetRow } from "@/components/sessions/previous-set-row";
 import { SessionCompletionPrompt } from "@/components/sessions/session-completion-prompt";
-import { addSet } from "@/lib/actions/sessions";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 import { cn } from "@/lib/utils";
@@ -24,20 +23,28 @@ const INDICATOR_DURATION_MS = 1200;
 // s'anime jusqu'au panneau voisin ou revient à sa place selon le seuil franchi.
 export function SessionCarousel({
   basePath,
-  addSetArg,
   sessionId,
   allowRemove,
   groups,
   history,
   initialActiveExerciseId,
+  onAddSet,
+  onLogSet,
+  onUpdateSet,
+  onRemoveSet,
+  onCompleteSession,
 }: {
   basePath: string;
-  addSetArg: string;
-  sessionId?: string;
+  sessionId: string | null;
   allowRemove: boolean;
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
   initialActiveExerciseId: string;
+  onAddSet: (exerciseId: string, exerciseOrder: number) => void;
+  onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
+  onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
+  onRemoveSet: (setId: string) => void;
+  onCompleteSession: () => void;
 }) {
   const initialIndex = Math.max(
     0,
@@ -83,7 +90,9 @@ export function SessionCarousel({
   }, [activeIndex]);
 
   // Garde l'URL partageable/rechargeable sans passer par le routeur Next (pas de round-trip
-  // serveur pour un simple changement d'exercice côté client).
+  // serveur pour un simple changement d'exercice côté client) — et c'est aussi ce mécanisme qui
+  // fait apparaître l'URL /sessions/[id] dès qu'une séance démarre depuis l'aperçu d'un programme
+  // (basePath change alors de valeur, voir SessionTracker).
   useEffect(() => {
     const url = `${basePath}?exercise=${groups[activeIndex].exerciseId}`;
     window.history.replaceState(null, "", url);
@@ -167,8 +176,11 @@ export function SessionCarousel({
               <ExercisePanel
                 group={group}
                 history={history[group.exerciseId] ?? []}
-                addSetArg={addSetArg}
                 allowRemove={allowRemove}
+                onAddSet={onAddSet}
+                onLogSet={onLogSet}
+                onUpdateSet={onUpdateSet}
+                onRemoveSet={onRemoveSet}
               />
             </div>
           ))}
@@ -194,7 +206,7 @@ export function SessionCarousel({
 
       {sessionId && showCompletionPrompt && (
         <SessionCompletionPrompt
-          sessionId={sessionId}
+          onComplete={onCompleteSession}
           onContinue={() => setShowCompletionPrompt(false)}
         />
       )}
@@ -237,13 +249,19 @@ function StepperFlash({
 function ExercisePanel({
   group,
   history,
-  addSetArg,
   allowRemove,
+  onAddSet,
+  onLogSet,
+  onUpdateSet,
+  onRemoveSet,
 }: {
   group: SessionRowGroup;
   history: PreviousPerformance[];
-  addSetArg: string;
   allowRemove: boolean;
+  onAddSet: (exerciseId: string, exerciseOrder: number) => void;
+  onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
+  onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
+  onRemoveSet: (setId: string) => void;
 }) {
   const rows = buildSessionRows(group, history);
   const previousPerformance = history[0];
@@ -273,17 +291,19 @@ function ExercisePanel({
                   previousSet={row.previous}
                   recap={row.recap}
                   locked={!row.unlocked}
+                  onUpdate={onUpdateSet}
+                  onRemove={onRemoveSet}
                 />
               </li>
             ) : (
               <li key={`previous-${row.setNumber}`}>
                 <PreviousSetRow
                   previousSet={row.previous!}
-                  addSetArg={addSetArg}
                   exerciseId={group.exerciseId}
                   exerciseOrder={group.exerciseOrder}
                   recap={row.recap}
                   locked={!row.unlocked}
+                  onLog={onLogSet}
                 />
               </li>
             )
@@ -291,11 +311,15 @@ function ExercisePanel({
         </ul>
       )}
 
-      <form action={addSet.bind(null, addSetArg, group.exerciseId, group.exerciseOrder)} className="mt-3">
-        <Button type="submit" variant="secondary" size="sm" className="w-full">
-          + Ajouter une série
-        </Button>
-      </form>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className="mt-3 w-full"
+        onClick={() => onAddSet(group.exerciseId, group.exerciseOrder)}
+      >
+        + Ajouter une série
+      </Button>
     </div>
   );
 }

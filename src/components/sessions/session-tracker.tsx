@@ -1,56 +1,87 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { SessionCarousel } from "@/components/sessions/session-carousel";
-import type { SessionRowGroup } from "@/lib/session-rows";
-import type { PreviousPerformance } from "@/lib/queries/exercise-history";
+import { useSessionEngine, type SessionSeed } from "@/lib/offline/session-engine";
 
-export type SessionTrackerGroup = SessionRowGroup;
-
+// Point d'entrée unique du suivi de séance : possède le moteur local (voir
+// src/lib/offline/session-engine.ts), qui fait toute la lecture/écriture sans jamais attendre le
+// réseau. Utilisé aussi bien pour l'aperçu d'un programme (seed.sessionId === null) que pour une
+// séance déjà démarrée — la bascule de l'un à l'autre se fait en place, sans navigation Next.js
+// (voir le commentaire dans SessionCarousel), ce qui est ce qui permet de démarrer une séance sans
+// aucun réseau.
 export function SessionTracker({
-  title,
-  basePath,
   backHref,
-  addSetArg,
-  sessionId,
-  groups,
+  seed,
   activeExerciseId,
   allowRemove,
-  headerRight,
-  history,
 }: {
-  title: string;
-  basePath: string;
   backHref: string;
-  addSetArg: string;
-  // Uniquement pour une vraie séance (pas l'aperçu de modèle) : active la popup de fin de séance
-  // automatique dès que toutes les séries sont validées.
-  sessionId?: string;
-  groups: SessionTrackerGroup[];
+  seed: SessionSeed;
   activeExerciseId: string;
   allowRemove: boolean;
-  headerRight?: ReactNode;
-  history: Record<string, PreviousPerformance[]>;
 }) {
+  const router = useRouter();
+  const engine = useSessionEngine(seed);
+  const { sessionId, completedAt, groups, history } = engine;
+
+  const basePath = sessionId ? `/sessions/${sessionId}` : `/workouts/${seed.workoutTemplateId}/session`;
+
+  function handleComplete() {
+    engine.completeSession();
+    router.push("/history");
+  }
+
+  if (groups.length === 0) {
+    return (
+      <>
+        <PageHeader backHref={backHref} />
+        <Container>
+          <h1 className="text-2xl font-semibold">{seed.templateName}</h1>
+          <p className="mt-4 text-neutral-500">Aucun exercice dans cette séance.</p>
+        </Container>
+      </>
+    );
+  }
+
   return (
     <>
       <PageHeader backHref={backHref} className="max-w-2xl" />
       <Container className="max-w-2xl">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">{title}</h1>
+            <h1 className="text-2xl font-semibold">{seed.templateName}</h1>
           </div>
-          {headerRight}
+          {sessionId && !completedAt ? (
+            <ConfirmSubmitButton
+              type="button"
+              variant="secondary"
+              size="sm"
+              confirmMessage="Terminer la séance ? Vous ne pourrez plus modifier les séries après."
+              onClick={handleComplete}
+            >
+              Terminer
+            </ConfirmSubmitButton>
+          ) : !sessionId ? (
+            <p className="text-xs text-neutral-400">Renseignez une série pour démarrer</p>
+          ) : null}
         </div>
 
         <SessionCarousel
           basePath={basePath}
-          addSetArg={addSetArg}
           sessionId={sessionId}
           allowRemove={allowRemove}
           groups={groups}
           history={history}
           initialActiveExerciseId={activeExerciseId}
+          onAddSet={engine.addSet}
+          onLogSet={engine.logSet}
+          onUpdateSet={engine.updateSet}
+          onRemoveSet={engine.removeSet}
+          onCompleteSession={handleComplete}
         />
       </Container>
     </>
