@@ -62,7 +62,13 @@ export function SessionCarousel({
   const [prevGroups, setPrevGroups] = useState(groups);
   if (groups !== prevGroups) {
     setPrevGroups(groups);
-    const allDone = groups.every((g) => g.sets.length > 0 && g.sets.every((s) => s.completed));
+    // "Terminé" doit tenir compte des séries encore seulement suggérées par l'historique (pas
+    // encore validées cette séance), pas juste de celles déjà enregistrées : sinon, valider
+    // l'avant-dernière série d'un exercice qui en propose une de plus déclenche la popup trop tôt.
+    const allDone = groups.every((g) => {
+      const rows = buildSessionRows(g, history[g.exerciseId] ?? []);
+      return rows.length > 0 && rows.every((row) => row.current?.completed === true);
+    });
     if (sessionId && allDone) {
       setShowCompletionPrompt(true);
     }
