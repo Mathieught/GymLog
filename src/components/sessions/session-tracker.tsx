@@ -55,7 +55,9 @@ export function SessionTracker({
           <div>
             <h1 className="text-2xl font-semibold">{seed.templateName}</h1>
           </div>
-          {sessionId && !completedAt ? (
+          {sessionId && completedAt ? (
+            <p className="text-xs text-neutral-400">Séance terminée · lecture seule</p>
+          ) : sessionId ? (
             <ConfirmSubmitButton
               type="button"
               variant="secondary"
@@ -65,15 +67,16 @@ export function SessionTracker({
             >
               Terminer
             </ConfirmSubmitButton>
-          ) : !sessionId ? (
+          ) : (
             <p className="text-xs text-neutral-400">Renseignez une série pour démarrer</p>
-          ) : null}
+          )}
         </div>
 
         <SessionCarousel
           basePath={basePath}
           sessionId={sessionId}
-          allowRemove={allowRemove}
+          allowRemove={allowRemove && !completedAt}
+          readOnly={!!completedAt}
           groups={groups}
           history={history}
           initialActiveExerciseId={activeExerciseId}

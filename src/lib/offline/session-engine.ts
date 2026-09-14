@@ -84,6 +84,12 @@ export function useSessionEngine(seed: SessionSeed) {
 
   const applyMutation = useCallback(
     async (compute: (current: EngineState) => MutationResult) => {
+      // Une séance terminée est figée : le serveur refuse de toute façon ces mutations (voir
+      // InvalidMutationError dans session-mutations.ts), mais on évite ici même l'aller-retour —
+      // et l'illusion, via un rendu client en retard (cache, séance juste synchronisée), qu'une
+      // modification a été prise en compte.
+      if (stateRef.current.completedAt) return;
+
       const previousSessionId = stateRef.current.sessionId;
       const result = compute(stateRef.current);
       if (!result) return;

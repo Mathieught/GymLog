@@ -25,6 +25,7 @@ export function SessionCarousel({
   basePath,
   sessionId,
   allowRemove,
+  readOnly,
   groups,
   history,
   initialActiveExerciseId,
@@ -37,6 +38,10 @@ export function SessionCarousel({
   basePath: string;
   sessionId: string | null;
   allowRemove: boolean;
+  // Séance déjà terminée : consultation uniquement, aucune série ne doit pouvoir être ajoutée,
+  // modifiée ou supprimée (voir aussi la garde côté moteur dans session-engine.ts et côté serveur
+  // dans session-mutations.ts, qui refusent ces mutations même si ce flag était contourné).
+  readOnly: boolean;
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
   initialActiveExerciseId: string;
@@ -69,7 +74,7 @@ export function SessionCarousel({
       const rows = buildSessionRows(g, history[g.exerciseId] ?? []);
       return rows.length > 0 && rows.every((row) => row.current?.completed === true);
     });
-    if (sessionId && allDone) {
+    if (sessionId && !readOnly && allDone) {
       setShowCompletionPrompt(true);
     }
   }
@@ -183,6 +188,7 @@ export function SessionCarousel({
                 group={group}
                 history={history[group.exerciseId] ?? []}
                 allowRemove={allowRemove}
+                readOnly={readOnly}
                 onAddSet={onAddSet}
                 onLogSet={onLogSet}
                 onUpdateSet={onUpdateSet}
@@ -256,6 +262,7 @@ function ExercisePanel({
   group,
   history,
   allowRemove,
+  readOnly,
   onAddSet,
   onLogSet,
   onUpdateSet,
@@ -264,6 +271,7 @@ function ExercisePanel({
   group: SessionRowGroup;
   history: PreviousPerformance[];
   allowRemove: boolean;
+  readOnly: boolean;
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
@@ -296,7 +304,7 @@ function ExercisePanel({
                   canRemove={allowRemove}
                   previousSet={row.previous}
                   recap={row.recap}
-                  locked={!row.unlocked}
+                  locked={readOnly || !row.unlocked}
                   onUpdate={onUpdateSet}
                   onRemove={onRemoveSet}
                 />
@@ -308,7 +316,7 @@ function ExercisePanel({
                   exerciseId={group.exerciseId}
                   exerciseOrder={group.exerciseOrder}
                   recap={row.recap}
-                  locked={!row.unlocked}
+                  locked={readOnly || !row.unlocked}
                   onLog={onLogSet}
                 />
               </li>
@@ -317,15 +325,17 @@ function ExercisePanel({
         </ul>
       )}
 
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        className="mt-3 w-full"
-        onClick={() => onAddSet(group.exerciseId, group.exerciseOrder)}
-      >
-        + Ajouter une série
-      </Button>
+      {!readOnly && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="mt-3 w-full"
+          onClick={() => onAddSet(group.exerciseId, group.exerciseOrder)}
+        >
+          + Ajouter une série
+        </Button>
+      )}
     </div>
   );
 }

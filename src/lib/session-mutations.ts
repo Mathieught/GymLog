@@ -6,8 +6,17 @@ import { prisma } from "@/lib/prisma";
 // upsert/delete idempotent, rejouable sans effet de bord si le client retente un lot déjà
 // appliqué.
 
-async function assertSessionOwnership(userId: string, sessionId: string) {
-  await prisma.workoutSession.findUniqueOrThrow({ where: { id: sessionId, userId } });
+// Rejetée pour une opération qui ne deviendra jamais valide (séance déjà terminée, série
+// introuvable) : à distinguer d'une panne transitoire (réseau, base) qui mérite d'être
+// retentée. La route de synchronisation abandonne la retentative sur ce type d'erreur — sinon
+// une telle opération, jamais applicable, bloquerait indéfiniment toute la file derrière elle.
+export class InvalidMutationError extends Error {}
+
+async function assertSessionMutable(userId: string, sessionId: string) {
+  const session = await prisma.workoutSession.findUniqueOrThrow({ where: { id: sessionId, userId } });
+  if (session.completedAt) {
+    throw new InvalidMutationError("Séance déjà terminée : modification impossible");
+  }
 }
 
 export async function ensureSession(
@@ -29,7 +38,7 @@ export async function addSet(
   userId: string,
   params: { setId: string; sessionId: string; exerciseId: string; exerciseOrder: number; setNumber: number }
 ) {
-  await assertSessionOwnership(userId, params.sessionId);
+  await assertSessionMutable(userId, params.sessionId);
 
   await prisma.workoutSet.upsert({
     where: { id: params.setId },
@@ -56,7 +65,7 @@ export async function logSet(
     actualReps: number | null;
   }
 ) {
-  await assertSessionOwnership(userId, params.sessionId);
+  await assertSessionMutable(userId, params.sessionId);
 
   await prisma.workoutSet.upsert({
     where: { id: params.setId },
@@ -79,17 +88,19 @@ export async function updateSet(
   params: { setId: string; actualWeight: number | null; actualReps: number | null; completed: boolean }
 ) {
   const result = await prisma.workoutSet.updateMany({
-    where: { id: params.setId, workoutSession: { userId } },
+    where: { id: params.setId, workoutSession: { userId, completedAt: null } },
     data: { actualWeight: params.actualWeight, actualReps: params.actualReps, completed: params.completed },
   });
-  if (result.count === 0) throw new Error("Set introuvable ou non autorisée");
+  if (result.count === 0) {
+    throw new InvalidMutationError("Série introuvable, non autorisée, ou séance déjà terminée");
+  }
 }
 
 export async function removeSet(
   userId: string,
   params: { setId: string; sessionId: string; exerciseId: string }
 ) {
-  await assertSessionOwnership(userId, params.sessionId);
+  await assertSessionMutable(userId, params.sessionId);
 
   await prisma.$transaction(async (tx) => {
     await tx.workoutSet.deleteMany({ where: { id: params.setId } });
