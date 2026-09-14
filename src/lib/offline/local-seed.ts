@@ -1,6 +1,6 @@
 import type { SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
-import type { LocalSession } from "@/lib/offline/types";
+import type { LocalSession, TemplateSnapshot } from "@/lib/offline/types";
 import { getLocalHistory } from "@/lib/offline/db";
 import type { SessionSeed } from "@/lib/offline/session-engine";
 
@@ -53,5 +53,27 @@ export async function localSessionToSeed(local: LocalSession): Promise<SessionSe
     groups,
     history,
     completedAt: local.completedAt,
+  };
+}
+
+// Aperçu (aucune séance démarrée) construit à partir d'un programme mis en cache par
+// src/lib/offline/snapshot.ts — permet de démarrer une séance hors ligne depuis /~offline même
+// pour un programme dont la page d'aperçu n'a jamais été ouverte individuellement.
+export function templateSnapshotToSeed(template: TemplateSnapshot): SessionSeed {
+  return {
+    sessionId: null,
+    workoutTemplateId: template.id,
+    templateName: template.name,
+    groups: template.exercises
+      .slice()
+      .sort((a, b) => a.exerciseOrder - b.exerciseOrder)
+      .map((e) => ({
+        exerciseId: e.exerciseId,
+        exerciseOrder: e.exerciseOrder,
+        exercise: e.exercise,
+        sets: [],
+      })),
+    history: {},
+    completedAt: null,
   };
 }

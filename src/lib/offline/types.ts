@@ -31,6 +31,16 @@ export type LocalHistoryEntry = {
   updatedAt: number;
 };
 
+// Instantané léger des programmes actifs, rafraîchi dès qu'il y a du réseau (voir
+// src/lib/offline/snapshot.ts) : permet de démarrer une séance hors ligne à partir de N'IMPORTE
+// quel programme, pas seulement ceux dont la page d'aperçu a déjà été visitée individuellement.
+export type TemplateSnapshot = {
+  id: string;
+  name: string;
+  exercises: { exerciseId: string; exerciseOrder: number; exercise: LocalExercise }[];
+  updatedAt: number;
+};
+
 // Une opération par geste utilisateur, rejouée dans l'ordre par le serveur (voir
 // src/lib/session-mutations.ts). Les ids (set, séance) sont générés côté client, donc chaque
 // opération est idempotente à rejouer (upsert / delete "silencieux").

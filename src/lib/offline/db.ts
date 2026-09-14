@@ -1,9 +1,10 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { LocalHistoryEntry, LocalSession, OutboxOp } from "@/lib/offline/types";
+import type { LocalHistoryEntry, LocalSession, OutboxOp, TemplateSnapshot } from "@/lib/offline/types";
 
 interface GymLogDB extends DBSchema {
   sessions: { key: string; value: LocalSession };
   history: { key: string; value: LocalHistoryEntry };
+  templates: { key: string; value: TemplateSnapshot };
   outbox: { key: number; value: { seq?: number; id: string; createdAt: number; op: OutboxOp } };
   meta: { key: string; value: { key: string; value: unknown } };
 }
@@ -14,12 +15,17 @@ let dbPromise: Promise<IDBPDatabase<GymLogDB>> | null = null;
 // pendant le rendu serveur.
 function getDb() {
   if (!dbPromise) {
-    dbPromise = openDB<GymLogDB>("gymlog-offline", 1, {
-      upgrade(db) {
-        db.createObjectStore("sessions", { keyPath: "id" });
-        db.createObjectStore("history", { keyPath: "exerciseId" });
-        db.createObjectStore("outbox", { keyPath: "seq", autoIncrement: true });
-        db.createObjectStore("meta", { keyPath: "key" });
+    dbPromise = openDB<GymLogDB>("gymlog-offline", 2, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore("sessions", { keyPath: "id" });
+          db.createObjectStore("history", { keyPath: "exerciseId" });
+          db.createObjectStore("outbox", { keyPath: "seq", autoIncrement: true });
+          db.createObjectStore("meta", { keyPath: "key" });
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore("templates", { keyPath: "id" });
+        }
       },
     });
   }
@@ -60,13 +66,33 @@ export async function removeFromOutbox(seqs: number[]) {
   await tx.done;
 }
 
+export async function getLocalTemplates() {
+  return (await getDb()).getAll("templates");
+}
+
+export async function getLocalTemplate(id: string) {
+  return (await getDb()).get("templates", id);
+}
+
+export async function replaceLocalTemplates(templates: TemplateSnapshot[]) {
+  const db = await getDb();
+  const tx = db.transaction("templates", "readwrite");
+  await tx.store.clear();
+  await Promise.all(templates.map((t) => tx.store.put(t)));
+  await tx.done;
+}
+
 // Signal "s'est déjà connecté au moins une fois avec du réseau" : tant qu'aucune séance ni
 // historique n'a jamais été mis en cache, l'appareil n'a pas encore de compte associé — se
 // connecter est alors impossible hors ligne (voir src/app/~offline/page.tsx).
 export async function hasAnyLocalData() {
   const db = await getDb();
-  const [sessionsCount, historyCount] = await Promise.all([db.count("sessions"), db.count("history")]);
-  return sessionsCount > 0 || historyCount > 0;
+  const [sessionsCount, historyCount, templatesCount] = await Promise.all([
+    db.count("sessions"),
+    db.count("history"),
+    db.count("templates"),
+  ]);
+  return sessionsCount > 0 || historyCount > 0 || templatesCount > 0;
 }
 
 export async function setMeta(key: string, value: unknown) {
