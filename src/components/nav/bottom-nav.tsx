@@ -16,6 +16,10 @@ export function BottomNav() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname.startsWith(href);
 
+  // Pas de menu tant qu'on n'est pas connecté : tous ses liens ramèneraient de toute façon à la
+  // page de connexion.
+  if (pathname === "/login") return null;
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200 bg-white/95 py-2 backdrop-blur">
       <div className="mx-auto flex max-w-lg items-center gap-0.5 rounded-full bg-neutral-200/70 p-0.5">

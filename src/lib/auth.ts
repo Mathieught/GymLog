@@ -8,7 +8,9 @@ const isDev = process.env.NODE_ENV !== "production";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  // Explicite plutôt que de compter sur le défaut d'Auth.js : reste connecté 30 jours sans avoir
+  // à se reconnecter (utile en salle, où re-passer par Google à chaque fois est pénible).
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
   },
