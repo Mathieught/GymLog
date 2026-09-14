@@ -3,10 +3,17 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-const ITEM_HEIGHT = 36;
+export const WHEEL_ITEM_HEIGHT = 36;
 const VISIBLE_ITEMS = 5;
 const PADDING_ITEMS = Math.floor(VISIBLE_ITEMS / 2);
 const SETTLE_DELAY_MS = 120;
+// Hauteur totale nécessairement exacte : le calage du bandeau de sélection et le padding haut/bas
+// du rail supposent tous les deux que le conteneur mesure pile VISIBLE_ITEMS lignes. Le laisser
+// dépendre d'un layout flexible (ex. flex-1 dans un parent en %/vh) désynchronise ce calcul du
+// rendu réel et décale visuellement la sélection — d'où une hauteur fixe imposée ici plutôt que
+// négociée par le parent.
+export const WHEEL_HEIGHT = WHEEL_ITEM_HEIGHT * VISIBLE_ITEMS;
+const ITEM_HEIGHT = WHEEL_ITEM_HEIGHT;
 
 // Molette de sélection façon "picker" mobile : on fait défiler, la valeur au centre s'aimante
 // et devient la valeur retenue une fois le geste terminé. L'alignement final est calculé en JS
@@ -80,10 +87,10 @@ export function WheelPicker({
   }
 
   return (
-    <div className="relative min-h-0 flex-1">
+    <div className="relative w-full" style={{ height: WHEEL_HEIGHT }}>
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-lg bg-neutral-100"
+        className="pointer-events-none absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-lg border border-neutral-300 bg-neutral-100"
         style={{ height: ITEM_HEIGHT }}
       />
       <div

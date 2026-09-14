@@ -52,6 +52,16 @@ export function SetRow({
     onUpdate(set.id, weight, reps);
   }
 
+  // Une série jamais renseignée (juste ajoutée, valeurs par défaut) se supprime sans rien
+  // demander — annuler l'ajout, rien à perdre. Une série déjà validée contient un vrai résultat :
+  // sa suppression demande confirmation.
+  function handleRemove() {
+    if (set.completed && !window.confirm("Supprimer cette série ? Le résultat sera perdu.")) {
+      return;
+    }
+    onRemove(set.id);
+  }
+
   return (
     <>
       <div
@@ -82,15 +92,17 @@ export function SetRow({
           )}
           <button
             type="button"
-            onClick={() => onRemove(set.id)}
+            onClick={handleRemove}
             disabled={!canRemove}
             className={cn(
-              "shrink-0 text-neutral-400 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30",
+              "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-400",
+              "hover:bg-red-50 hover:text-red-600 active:bg-red-100",
+              "disabled:pointer-events-none disabled:opacity-30",
               locked && "ml-auto"
             )}
             aria-label="Supprimer la série"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-[18px] w-[18px]" />
           </button>
         </div>
 

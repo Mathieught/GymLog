@@ -53,7 +53,7 @@ export function SetValueSheet({
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
-      <div className="absolute inset-x-0 bottom-0 flex h-[25vh] min-h-[190px] flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl">
+      <div className="absolute inset-x-0 bottom-0 flex flex-col overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
           <span className="text-sm font-medium text-neutral-500">{label}</span>
           <button
@@ -64,13 +64,13 @@ export function SetValueSheet({
             Valider
           </button>
         </div>
-        <div className="flex min-h-0 flex-1 divide-x divide-neutral-100">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <p className="pt-1 text-center text-[11px] text-neutral-400">répétitions</p>
+        <div className="flex divide-x divide-neutral-100 py-2">
+          <div className="flex flex-1 flex-col">
+            <p className="pb-1 text-center text-[11px] text-neutral-400">répétitions</p>
             <WheelPicker values={REPS_VALUES} value={reps} onChange={onChangeReps} format={String} />
           </div>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <p className="pt-1 text-center text-[11px] text-neutral-400">kg</p>
+          <div className="flex flex-1 flex-col">
+            <p className="pb-1 text-center text-[11px] text-neutral-400">kg</p>
             <WheelPicker
               values={WEIGHT_VALUES}
               value={weight}
