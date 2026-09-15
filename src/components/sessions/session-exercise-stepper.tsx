@@ -4,7 +4,7 @@ import { MUSCLE_ICONS } from "@/components/exercises/muscle-group-picker";
 
 type StepperGroup = {
   exerciseId: string;
-  exercise: { name: string; muscle: string };
+  exercise: { name: string; muscle: string[] };
   sets: { completed: boolean }[];
 };
 
@@ -23,12 +23,12 @@ export function SessionExerciseStepper({
         const isActive = group.exerciseId === activeExerciseId;
         const isDone = group.sets.length > 0 && group.sets.every((set) => set.completed);
         const MuscleIcon =
-          MUSCLE_ICONS[group.exercise.muscle as keyof typeof MUSCLE_ICONS] ?? Dumbbell;
+          MUSCLE_ICONS[group.exercise.muscle[0] as keyof typeof MUSCLE_ICONS] ?? Dumbbell;
 
         return (
           <li key={group.exerciseId} className="flex flex-col items-center">
             <span
-              title={`${group.exercise.name} · ${group.exercise.muscle}`}
+              title={`${group.exercise.name} · ${group.exercise.muscle.join(", ")}`}
               aria-current={isActive ? "step" : undefined}
               className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-full border-2 text-[10px] font-semibold transition-all",

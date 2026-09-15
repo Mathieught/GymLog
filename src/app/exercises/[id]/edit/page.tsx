@@ -2,8 +2,6 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ExerciseForm } from "@/components/exercises/exercise-form";
 import { updateExercise } from "@/lib/actions/exercises";
-import { PageHeader } from "@/components/nav/page-header";
-import { Container } from "@/components/ui/container";
 
 export default async function EditExercisePage({
   params,
@@ -13,16 +11,11 @@ export default async function EditExercisePage({
   if (!exercise || exercise.isArchived) notFound();
 
   return (
-    <>
-      <PageHeader backHref={`/exercises/${exercise.id}`} />
-      <Container>
-        <h1 className="mb-6 text-2xl font-semibold">Modifier {exercise.name}</h1>
-        <ExerciseForm
-          action={updateExercise.bind(null, exercise.id)}
-          defaultValues={exercise}
-          submitLabel="Enregistrer les modifications"
-        />
-      </Container>
-    </>
+    <ExerciseForm
+      action={updateExercise.bind(null, exercise.id)}
+      backHref={`/exercises/${exercise.id}`}
+      title={`Modifier ${exercise.name}`}
+      defaultValues={exercise}
+    />
   );
 }

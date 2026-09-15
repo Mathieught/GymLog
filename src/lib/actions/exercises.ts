@@ -22,8 +22,7 @@ export async function createExercise(
       userId,
       name: parsed.data.name,
       muscle: parsed.data.muscle,
-      targetWeight: parsed.data.targetWeight,
-      targetReps: parsed.data.targetReps,
+      targetSets: parsed.data.targetSets,
       description: parsed.data.description || null,
     },
   });
@@ -48,8 +47,7 @@ export async function updateExercise(
     data: {
       name: parsed.data.name,
       muscle: parsed.data.muscle,
-      targetWeight: parsed.data.targetWeight,
-      targetReps: parsed.data.targetReps,
+      targetSets: parsed.data.targetSets,
       description: parsed.data.description || null,
     },
   });
@@ -66,9 +64,8 @@ export type CreateExerciseInlineState = {
   exercise?: {
     id: string;
     name: string;
-    muscle: string;
-    targetWeight: number;
-    targetReps: number;
+    muscle: string[];
+    targetSets: number;
   };
   nonce?: number;
 };
@@ -90,8 +87,7 @@ export async function createExerciseInline(
       userId,
       name: parsed.data.name,
       muscle: parsed.data.muscle,
-      targetWeight: parsed.data.targetWeight,
-      targetReps: parsed.data.targetReps,
+      targetSets: parsed.data.targetSets,
       description: parsed.data.description || null,
     },
   });
@@ -103,8 +99,7 @@ export async function createExerciseInline(
       id: exercise.id,
       name: exercise.name,
       muscle: exercise.muscle,
-      targetWeight: exercise.targetWeight,
-      targetReps: exercise.targetReps,
+      targetSets: exercise.targetSets,
     },
     nonce: Date.now(),
   };

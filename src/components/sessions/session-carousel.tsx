@@ -286,7 +286,7 @@ function ExercisePanel({
     <div className="pr-1">
       <div className="mb-4 border-b border-neutral-100 pb-3">
         <p className="font-medium">{group.exercise.name}</p>
-        <p className="text-sm text-neutral-500">{group.exercise.muscle}</p>
+        <p className="text-sm text-neutral-500">{group.exercise.muscle.join(", ")}</p>
       </div>
 
       {rows.length === 0 ? (

@@ -11,7 +11,7 @@ export type SessionRowSet = {
 export type SessionRowGroup = {
   exerciseId: string;
   exerciseOrder: number;
-  exercise: { name: string; muscle: string };
+  exercise: { name: string; muscle: string[] };
   sets: SessionRowSet[];
 };
 

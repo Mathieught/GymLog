@@ -15,7 +15,7 @@ export default async function ExercisesPage({ searchParams }: PageProps<"/exerci
   const exercises = await getActiveExercises(userId);
 
   const availableMuscles = MUSCLE_GROUPS.filter((muscle) =>
-    exercises.some((exercise) => exercise.muscle === muscle)
+    exercises.some((exercise) => exercise.muscle.includes(muscle))
   );
   const requestedMuscles = (
     typeof selectedMuscleRaw === "string" ? selectedMuscleRaw.split(",") : selectedMuscleRaw ?? []
@@ -25,7 +25,7 @@ export default async function ExercisesPage({ searchParams }: PageProps<"/exerci
   const groups = MUSCLE_GROUPS.filter((muscle) => selectedMuscles.size === 0 || selectedMuscles.has(muscle))
     .map((muscle) => ({
       muscle,
-      exercises: exercises.filter((exercise) => exercise.muscle === muscle),
+      exercises: exercises.filter((exercise) => exercise.muscle.includes(muscle)),
     }))
     .filter((group) => group.exercises.length > 0);
 
@@ -98,7 +98,7 @@ export default async function ExercisesPage({ searchParams }: PageProps<"/exerci
                           <Card className="transition-colors hover:border-neutral-400">
                             <p className="font-medium">{exercise.name}</p>
                             <p className="text-sm text-neutral-500">
-                              {exercise.targetWeight} kg × {exercise.targetReps} reps
+                              {exercise.targetSets} série{exercise.targetSets > 1 ? "s" : ""}
                             </p>
                           </Card>
                         </Link>

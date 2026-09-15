@@ -4,13 +4,15 @@ export const MUSCLE_GROUPS = [
   "Épaules",
   "Biceps",
   "Triceps",
-  "Jambes",
-  "Fessiers",
-  "Mollets",
-  "Abdominaux",
   "Avant-bras",
-  "Full body",
+  "Abdominaux",
+  "Jambes",
+  "Autres",
 ] as const;
+
+// Nombre de séries proposées en raccourci dans le sélecteur de séries (au-delà, l'utilisateur
+// passe par "Valeur personnalisée").
+export const QUICK_SET_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 export const WEEKDAYS = [
   { value: 1, label: "Lundi" },

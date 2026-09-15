@@ -20,6 +20,7 @@ import { GripVertical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select, Label, FieldError } from "@/components/ui/field";
 import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
+import { SetCountPicker } from "@/components/exercises/set-count-picker";
 import { WEEKDAYS } from "@/lib/constants";
 import { initialActionState, type ActionState } from "@/lib/action-state";
 import { createExerciseInline, type CreateExerciseInlineState } from "@/lib/actions/exercises";
@@ -27,9 +28,8 @@ import { createExerciseInline, type CreateExerciseInlineState } from "@/lib/acti
 type ExerciseOption = {
   id: string;
   name: string;
-  muscle: string;
-  targetWeight: number;
-  targetReps: number;
+  muscle: string[];
+  targetSets: number;
 };
 
 type Row = {
@@ -203,7 +203,7 @@ export function WorkoutTemplateForm({
               <option value="">Ajouter un exercice existant...</option>
               {addableExercises.map((exercise) => (
                 <option key={exercise.id} value={exercise.id}>
-                  {exercise.name} · {exercise.muscle}
+                  {exercise.name} · {exercise.muscle.join(", ")}
                 </option>
               ))}
             </Select>
@@ -227,7 +227,8 @@ export function WorkoutTemplateForm({
 
 function CreateExerciseInline({ onCreated }: { onCreated: (exercise: ExerciseOption) => void }) {
   const [open, setOpen] = useState(false);
-  const [muscle, setMuscle] = useState("");
+  const [muscle, setMuscle] = useState<string[]>([]);
+  const [targetSets, setTargetSets] = useState(3);
   const [state, formAction, pending] = useActionState<CreateExerciseInlineState, FormData>(
     createExerciseInline,
     {}
@@ -272,38 +273,20 @@ function CreateExerciseInline({ onCreated }: { onCreated: (exercise: ExerciseOpt
       </div>
 
       <div>
-        <Label htmlFor={`${idPrefix}-muscle`}>Muscle ciblé</Label>
+        <Label htmlFor={`${idPrefix}-muscle`}>Muscles ciblés</Label>
         <MuscleGroupPicker id={`${idPrefix}-muscle`} name="muscle" value={muscle} onChange={setMuscle} />
         <FieldError messages={state.fieldErrors?.muscle} />
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <Label htmlFor={`${idPrefix}-weight`}>Poids cible (kg)</Label>
-          <Input
-            id={`${idPrefix}-weight`}
-            name="targetWeight"
-            type="number"
-            step="0.5"
-            min="0"
-            defaultValue={0}
-            required
-          />
-          <FieldError messages={state.fieldErrors?.targetWeight} />
-        </div>
-        <div>
-          <Label htmlFor={`${idPrefix}-reps`}>Répétitions cibles</Label>
-          <Input
-            id={`${idPrefix}-reps`}
-            name="targetReps"
-            type="number"
-            step="1"
-            min="1"
-            defaultValue={10}
-            required
-          />
-          <FieldError messages={state.fieldErrors?.targetReps} />
-        </div>
+      <div>
+        <Label htmlFor={`${idPrefix}-sets`}>Nombre de série</Label>
+        <SetCountPicker
+          id={`${idPrefix}-sets`}
+          name="targetSets"
+          value={targetSets}
+          onChange={setTargetSets}
+        />
+        <FieldError messages={state.fieldErrors?.targetSets} />
       </div>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}

@@ -72,9 +72,8 @@ model Exercise {
   userId       String
   user         User     @relation(fields: [userId], references: [id])
   name         String
-  muscle       String
-  targetWeight Float
-  targetReps   Int
+  muscle       String[]
+  targetSets   Int
   description  String?
   isArchived   Boolean  @default(false)
   createdAt    DateTime @default(now())

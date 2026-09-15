@@ -64,7 +64,9 @@ export default async function WorkoutTemplateDetailPage({
                     <Card className="flex items-center justify-between transition-colors hover:border-neutral-400">
                       <div>
                         <p className="font-medium">{workoutExercise.exercise.name}</p>
-                        <p className="text-sm text-neutral-500">{workoutExercise.exercise.muscle}</p>
+                        <p className="text-sm text-neutral-500">
+                          {workoutExercise.exercise.muscle.join(", ")}
+                        </p>
                       </div>
                       <ChevronRight className="h-4 w-4 text-neutral-400" />
                     </Card>

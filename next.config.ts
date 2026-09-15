@@ -3,7 +3,7 @@ import { withSerwist } from "@serwist/turbopack";
 
 const nextConfig: NextConfig = {
   async redirects() {
-    return [{ source: "/", destination: "/history", permanent: false }];
+    return [{ source: "/", destination: "/workouts", permanent: false }];
   },
 };
 

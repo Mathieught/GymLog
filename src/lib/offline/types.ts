@@ -11,7 +11,7 @@ export type LocalSet = {
   completed: boolean;
 };
 
-export type LocalExercise = { name: string; muscle: string };
+export type LocalExercise = { name: string; muscle: string[] };
 
 export type LocalSession = {
   id: string;

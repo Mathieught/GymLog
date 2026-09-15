@@ -85,7 +85,7 @@ export default async function SessionDetailPage({
             {groups.map((group) => (
               <div key={group.exerciseId}>
                 <p className="font-medium">{group.exercise.name}</p>
-                <p className="text-xs text-neutral-500">{group.exercise.muscle}</p>
+                <p className="text-xs text-neutral-500">{group.exercise.muscle.join(", ")}</p>
 
                 {group.sets.length === 0 ? (
                   <p className="mt-2 text-sm text-neutral-500">Aucune série enregistrée.</p>

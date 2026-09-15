@@ -20,7 +20,7 @@ export default async function ExerciseDetailPage({
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold">{exercise.name}</h1>
-            <p className="text-neutral-500">{exercise.muscle}</p>
+            <p className="text-neutral-500">{exercise.muscle.join(", ")}</p>
           </div>
           <ButtonLink href={`/exercises/${exercise.id}/edit`} variant="secondary" size="sm">
             Modifier
@@ -30,7 +30,7 @@ export default async function ExerciseDetailPage({
         <div className="rounded-2xl border border-neutral-200 bg-white p-4">
           <p className="text-sm text-neutral-500">Objectif actuel</p>
           <p className="text-lg font-medium">
-            {exercise.targetWeight} kg × {exercise.targetReps} reps
+            {exercise.targetSets} série{exercise.targetSets > 1 ? "s" : ""}
           </p>
           {exercise.description && (
             <p className="mt-3 text-sm text-neutral-600">{exercise.description}</p>
