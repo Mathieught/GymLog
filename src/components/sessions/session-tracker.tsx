@@ -38,10 +38,9 @@ export function SessionTracker({
   if (groups.length === 0) {
     return (
       <>
-        <PageHeader backHref={backHref} />
+        <PageHeader backHref={backHref} title={seed.templateName} />
         <Container>
-          <h1 className="text-2xl font-semibold">{seed.templateName}</h1>
-          <p className="mt-4 text-neutral-500">Aucun exercice dans cette séance.</p>
+          <p className="text-neutral-500">Aucun exercice dans cette séance.</p>
         </Container>
       </>
     );
@@ -49,14 +48,13 @@ export function SessionTracker({
 
   return (
     <>
-      <PageHeader backHref={backHref} className="max-w-2xl" />
-      <Container className="max-w-2xl">
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">{seed.templateName}</h1>
-          </div>
-          {sessionId && completedAt ? (
-            <p className="text-xs text-neutral-400">Séance terminée · lecture seule</p>
+      <PageHeader
+        backHref={backHref}
+        title={seed.templateName}
+        className="max-w-2xl"
+        right={
+          sessionId && completedAt ? (
+            <p className="text-xs text-neutral-400">Terminée</p>
           ) : sessionId ? (
             <ConfirmSubmitButton
               type="button"
@@ -68,10 +66,11 @@ export function SessionTracker({
               Terminer
             </ConfirmSubmitButton>
           ) : (
-            <p className="text-xs text-neutral-400">Renseignez une série pour démarrer</p>
-          )}
-        </div>
-
+            <p className="text-xs text-neutral-400">À démarrer</p>
+          )
+        }
+      />
+      <Container className="max-w-2xl">
         <SessionCarousel
           basePath={basePath}
           sessionId={sessionId}

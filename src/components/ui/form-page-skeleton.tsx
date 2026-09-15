@@ -5,10 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function FormPageSkeleton({ backHref, fields = 3 }: { backHref: string; fields?: number }) {
   return (
     <>
-      <PageHeader backHref={backHref} />
+      <PageHeader backHref={backHref} title={<Skeleton className="h-6 w-40" />} />
       <Container>
-        <Skeleton className="mb-6 h-7 w-48" />
-
         <div className="space-y-4">
           {Array.from({ length: fields }, (_, i) => (
             <div key={i}>

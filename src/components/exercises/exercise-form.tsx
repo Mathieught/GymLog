@@ -32,12 +32,10 @@ export function ExerciseForm({
 
   return (
     <>
-      <PageHeader backHref={backHref} />
+      <PageHeader backHref={backHref} title={title} />
 
       <Container>
         <form action={formAction} className="space-y-5">
-          <h1 className="text-2xl font-bold">{title}</h1>
-
           <div>
             <Label htmlFor="name">Nom de l&apos;exercice</Label>
             <Input

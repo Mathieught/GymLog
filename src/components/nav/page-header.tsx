@@ -20,8 +20,14 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className="sticky top-0 z-10 bg-neutral-50">
-      <div className={cn("mx-auto flex max-w-lg items-center justify-between gap-2 px-4 py-1.5", className)}>
+    // padding-top calé sur l'encoche de sécurité (comme le padding-bottom de BottomNav), avec un
+    // plancher de 24px : sur un écran sans encoche, env(safe-area-inset-top) vaut 0 et le header
+    // collerait sinon au bord de l'écran.
+    <header
+      className="sticky top-0 z-10 bg-neutral-50"
+      style={{ paddingTop: "max(env(safe-area-inset-top), 24px)" }}
+    >
+      <div className={cn("mx-auto flex max-w-lg items-center justify-between gap-2 px-4 pb-1.5", className)}>
         {backHref ? (
           <Link
             href={backHref}

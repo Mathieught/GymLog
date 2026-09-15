@@ -15,17 +15,17 @@ export default async function ExerciseDetailPage({
 
   return (
     <>
-      <PageHeader backHref="/exercises" />
-      <Container>
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">{exercise.name}</h1>
-            <p className="text-neutral-500">{exercise.muscle.join(", ")}</p>
-          </div>
+      <PageHeader
+        backHref="/exercises"
+        title={exercise.name}
+        right={
           <ButtonLink href={`/exercises/${exercise.id}/edit`} variant="secondary" size="sm">
             Modifier
           </ButtonLink>
-        </div>
+        }
+      />
+      <Container>
+        <p className="mb-6 text-neutral-500">{exercise.muscle.join(", ")}</p>
 
         <div className="rounded-2xl border border-neutral-200 bg-white p-4">
           <p className="text-sm text-neutral-500">Objectif actuel</p>
