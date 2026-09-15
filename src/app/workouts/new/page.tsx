@@ -11,9 +11,8 @@ export default async function NewWorkoutPage() {
 
   return (
     <>
-      <PageHeader backHref="/workouts" />
+      <PageHeader backHref="/workouts" title="Nouvelle séance" />
       <Container>
-        <h1 className="mb-6 text-2xl font-semibold">Nouvelle séance</h1>
         <WorkoutTemplateForm
           action={createWorkoutTemplate}
           exerciseOptions={exercises}

@@ -34,9 +34,8 @@ export default async function EditWorkoutPage({
 
   return (
     <>
-      <PageHeader backHref={`/workouts/${template.id}`} />
+      <PageHeader backHref={`/workouts/${template.id}`} title={`Modifier ${template.name}`} />
       <Container>
-        <h1 className="mb-6 text-2xl font-semibold">Modifier {template.name}</h1>
         <WorkoutTemplateForm
           action={updateWorkoutTemplate.bind(null, template.id)}
           exerciseOptions={availableExercises}

@@ -108,6 +108,41 @@ export function WorkoutTemplateForm({
   }
 
   const exercisesJson = JSON.stringify(rows.map(({ exerciseId }) => ({ exerciseId })));
+  // La création ne demande que le nom : description, jours planifiés et exercices se règlent
+  // ensuite depuis la page de modification (refonte Figma "Workout-Form-refonte-3" — on verra
+  // avec les retours d'usage si ce flux en deux temps tient la route).
+  const isCreate = !defaultValues;
+
+  if (isCreate) {
+    return (
+      <form action={formAction} className="space-y-5">
+        <div>
+          <Label htmlFor="name">Nom de la séance</Label>
+          <Input id="name" name="name" placeholder="Push day" required />
+          <FieldError messages={state.fieldErrors?.name} />
+        </div>
+
+        <div>
+          <Label>Exercices</Label>
+          <p className="text-sm text-neutral-400">Ajouter des exercices maintenant ou plus tard</p>
+        </div>
+
+        {/* description est requis (string) côté schéma de validation : sans champ visible sur cet
+            écran, on force une valeur vide plutôt que de laisser FormData renvoyer null. */}
+        <input type="hidden" name="description" value="" />
+
+        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#00C896] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {pending ? "Création..." : submitLabel}
+        </button>
+      </form>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -8,7 +8,6 @@ import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { archiveWorkoutTemplate } from "@/lib/actions/workout-templates";
-import { formatScheduleDays } from "@/lib/constants";
 
 export default async function WorkoutTemplateDetailPage({
   params,
@@ -23,22 +22,18 @@ export default async function WorkoutTemplateDetailPage({
   });
   if (!template || template.isArchived) notFound();
 
-  const scheduleLabel = formatScheduleDays(template.schedules.map((s) => s.dayOfWeek));
-
   return (
     <>
-      <PageHeader backHref="/workouts" />
-      <Container>
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">{template.name}</h1>
-            {scheduleLabel && <p className="text-neutral-500">{scheduleLabel}</p>}
-          </div>
+      <PageHeader
+        backHref="/workouts"
+        title={`Séance : ${template.name}`}
+        right={
           <ButtonLink href={`/workouts/${template.id}/edit`} variant="secondary" size="sm">
             Modifier
           </ButtonLink>
-        </div>
-
+        }
+      />
+      <Container>
         {template.description && (
           <p className="mb-4 text-sm text-neutral-600">{template.description}</p>
         )}

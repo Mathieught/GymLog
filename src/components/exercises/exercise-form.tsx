@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Check } from "lucide-react";
 import { Input, Textarea, Label, FieldError } from "@/components/ui/field";
 import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
 import { SetCountPicker } from "@/components/exercises/set-count-picker";
@@ -13,11 +12,13 @@ export function ExerciseForm({
   action,
   backHref,
   title,
+  submitLabel,
   defaultValues,
 }: {
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
   backHref: string;
   title: string;
+  submitLabel: string;
   defaultValues?: {
     name: string;
     muscle: string[];
@@ -31,23 +32,10 @@ export function ExerciseForm({
 
   return (
     <>
-      <PageHeader
-        backHref={backHref}
-        right={
-          <button
-            type="submit"
-            form="exercise-form"
-            disabled={pending}
-            aria-label={pending ? "Enregistrement..." : "Enregistrer"}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#23E16C] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            <Check className="h-5 w-5" strokeWidth={3} />
-          </button>
-        }
-      />
+      <PageHeader backHref={backHref} />
 
       <Container>
-        <form id="exercise-form" action={formAction} className="space-y-5">
+        <form action={formAction} className="space-y-5">
           <h1 className="text-2xl font-bold">{title}</h1>
 
           <div>
@@ -91,6 +79,14 @@ export function ExerciseForm({
           </div>
 
           {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+
+          <button
+            type="submit"
+            disabled={pending}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-[#00C896] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {pending ? "Enregistrement..." : submitLabel}
+          </button>
         </form>
       </Container>
     </>

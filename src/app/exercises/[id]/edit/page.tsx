@@ -15,6 +15,7 @@ export default async function EditExercisePage({
       action={updateExercise.bind(null, exercise.id)}
       backHref={`/exercises/${exercise.id}`}
       title={`Modifier ${exercise.name}`}
+      submitLabel="Enregistrer les modifications"
       defaultValues={exercise}
     />
   );
