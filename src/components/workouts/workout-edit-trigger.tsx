@@ -58,7 +58,6 @@ export function WorkoutEditTrigger({
           exerciseOptions={exerciseOptions}
           exerciseNamesById={exerciseNamesById}
           defaultValues={defaultValues}
-          submitLabel="Enregistrer les modifications"
           onClose={() => setOpen(false)}
           onSuccess={() => setOpen(false)}
         />

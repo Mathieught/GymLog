@@ -6,16 +6,18 @@ import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
 import { SetCountPicker } from "@/components/exercises/set-count-picker";
 import { initialActionState, type ActionState } from "@/lib/action-state";
 
-// Formulaire nu (pas d'en-tête ni de conteneur de page) : toujours ouvert dans une popup
-// (ExerciseFormSheet), qui fournit son propre en-tête/scroll.
+// Formulaire nu (pas d'en-tête ni de conteneur de page, pas de bouton de validation) : toujours
+// ouvert dans une popup (ExerciseFormSheet), qui fournit son propre en-tête/scroll et dont le
+// bouton de validation (icône dans l'en-tête) cible ce formulaire via son id.
 export function ExerciseForm({
+  formId,
   action,
-  submitLabel,
   defaultValues,
   onSuccess,
+  onPendingChange,
 }: {
+  formId?: string;
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
-  submitLabel: string;
   defaultValues?: {
     name: string;
     muscle: string[];
@@ -26,6 +28,9 @@ export function ExerciseForm({
   // actions create/updateExercise ne font plus de redirect() (on reste sur la page derrière la
   // popup, qui se revalide déjà toute seule).
   onSuccess?: () => void;
+  // Reflète `pending` (useActionState) au parent : le bouton de validation vit dans l'en-tête de
+  // la popup, hors de ce composant, et doit pourtant se désactiver pendant l'enregistrement.
+  onPendingChange?: (pending: boolean) => void;
 }) {
   const [state, formAction, pending] = useActionState(action, initialActionState);
   const handledNonce = useRef<number | undefined>(undefined);
@@ -35,11 +40,14 @@ export function ExerciseForm({
       onSuccess?.();
     }
   }, [state, onSuccess]);
+  useEffect(() => {
+    onPendingChange?.(pending);
+  }, [pending, onPendingChange]);
   const [muscle, setMuscle] = useState<string[]>(defaultValues?.muscle ?? []);
   const [targetSets, setTargetSets] = useState(defaultValues?.targetSets ?? 3);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form id={formId} action={formAction} className="space-y-5">
       <div>
         <Label htmlFor="name">Nom de l&apos;exercice</Label>
         <Input
@@ -76,14 +84,6 @@ export function ExerciseForm({
       </div>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex h-11 items-center justify-center rounded-xl bg-[#00C896] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-      >
-        {pending ? "Enregistrement..." : submitLabel}
-      </button>
     </form>
   );
 }

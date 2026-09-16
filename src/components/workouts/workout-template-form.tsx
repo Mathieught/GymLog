@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -38,13 +38,18 @@ type Row = {
 };
 
 export function WorkoutTemplateForm({
+  formId: formIdProp,
   action,
   exerciseOptions,
   exerciseNamesById,
   defaultValues,
-  submitLabel,
   onSuccess,
+  onPendingChange,
 }: {
+  // Fourni par WorkoutFormSheet, qui rend le bouton de validation dans l'en-tête de la popup
+  // (hors de l'arbre de ce composant) : l'attribut HTML form="..." l'associe malgré tout au
+  // formulaire. Repli sur un id généré localement si utilisé sans popup.
+  formId?: string;
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
   exerciseOptions: ExerciseOption[];
   exerciseNamesById: Record<string, string>;
@@ -54,12 +59,14 @@ export function WorkoutTemplateForm({
     exercises: { exerciseId: string }[];
     scheduleDays: number[];
   };
-  submitLabel: string;
   // Appelé après un enregistrement réussi (voir ActionState.nonce) : utilisé quand le formulaire
   // est ouvert dans une popup (WorkoutFormSheet) pour la refermer, puisque les actions
   // create/updateWorkoutTemplate ne font plus de redirect() (on reste sur la page derrière la
   // popup, qui se revalide déjà toute seule).
   onSuccess?: () => void;
+  // Reflète `pending` (useActionState) au parent : le bouton de validation vit dans l'en-tête de
+  // la popup, hors de ce composant, et doit pourtant se désactiver pendant l'enregistrement.
+  onPendingChange?: (pending: boolean) => void;
 }) {
   const [state, formAction, pending] = useActionState(action, initialActionState);
   const handledNonce = useRef<number | undefined>(undefined);
@@ -69,6 +76,9 @@ export function WorkoutTemplateForm({
       onSuccess?.();
     }
   }, [state, onSuccess]);
+  useEffect(() => {
+    onPendingChange?.(pending);
+  }, [pending, onPendingChange]);
   const [rows, setRows] = useState<Row[]>(
     () =>
       // Clé dérivée de l'exerciceId (stable et identique entre le rendu serveur et client) : les
@@ -88,7 +98,7 @@ export function WorkoutTemplateForm({
   // n'active le rendu avec DndContext qu'après l'hydratation pour éviter le mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const formId = `${idPrefix}-template-form`;
+  const formId = formIdProp ?? `${idPrefix}-template-form`;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const addableExercises = options.filter((exercise) => !rows.some((row) => row.exerciseId === exercise.id));
@@ -184,7 +194,7 @@ export function WorkoutTemplateForm({
 
   if (isCreate) {
     return (
-      <div className="space-y-6 pb-24">
+      <div className="space-y-6">
         <form id={formId} action={formAction} className="space-y-5">
           <div>
             <Label htmlFor="name">Nom de la séance</Label>
@@ -201,23 +211,12 @@ export function WorkoutTemplateForm({
         {exercisesSection}
 
         {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-
-        <FormNavBar>
-          <button
-            type="submit"
-            form={formId}
-            disabled={pending}
-            className="h-11 flex-1 rounded-full bg-[#00C896] text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {pending ? "Création..." : submitLabel}
-          </button>
-        </FormNavBar>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-6">
       <form id={formId} action={formAction} className="space-y-4">
         <div>
           <Label htmlFor="name">Nom de la séance</Label>
@@ -257,29 +256,6 @@ export function WorkoutTemplateForm({
       </div>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-
-      <FormNavBar>
-        <Button type="submit" form={formId} disabled={pending} className="h-11 flex-1 rounded-full">
-          {pending ? "Enregistrement..." : submitLabel}
-        </Button>
-      </FormNavBar>
-    </div>
-  );
-}
-
-// Remplace la nav à onglets (masquée sur cet écran, voir BottomNav) par le bouton de validation :
-// même pastille flottante, pour rester accessible en permanence sans ajouter de deuxième barre
-// au-dessus de la nav quand le formulaire s'allonge (plusieurs exercices, panneau de création
-// d'exercice ouvert...).
-function FormNavBar({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className="fixed inset-x-0 bottom-0 z-10 flex justify-center px-4"
-      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
-    >
-      <div className="flex w-full max-w-lg items-center gap-0.5 rounded-full border border-neutral-200/80 bg-neutral-100/90 p-0.5 shadow-lg shadow-black/5 backdrop-blur-md">
-        {children}
-      </div>
     </div>
   );
 }

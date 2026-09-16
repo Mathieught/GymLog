@@ -20,7 +20,6 @@ export function ExerciseCreateTrigger() {
         <ExerciseFormSheet
           title="Nouvel exercice"
           action={createExercise}
-          submitLabel="Créer l'exercice"
           onClose={() => setOpen(false)}
           onSuccess={() => setOpen(false)}
         />

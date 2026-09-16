@@ -101,7 +101,6 @@ export function WorkoutList({
           action={createWorkoutTemplate}
           exerciseOptions={exerciseOptions}
           exerciseNamesById={exerciseNamesById}
-          submitLabel="Créer la séance"
           onClose={() => setCreateSheetOpen(false)}
           onSuccess={() => setCreateSheetOpen(false)}
         />
