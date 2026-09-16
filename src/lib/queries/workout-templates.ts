@@ -13,7 +13,10 @@ export const getActiveWorkoutTemplates = unstable_cache(
       },
       orderBy: [{ order: "asc" }, { name: "asc" }],
     }),
-  ["active-workout-templates"],
+  // v2 : change de clé pour forcer un cache froid après un peuplement de données fait en dehors de
+  // l'app (script direct en base, sans passer par revalidateTag) — sans ça la liste restait
+  // indéfiniment périmée sur le déploiement de prod tant que rien n'appelait updateTag.
+  ["active-workout-templates-v2"],
   { tags: ["workout-templates"] }
 );
 
