@@ -53,7 +53,7 @@ export function SetValueSheet({
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
-      <div className="absolute inset-x-0 bottom-0 flex flex-col overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
+      <div className="absolute inset-x-0 bottom-0 mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
           <span className="text-sm font-medium text-neutral-500">{label}</span>
           <button
