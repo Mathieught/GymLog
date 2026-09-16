@@ -93,7 +93,6 @@ export function ExercisePickerSheet({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Rechercher un exercice..."
-              autoFocus
               className="h-11 w-full rounded-xl border border-neutral-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
             />
           </div>
