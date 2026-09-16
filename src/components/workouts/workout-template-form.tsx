@@ -96,6 +96,15 @@ export function WorkoutTemplateForm({
   // Remonte en haut du formulaire une fois un exercice créé et ajouté (voir handleExerciseCreated) :
   // le panneau de création peut avoir été ouvert loin en bas d'une longue liste d'exercices.
   const topRef = useRef<HTMLDivElement>(null);
+  // Remonte jusqu'à ce bloc (qui contient le bouton "Ajouter un exercice existant" juste avant le
+  // panneau de création) à l'ouverture de ce dernier : le bouton reste ainsi visible au-dessus du
+  // formulaire plutôt que de défiler jusqu'à en sortir complètement du cadre.
+  const addExercisePanelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (createExerciseOpen) {
+      addExercisePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [createExerciseOpen]);
   const idPrefix = useId();
   // dnd-kit attribue un id d'accessibilité auto-incrémenté (non basé sur useId) à chaque
   // useSortable : il diffère toujours entre le rendu serveur et la première passe client. On
@@ -175,27 +184,29 @@ export function WorkoutTemplateForm({
       )}
       <FieldError messages={state.fieldErrors?.exercises} />
 
-      {addableExercises.length > 0 && (
-        <button
-          type="button"
-          onClick={() => {
-            // Un seul des deux panneaux d'ajout ouvert à la fois : sans ça, refermer la popup de
-            // sélection laissait le panneau de création encore déplié derrière, pour rien.
-            setCreateExerciseOpen(false);
-            setPickerOpen(true);
-          }}
-          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
-        >
-          <Search className="h-4 w-4" />
-          Ajouter un exercice existant
-        </button>
-      )}
+      <div ref={addExercisePanelRef}>
+        {addableExercises.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              // Un seul des deux panneaux d'ajout ouvert à la fois : sans ça, refermer la popup de
+              // sélection laissait le panneau de création encore déplié derrière, pour rien.
+              setCreateExerciseOpen(false);
+              setPickerOpen(true);
+            }}
+            className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
+          >
+            <Search className="h-4 w-4" />
+            Ajouter un exercice existant
+          </button>
+        )}
 
-      <CreateExerciseInline
-        open={createExerciseOpen}
-        onOpenChange={setCreateExerciseOpen}
-        onCreated={handleExerciseCreated}
-      />
+        <CreateExerciseInline
+          open={createExerciseOpen}
+          onOpenChange={setCreateExerciseOpen}
+          onCreated={handleExerciseCreated}
+        />
+      </div>
 
       {pickerOpen && (
         <ExercisePickerSheet
@@ -292,7 +303,6 @@ function CreateExerciseInline({
   );
   const handledNonce = useRef<number | undefined>(undefined);
   const idPrefix = useId();
-  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.exercise && state.nonce !== handledNonce.current) {
@@ -300,15 +310,6 @@ function CreateExerciseInline({
       onCreated(state.exercise);
     }
   }, [state, onCreated]);
-
-  // Amène le formulaire tout en haut de la zone visible dès son ouverture, pour qu'il soit
-  // entièrement lisible sans avoir à faire défiler manuellement (surtout utile ouvert loin en bas
-  // d'une longue liste d'exercices).
-  useEffect(() => {
-    if (open) {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [open]);
 
   if (!open) {
     return (
@@ -324,7 +325,6 @@ function CreateExerciseInline({
 
   return (
     <form
-      ref={formRef}
       action={formAction}
       className="mt-3 space-y-3 rounded-xl border border-neutral-200 bg-white p-3"
     >
