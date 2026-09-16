@@ -18,7 +18,7 @@ export function SessionExerciseStepper({
   activeExerciseId: string;
 }) {
   return (
-    <ol className="flex flex-shrink-0 flex-col items-center">
+    <ol className="flex flex-shrink-0 flex-row items-center">
       {groups.map((group, index) => {
         const isActive = group.exerciseId === activeExerciseId;
         const isDone = group.sets.length > 0 && group.sets.every((set) => set.completed);
@@ -26,7 +26,7 @@ export function SessionExerciseStepper({
           MUSCLE_ICONS[group.exercise.muscle[0] as keyof typeof MUSCLE_ICONS] ?? Dumbbell;
 
         return (
-          <li key={group.exerciseId} className="flex flex-col items-center">
+          <li key={group.exerciseId} className="flex flex-row items-center">
             <span
               title={`${group.exercise.name} · ${group.exercise.muscle.join(", ")}`}
               aria-current={isActive ? "step" : undefined}
@@ -46,7 +46,7 @@ export function SessionExerciseStepper({
               )}
             </span>
             {index < groups.length - 1 && (
-              <div className="h-4 w-px bg-neutral-200" aria-hidden="true" />
+              <div className="h-px w-4 bg-neutral-200" aria-hidden="true" />
             )}
           </li>
         );

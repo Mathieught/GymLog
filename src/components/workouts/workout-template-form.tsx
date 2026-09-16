@@ -92,6 +92,10 @@ export function WorkoutTemplateForm({
   const [options, setOptions] = useState<ExerciseOption[]>(exerciseOptions);
   const [namesById, setNamesById] = useState<Record<string, string>>(exerciseNamesById);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [createExerciseOpen, setCreateExerciseOpen] = useState(false);
+  // Remonte en haut du formulaire une fois un exercice créé et ajouté (voir handleExerciseCreated) :
+  // le panneau de création peut avoir été ouvert loin en bas d'une longue liste d'exercices.
+  const topRef = useRef<HTMLDivElement>(null);
   const idPrefix = useId();
   // dnd-kit attribue un id d'accessibilité auto-incrémenté (non basé sur useId) à chaque
   // useSortable : il diffère toujours entre le rendu serveur et la première passe client. On
@@ -112,6 +116,8 @@ export function WorkoutTemplateForm({
     setOptions((current) => [...current, exercise].sort((a, b) => a.name.localeCompare(b.name)));
     setNamesById((current) => ({ ...current, [exercise.id]: exercise.name }));
     setRows((current) => [...current, { key: crypto.randomUUID(), exerciseId: exercise.id }]);
+    setCreateExerciseOpen(false);
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function removeRow(key: string) {
@@ -172,7 +178,12 @@ export function WorkoutTemplateForm({
       {addableExercises.length > 0 && (
         <button
           type="button"
-          onClick={() => setPickerOpen(true)}
+          onClick={() => {
+            // Un seul des deux panneaux d'ajout ouvert à la fois : sans ça, refermer la popup de
+            // sélection laissait le panneau de création encore déplié derrière, pour rien.
+            setCreateExerciseOpen(false);
+            setPickerOpen(true);
+          }}
           className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
         >
           <Search className="h-4 w-4" />
@@ -180,7 +191,11 @@ export function WorkoutTemplateForm({
         </button>
       )}
 
-      <CreateExerciseInline onCreated={handleExerciseCreated} />
+      <CreateExerciseInline
+        open={createExerciseOpen}
+        onOpenChange={setCreateExerciseOpen}
+        onCreated={handleExerciseCreated}
+      />
 
       {pickerOpen && (
         <ExercisePickerSheet
@@ -194,7 +209,7 @@ export function WorkoutTemplateForm({
 
   if (isCreate) {
     return (
-      <div className="space-y-6">
+      <div ref={topRef} className="space-y-6">
         <form id={formId} action={formAction} className="space-y-5">
           <div>
             <Label htmlFor="name">Nom de la séance</Label>
@@ -216,7 +231,7 @@ export function WorkoutTemplateForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={topRef} className="space-y-6">
       <form id={formId} action={formAction} className="space-y-4">
         <div>
           <Label htmlFor="name">Nom de la séance</Label>
@@ -260,8 +275,15 @@ export function WorkoutTemplateForm({
   );
 }
 
-function CreateExerciseInline({ onCreated }: { onCreated: (exercise: ExerciseOption) => void }) {
-  const [open, setOpen] = useState(false);
+function CreateExerciseInline({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (exercise: ExerciseOption) => void;
+}) {
   const [muscle, setMuscle] = useState<string[]>([]);
   const [targetSets, setTargetSets] = useState(3);
   const [state, formAction, pending] = useActionState<CreateExerciseInlineState, FormData>(
@@ -270,20 +292,29 @@ function CreateExerciseInline({ onCreated }: { onCreated: (exercise: ExerciseOpt
   );
   const handledNonce = useRef<number | undefined>(undefined);
   const idPrefix = useId();
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.exercise && state.nonce !== handledNonce.current) {
       handledNonce.current = state.nonce;
       onCreated(state.exercise);
-      setOpen(false);
     }
   }, [state, onCreated]);
+
+  // Amène le formulaire tout en haut de la zone visible dès son ouverture, pour qu'il soit
+  // entièrement lisible sans avoir à faire défiler manuellement (surtout utile ouvert loin en bas
+  // d'une longue liste d'exercices).
+  useEffect(() => {
+    if (open) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [open]);
 
   if (!open) {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => onOpenChange(true)}
         className="mt-3 text-sm font-medium text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
       >
         + Créer un nouvel exercice
@@ -293,6 +324,7 @@ function CreateExerciseInline({ onCreated }: { onCreated: (exercise: ExerciseOpt
 
   return (
     <form
+      ref={formRef}
       action={formAction}
       className="mt-3 space-y-3 rounded-xl border border-neutral-200 bg-white p-3"
     >
@@ -330,7 +362,7 @@ function CreateExerciseInline({ onCreated }: { onCreated: (exercise: ExerciseOpt
         <Button type="submit" size="sm" disabled={pending}>
           {pending ? "Création..." : "Créer et ajouter à la séance"}
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
+        <Button type="button" size="sm" variant="ghost" onClick={() => onOpenChange(false)}>
           Annuler
         </Button>
       </div>

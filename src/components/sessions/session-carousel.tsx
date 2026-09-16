@@ -235,9 +235,10 @@ export function SessionCarousel({
 
 // Remonte (via la key sur exerciseId côté appelant) à chaque changement d'exercice, ce qui
 // réarme naturellement l'affichage temporaire sans setState synchrone dans un effect du parent.
-// Purement informatif (non cliquable) : juste de quoi se repérer un instant. `absolute` (plutôt
-// que l'ancien `sticky`, qui restait dans le flux) : une fois masqué, ne réserve plus d'espace —
-// sans quoi l'indicateur devenu invisible laissait un grand blanc entre l'en-tête et l'exercice.
+// Purement informatif (non cliquable) : juste de quoi se repérer un instant. `fixed` en bas de
+// l'écran (plutôt que l'ancien `sticky` en haut, qui restait dans le flux même invisible et
+// laissait un grand blanc entre l'en-tête et l'exercice) : indépendant du scroll et du contenu du
+// panneau actif, et ne réserve aucun espace une fois masqué.
 function StepperFlash({
   groups,
   activeExerciseId,
@@ -261,9 +262,10 @@ function StepperFlash({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center transition-opacity duration-300",
+        "pointer-events-none fixed inset-x-0 z-20 flex justify-center transition-opacity duration-300",
         phase === "visible" ? "opacity-100" : "opacity-0"
       )}
+      style={{ bottom: "max(env(safe-area-inset-bottom), 1rem)" }}
       aria-hidden={phase !== "visible"}
     >
       <div className="rounded-xl border border-neutral-200 bg-white/95 p-2 shadow-md backdrop-blur">
