@@ -79,6 +79,7 @@ export function SessionTracker({
           groups={groups}
           history={history}
           initialActiveExerciseId={activeExerciseId}
+          templateName={seed.templateName}
           onAddSet={engine.addSet}
           onLogSet={engine.logSet}
           onUpdateSet={engine.updateSet}

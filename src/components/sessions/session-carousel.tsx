@@ -27,6 +27,7 @@ export function SessionCarousel({
   groups,
   history,
   initialActiveExerciseId,
+  templateName,
   onAddSet,
   onLogSet,
   onUpdateSet,
@@ -44,6 +45,10 @@ export function SessionCarousel({
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
   initialActiveExerciseId: string;
+  // Nom de la séance (déjà affiché dans l'en-tête) : sert à ne pas répéter le muscle ciblé de
+  // l'exercice quand il correspond au nom de la séance (ex. séance "Dos" contenant un exercice
+  // ciblant "Dos") — voir ExercisePanel.
+  templateName: string;
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
@@ -170,7 +175,7 @@ export function SessionCarousel({
   const activeGroup = groups[activeIndex];
 
   return (
-    <div>
+    <div className="relative">
       <StepperFlash key={activeGroup.exerciseId} groups={groups} activeExerciseId={activeGroup.exerciseId} />
 
       <div
@@ -189,6 +194,7 @@ export function SessionCarousel({
                 history={history[group.exerciseId] ?? []}
                 allowRemove={allowRemove}
                 readOnly={readOnly}
+                templateName={templateName}
                 onAddSet={onAddSet}
                 onLogSet={onLogSet}
                 onUpdateSet={onUpdateSet}
@@ -229,7 +235,9 @@ export function SessionCarousel({
 
 // Remonte (via la key sur exerciseId côté appelant) à chaque changement d'exercice, ce qui
 // réarme naturellement l'affichage temporaire sans setState synchrone dans un effect du parent.
-// Purement informatif (non cliquable) : juste de quoi se repérer un instant.
+// Purement informatif (non cliquable) : juste de quoi se repérer un instant. `absolute` (plutôt
+// que l'ancien `sticky`, qui restait dans le flux) : une fois masqué, ne réserve plus d'espace —
+// sans quoi l'indicateur devenu invisible laissait un grand blanc entre l'en-tête et l'exercice.
 function StepperFlash({
   groups,
   activeExerciseId,
@@ -237,20 +245,26 @@ function StepperFlash({
   groups: SessionRowGroup[];
   activeExerciseId: string;
 }) {
-  const [visible, setVisible] = useState(true);
+  const [phase, setPhase] = useState<"visible" | "fading" | "hidden">("visible");
 
   useEffect(() => {
-    const timeout = setTimeout(() => setVisible(false), INDICATOR_DURATION_MS);
-    return () => clearTimeout(timeout);
+    const fadeTimer = setTimeout(() => setPhase("fading"), INDICATOR_DURATION_MS);
+    const hideTimer = setTimeout(() => setPhase("hidden"), INDICATOR_DURATION_MS + 300);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
   }, []);
+
+  if (phase === "hidden") return null;
 
   return (
     <div
       className={cn(
-        "pointer-events-none sticky top-12 z-20 mb-2 flex justify-center transition-opacity duration-300",
-        visible ? "opacity-100" : "opacity-0"
+        "pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center transition-opacity duration-300",
+        phase === "visible" ? "opacity-100" : "opacity-0"
       )}
-      aria-hidden={!visible}
+      aria-hidden={phase !== "visible"}
     >
       <div className="rounded-xl border border-neutral-200 bg-white/95 p-2 shadow-md backdrop-blur">
         <SessionExerciseStepper groups={groups} activeExerciseId={activeExerciseId} />
@@ -264,6 +278,7 @@ function ExercisePanel({
   history,
   allowRemove,
   readOnly,
+  templateName,
   onAddSet,
   onLogSet,
   onUpdateSet,
@@ -274,6 +289,7 @@ function ExercisePanel({
   history: PreviousPerformance[];
   allowRemove: boolean;
   readOnly: boolean;
+  templateName: string;
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
@@ -281,12 +297,21 @@ function ExercisePanel({
   onRemoveSet: (setId: string) => void;
 }) {
   const rows = buildSessionRows(group, history);
+  // Le nom de la séance est déjà affiché juste au-dessus (en-tête) : ne pas répéter un muscle qui
+  // le reprend mot pour mot (ex. séance "Dos" listant un exercice ciblant "Dos"). Les autres
+  // muscles ciblés par l'exercice restent affichés normalement.
+  const normalizedTemplateName = templateName.trim().toLowerCase();
+  const displayedMuscles = group.exercise.muscle.filter(
+    (muscle) => muscle.trim().toLowerCase() !== normalizedTemplateName
+  );
 
   return (
     <div className="pr-1">
       <div className="mb-4 border-b border-neutral-100 pb-3">
         <p className="font-medium">{group.exercise.name}</p>
-        <p className="text-sm text-neutral-500">{group.exercise.muscle.join(", ")}</p>
+        {displayedMuscles.length > 0 && (
+          <p className="text-sm text-neutral-500">{displayedMuscles.join(", ")}</p>
+        )}
       </div>
 
       {rows.length === 0 ? (
