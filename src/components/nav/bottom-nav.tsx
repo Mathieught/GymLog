@@ -12,18 +12,12 @@ const navItems = [
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
 
-const HIDDEN_NAV_PATTERNS = [
-  // Toute page liée à une séance précise sous /workouts (détail, formulaire de création/édition,
-  // suivi en cours) : dès qu'on quitte la liste pour entrer "dans" une séance, on s'y concentre.
-  // Le bouton retour de l'en-tête suffit pour en sortir ; sur les formulaires, le bouton de
-  // validation prend même la place des onglets dans la pastille flottante (voir
-  // WorkoutTemplateForm). La page détail d'une séance passée (/sessions/[id], accessible depuis
-  // l'historique) garde la nav.
-  /^\/workouts\/.+/,
-  // Formulaires de création/édition d'exercice : même logique, la page détail (/exercises/[id])
-  // garde la nav puisque ce n'est pas un formulaire.
-  /^\/exercises\/(new|[^/]+\/edit)$/,
-];
+// Toute page liée à une séance précise sous /workouts (détail, suivi en cours — les formulaires de
+// création/édition sont désormais des popups, pas des pages, voir WorkoutFormSheet) : dès qu'on
+// quitte la liste pour entrer "dans" une séance, on s'y concentre. Le bouton retour de l'en-tête
+// suffit pour en sortir. La page détail d'une séance passée (/sessions/[id], accessible depuis
+// l'historique) garde la nav.
+const HIDDEN_NAV_PATTERNS = [/^\/workouts\/.+/];
 
 export function BottomNav() {
   const pathname = usePathname();

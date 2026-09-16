@@ -43,6 +43,7 @@ export function WorkoutTemplateForm({
   exerciseNamesById,
   defaultValues,
   submitLabel,
+  onSuccess,
 }: {
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
   exerciseOptions: ExerciseOption[];
@@ -54,8 +55,20 @@ export function WorkoutTemplateForm({
     scheduleDays: number[];
   };
   submitLabel: string;
+  // Appelé après un enregistrement réussi (voir ActionState.nonce) : utilisé quand le formulaire
+  // est ouvert dans une popup (WorkoutFormSheet) pour la refermer, puisque les actions
+  // create/updateWorkoutTemplate ne font plus de redirect() (on reste sur la page derrière la
+  // popup, qui se revalide déjà toute seule).
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(action, initialActionState);
+  const handledNonce = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (state.nonce !== undefined && state.nonce !== handledNonce.current) {
+      handledNonce.current = state.nonce;
+      onSuccess?.();
+    }
+  }, [state, onSuccess]);
   const [rows, setRows] = useState<Row[]>(
     () =>
       // Clé dérivée de l'exerciceId (stable et identique entre le rendu serveur et client) : les

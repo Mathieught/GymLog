@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { getCurrentUserId } from "@/lib/current-user";
 import { getActiveExercises } from "@/lib/queries/exercises";
-import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
 import { ExerciseSearchList } from "@/components/exercises/exercise-search-list";
+import { ExerciseCreateTrigger } from "@/components/exercises/exercise-create-trigger";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -40,15 +40,7 @@ export default async function ExercisesPage({ searchParams }: PageProps<"/exerci
 
   return (
     <Container topSafeArea>
-      <PageTitle
-        action={
-          <ButtonLink href="/exercises/new" size="sm">
-            + Nouvel exercice
-          </ButtonLink>
-        }
-      >
-        Exercices
-      </PageTitle>
+      <PageTitle action={<ExerciseCreateTrigger />}>Exercices</PageTitle>
 
       {exercises.length === 0 ? (
         <p className="text-neutral-500">

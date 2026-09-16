@@ -53,7 +53,7 @@ export async function createWorkoutTemplate(
 
   revalidatePath("/workouts");
   updateTag("workout-templates");
-  redirect("/workouts");
+  return { nonce: Date.now() };
 }
 
 export async function updateWorkoutTemplate(
@@ -90,7 +90,7 @@ export async function updateWorkoutTemplate(
   revalidatePath("/workouts");
   updateTag("workout-templates");
   revalidatePath(`/workouts/${templateId}`);
-  redirect(`/workouts/${templateId}`);
+  return { nonce: Date.now() };
 }
 
 export async function archiveWorkoutTemplate(templateId: string) {

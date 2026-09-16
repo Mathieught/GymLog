@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ButtonLink } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
+import { ExerciseEditTrigger } from "@/components/exercises/exercise-edit-trigger";
 import { archiveExercise } from "@/lib/actions/exercises";
 
 export default async function ExerciseDetailPage({
@@ -19,9 +19,11 @@ export default async function ExerciseDetailPage({
         backHref="/exercises"
         title={exercise.name}
         right={
-          <ButtonLink href={`/exercises/${exercise.id}/edit`} variant="secondary" size="sm">
-            Modifier
-          </ButtonLink>
+          <ExerciseEditTrigger
+            exerciseId={exercise.id}
+            exerciseName={exercise.name}
+            defaultValues={exercise}
+          />
         }
       />
       <Container>

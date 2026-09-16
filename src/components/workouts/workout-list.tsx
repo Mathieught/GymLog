@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/ui/page-title";
 import { WorkoutEditSheet } from "@/components/workouts/workout-edit-sheet";
+import { WorkoutFormSheet } from "@/components/workouts/workout-form-sheet";
+import { createWorkoutTemplate } from "@/lib/actions/workout-templates";
 
 type TemplateItem = {
   id: string;
@@ -14,7 +16,22 @@ type TemplateItem = {
   scheduleLabel: string | null;
 };
 
-export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
+type ExerciseOption = {
+  id: string;
+  name: string;
+  muscle: string[];
+  targetSets: number;
+};
+
+export function WorkoutList({
+  templates,
+  exerciseOptions,
+  exerciseNamesById,
+}: {
+  templates: TemplateItem[];
+  exerciseOptions: ExerciseOption[];
+  exerciseNamesById: Record<string, string>;
+}) {
   const [items, setItems] = useState(templates);
   // Resynchronise l'état local sur les nouvelles données serveur (après suppression/réorganisation
   // dans WorkoutEditSheet, qui revalident la route) : ajustement pendant le rendu plutôt que dans
@@ -26,6 +43,7 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
     setItems(templates);
   }
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [createSheetOpen, setCreateSheetOpen] = useState(false);
 
   return (
     <>
@@ -37,9 +55,9 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
                 Modifier
               </Button>
             )}
-            <ButtonLink href="/workouts/new" size="sm">
+            <Button type="button" size="sm" onClick={() => setCreateSheetOpen(true)}>
               + Nouvelle séance
-            </ButtonLink>
+            </Button>
           </div>
         }
       >
@@ -74,6 +92,18 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
           onReorder={setItems}
           onDeleted={(id) => setItems((current) => current.filter((item) => item.id !== id))}
           onClose={() => setEditSheetOpen(false)}
+        />
+      )}
+
+      {createSheetOpen && (
+        <WorkoutFormSheet
+          title="Nouvelle séance"
+          action={createWorkoutTemplate}
+          exerciseOptions={exerciseOptions}
+          exerciseNamesById={exerciseNamesById}
+          submitLabel="Créer la séance"
+          onClose={() => setCreateSheetOpen(false)}
+          onSuccess={() => setCreateSheetOpen(false)}
         />
       )}
     </>

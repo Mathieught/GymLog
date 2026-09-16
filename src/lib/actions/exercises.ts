@@ -29,7 +29,7 @@ export async function createExercise(
 
   revalidatePath("/exercises");
   updateTag("exercises");
-  redirect("/exercises");
+  return { nonce: Date.now() };
 }
 
 export async function updateExercise(
@@ -55,7 +55,7 @@ export async function updateExercise(
   revalidatePath("/exercises");
   updateTag("exercises");
   revalidatePath(`/exercises/${exerciseId}`);
-  redirect(`/exercises/${exerciseId}`);
+  return { nonce: Date.now() };
 }
 
 export type CreateExerciseInlineState = {
