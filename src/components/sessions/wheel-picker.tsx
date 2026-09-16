@@ -3,7 +3,10 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-export const WHEEL_ITEM_HEIGHT = 36;
+// Légèrement agrandi (36 -> 44px, la taille de cible tactile recommandée) pour rendre chaque
+// valeur un peu plus simple à toucher précisément ; la hauteur de la popup en dépend directement
+// (WHEEL_HEIGHT ci-dessous), donc elle grandit d'autant.
+export const WHEEL_ITEM_HEIGHT = 44;
 const VISIBLE_ITEMS = 5;
 const PADDING_ITEMS = Math.floor(VISIBLE_ITEMS / 2);
 const SETTLE_DELAY_MS = 120;
