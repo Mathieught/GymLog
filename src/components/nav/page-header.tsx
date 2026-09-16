@@ -40,7 +40,9 @@ export function PageHeader({
           <div className="h-8 w-8 shrink-0" />
         )}
         {title !== undefined && (
-          <div className="min-w-0 flex-1 truncate text-xl font-bold text-neutral-900">{title}</div>
+          // Même taille/graisse que PageTitle (pages sans bouton retour) : text-xl font-bold ne
+          // matchait pas text-2xl font-semibold, d'où une incohérence visible en changeant de page.
+          <div className="min-w-0 flex-1 truncate text-2xl font-semibold text-neutral-900">{title}</div>
         )}
         <div className="flex shrink-0 items-center gap-2">{right ?? (title !== undefined ? null : <HeaderOptions />)}</div>
       </div>
