@@ -11,8 +11,24 @@ export const getActiveWorkoutTemplates = unstable_cache(
         _count: { select: { exercises: true } },
         schedules: true,
       },
-      orderBy: { name: "asc" },
+      orderBy: [{ order: "asc" }, { name: "asc" }],
     }),
   ["active-workout-templates"],
+  { tags: ["workout-templates"] }
+);
+
+// Page détail/édition consultée sur (presque) chaque tape sur une séance : sans cache, chaque
+// visite refait l'aller-retour vers la base distante (~400-700ms observés). Même tag que
+// ci-dessus, déjà invalidé par create/update/archiveWorkoutTemplate.
+export const getWorkoutTemplateDetail = unstable_cache(
+  async (id: string) =>
+    prisma.workoutTemplate.findUnique({
+      where: { id },
+      include: {
+        exercises: { include: { exercise: true }, orderBy: { order: "asc" } },
+        schedules: true,
+      },
+    }),
+  ["workout-template-detail"],
   { tags: ["workout-templates"] }
 );

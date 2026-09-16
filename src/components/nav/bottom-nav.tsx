@@ -12,13 +12,28 @@ const navItems = [
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
 
+const HIDDEN_NAV_PATTERNS = [
+  // Toute page liée à une séance précise sous /workouts (détail, formulaire de création/édition,
+  // suivi en cours) : dès qu'on quitte la liste pour entrer "dans" une séance, on s'y concentre.
+  // Le bouton retour de l'en-tête suffit pour en sortir ; sur les formulaires, le bouton de
+  // validation prend même la place des onglets dans la pastille flottante (voir
+  // WorkoutTemplateForm). La page détail d'une séance passée (/sessions/[id], accessible depuis
+  // l'historique) garde la nav.
+  /^\/workouts\/.+/,
+  // Formulaires de création/édition d'exercice : même logique, la page détail (/exercises/[id])
+  // garde la nav puisque ce n'est pas un formulaire.
+  /^\/exercises\/(new|[^/]+\/edit)$/,
+];
+
 export function BottomNav() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname.startsWith(href);
 
   // Pas de menu tant qu'on n'est pas connecté : tous ses liens ramèneraient de toute façon à la
   // page de connexion.
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || HIDDEN_NAV_PATTERNS.some((pattern) => pattern.test(pathname))) {
+    return null;
+  }
 
   return (
     // Le conteneur lui-même n'a aucun arrière-plan : seule la pastille flottante en a un, pour

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
 import { getActiveExercises } from "@/lib/queries/exercises";
+import { getWorkoutTemplateDetail } from "@/lib/queries/workout-templates";
 import { WorkoutTemplateForm } from "@/components/workouts/workout-template-form";
 import { updateWorkoutTemplate } from "@/lib/actions/workout-templates";
 import { PageHeader } from "@/components/nav/page-header";
@@ -14,13 +14,7 @@ export default async function EditWorkoutPage({
   const userId = await getCurrentUserId();
 
   const [template, availableExercises] = await Promise.all([
-    prisma.workoutTemplate.findUnique({
-      where: { id },
-      include: {
-        exercises: { include: { exercise: true }, orderBy: { order: "asc" } },
-        schedules: true,
-      },
-    }),
+    getWorkoutTemplateDetail(id),
     getActiveExercises(userId),
   ]);
   if (!template || template.isArchived) notFound();

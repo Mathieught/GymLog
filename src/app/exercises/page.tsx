@@ -2,10 +2,9 @@ import Link from "next/link";
 import { getCurrentUserId } from "@/lib/current-user";
 import { getActiveExercises } from "@/lib/queries/exercises";
 import { ButtonLink } from "@/components/ui/button";
-import { PageHeader } from "@/components/nav/page-header";
-import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
+import { ExerciseSearchList } from "@/components/exercises/exercise-search-list";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -40,77 +39,54 @@ export default async function ExercisesPage({ searchParams }: PageProps<"/exerci
   };
 
   return (
-    <>
-      <PageHeader />
-      <Container>
-        <PageTitle
-          action={
-            <ButtonLink href="/exercises/new" size="sm">
-              + Nouvel exercice
-            </ButtonLink>
-          }
-        >
-          Exercices
-        </PageTitle>
+    <Container topSafeArea>
+      <PageTitle
+        action={
+          <ButtonLink href="/exercises/new" size="sm">
+            + Nouvel exercice
+          </ButtonLink>
+        }
+      >
+        Exercices
+      </PageTitle>
 
-        {exercises.length === 0 ? (
-          <p className="text-neutral-500">
-            Aucun exercice pour l&apos;instant. Créez votre premier exercice pour commencer.
-          </p>
-        ) : (
-          <>
-            <div className="mb-6 flex flex-wrap gap-2">
+      {exercises.length === 0 ? (
+        <p className="text-neutral-500">
+          Aucun exercice pour l&apos;instant. Créez votre premier exercice pour commencer.
+        </p>
+      ) : (
+        <>
+          <div className="mb-6 flex flex-wrap gap-2">
+            <Link
+              href="/exercises"
+              className={cn(
+                "rounded-full border px-3 py-1 text-sm transition-colors",
+                selectedMuscles.size === 0
+                  ? "border-neutral-900 bg-neutral-900 text-white"
+                  : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
+              )}
+            >
+              Tous
+            </Link>
+            {availableMuscles.map((muscle) => (
               <Link
-                href="/exercises"
+                key={muscle}
+                href={hrefForToggle(muscle)}
                 className={cn(
                   "rounded-full border px-3 py-1 text-sm transition-colors",
-                  selectedMuscles.size === 0
+                  selectedMuscles.has(muscle)
                     ? "border-neutral-900 bg-neutral-900 text-white"
                     : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
                 )}
               >
-                Tous
+                {muscle}
               </Link>
-              {availableMuscles.map((muscle) => (
-                <Link
-                  key={muscle}
-                  href={hrefForToggle(muscle)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-sm transition-colors",
-                    selectedMuscles.has(muscle)
-                      ? "border-neutral-900 bg-neutral-900 text-white"
-                      : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
-                  )}
-                >
-                  {muscle}
-                </Link>
-              ))}
-            </div>
+            ))}
+          </div>
 
-            <div className="space-y-6">
-              {groups.map((group) => (
-                <section key={group.muscle}>
-                  <h2 className="mb-2 text-sm font-medium text-neutral-500">{group.muscle}</h2>
-                  <ul className="space-y-2">
-                    {group.exercises.map((exercise) => (
-                      <li key={exercise.id}>
-                        <Link href={`/exercises/${exercise.id}`}>
-                          <Card className="transition-colors hover:border-neutral-400">
-                            <p className="font-medium">{exercise.name}</p>
-                            <p className="text-sm text-neutral-500">
-                              {exercise.targetSets} série{exercise.targetSets > 1 ? "s" : ""}
-                            </p>
-                          </Card>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </>
-        )}
-      </Container>
-    </>
+          <ExerciseSearchList groups={groups} />
+        </>
+      )}
+    </Container>
   );
 }

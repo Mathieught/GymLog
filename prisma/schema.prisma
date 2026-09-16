@@ -91,6 +91,7 @@ model WorkoutTemplate {
   user        User     @relation(fields: [userId], references: [id])
   name        String
   description String?
+  order       Int      @default(0)
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

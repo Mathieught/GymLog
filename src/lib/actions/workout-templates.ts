@@ -102,3 +102,21 @@ export async function archiveWorkoutTemplate(templateId: string) {
   updateTag("workout-templates");
   redirect("/workouts");
 }
+
+// Appelée après chaque glisser-déposer dans le mode réorganisation de la liste des séances (voir
+// WorkoutList) : `orderedIds` est l'ordre complet affiché côté client, on le retranscrit tel quel.
+// Filtre par userId (contrairement aux autres actions de ce fichier) car la liste d'ids vient du
+// client plutôt que d'un id de route déjà validé par la page.
+export async function reorderWorkoutTemplates(orderedIds: string[]) {
+  const userId = await getCurrentUserId();
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.workoutTemplate.updateMany({
+        where: { id, userId },
+        data: { order: index },
+      })
+    )
+  );
+  revalidatePath("/workouts");
+  updateTag("workout-templates");
+}

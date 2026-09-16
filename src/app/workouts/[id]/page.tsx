@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getWorkoutTemplateDetail } from "@/lib/queries/workout-templates";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
@@ -13,13 +13,7 @@ export default async function WorkoutTemplateDetailPage({
   params,
 }: PageProps<"/workouts/[id]">) {
   const { id } = await params;
-  const template = await prisma.workoutTemplate.findUnique({
-    where: { id },
-    include: {
-      exercises: { include: { exercise: true }, orderBy: { order: "asc" } },
-      schedules: true,
-    },
-  });
+  const template = await getWorkoutTemplateDetail(id);
   if (!template || template.isArchived) notFound();
 
   return (

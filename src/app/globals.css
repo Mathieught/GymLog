@@ -3,3 +3,11 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
 }
+
+html {
+  /* Réserve toujours la place de la barre de défilement verticale : sans ça, une page plus haute
+     que l'écran (ex. Exercices avec plusieurs groupes musculaires) fait apparaître la scrollbar et
+     décale tout le contenu centré (mx-auto) et la navbar en bas (fixed, centrée) de quelques
+     pixels par rapport aux onglets sans scrollbar — d'où le "saut" en changeant d'onglet. */
+  scrollbar-gutter: stable;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   DndContext,
   closestCenter,
@@ -16,12 +16,12 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea, Select, Label, FieldError } from "@/components/ui/field";
+import { Input, Textarea, Label, FieldError } from "@/components/ui/field";
 import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
 import { SetCountPicker } from "@/components/exercises/set-count-picker";
-import { WEEKDAYS } from "@/lib/constants";
+import { ExercisePickerSheet } from "@/components/workouts/exercise-picker-sheet";
 import { initialActionState, type ActionState } from "@/lib/action-state";
 import { createExerciseInline, type CreateExerciseInlineState } from "@/lib/actions/exercises";
 
@@ -68,7 +68,7 @@ export function WorkoutTemplateForm({
   );
   const [options, setOptions] = useState<ExerciseOption[]>(exerciseOptions);
   const [namesById, setNamesById] = useState<Record<string, string>>(exerciseNamesById);
-  const [exerciseToAdd, setExerciseToAdd] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const idPrefix = useId();
   // dnd-kit attribue un id d'accessibilité auto-incrémenté (non basé sur useId) à chaque
   // useSortable : il diffère toujours entre le rendu serveur et la première passe client. On
@@ -80,11 +80,9 @@ export function WorkoutTemplateForm({
 
   const addableExercises = options.filter((exercise) => !rows.some((row) => row.exerciseId === exercise.id));
 
-  function addExercise() {
-    const exercise = options.find((option) => option.id === exerciseToAdd);
-    if (!exercise) return;
+  function addExercise(exercise: ExerciseOption) {
     setRows((current) => [...current, { key: crypto.randomUUID(), exerciseId: exercise.id }]);
-    setExerciseToAdd("");
+    setPickerOpen(false);
   }
 
   function handleExerciseCreated(exercise: ExerciseOption) {
@@ -108,44 +106,105 @@ export function WorkoutTemplateForm({
   }
 
   const exercisesJson = JSON.stringify(rows.map(({ exerciseId }) => ({ exerciseId })));
-  // La création ne demande que le nom : description, jours planifiés et exercices se règlent
-  // ensuite depuis la page de modification (refonte Figma "Workout-Form-refonte-3" — on verra
-  // avec les retours d'usage si ce flux en deux temps tient la route).
+  // La création ne demande que le nom (description et jours planifiés se règlent ensuite depuis
+  // la page de modification, refonte Figma "Workout-Form-refonte-3") mais garde l'ajout
+  // d'exercices, très utilisé dès la création.
   const isCreate = !defaultValues;
+
+  const exercisesSection = (
+    <div>
+      <Label>Exercices</Label>
+
+      {rows.length === 0 ? (
+        <p className="text-sm text-neutral-500">Aucun exercice ajouté pour l&apos;instant.</p>
+      ) : mounted ? (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={rows.map((row) => row.key)} strategy={verticalListSortingStrategy}>
+            <ul className="space-y-2">
+              {rows.map((row) => (
+                <ExerciseRow
+                  key={row.key}
+                  row={row}
+                  exerciseName={namesById[row.exerciseId] ?? "Exercice"}
+                  onRemove={removeRow}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((row) => (
+            <StaticExerciseRow
+              key={row.key}
+              row={row}
+              exerciseName={namesById[row.exerciseId] ?? "Exercice"}
+              onRemove={removeRow}
+            />
+          ))}
+        </ul>
+      )}
+      <FieldError messages={state.fieldErrors?.exercises} />
+
+      {addableExercises.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
+        >
+          <Search className="h-4 w-4" />
+          Ajouter un exercice existant
+        </button>
+      )}
+
+      <CreateExerciseInline onCreated={handleExerciseCreated} />
+
+      {pickerOpen && (
+        <ExercisePickerSheet
+          exercises={addableExercises}
+          onClose={() => setPickerOpen(false)}
+          onSelect={addExercise}
+        />
+      )}
+    </div>
+  );
 
   if (isCreate) {
     return (
-      <form action={formAction} className="space-y-5">
-        <div>
-          <Label htmlFor="name">Nom de la séance</Label>
-          <Input id="name" name="name" placeholder="Push day" required />
-          <FieldError messages={state.fieldErrors?.name} />
-        </div>
+      <div className="space-y-6 pb-24">
+        <form id={formId} action={formAction} className="space-y-5">
+          <div>
+            <Label htmlFor="name">Nom de la séance</Label>
+            <Input id="name" name="name" placeholder="Push day" required />
+            <FieldError messages={state.fieldErrors?.name} />
+          </div>
 
-        <div>
-          <Label>Exercices</Label>
-          <p className="text-sm text-neutral-400">Ajouter des exercices maintenant ou plus tard</p>
-        </div>
+          {/* description est requis (string) côté schéma de validation : sans champ visible sur cet
+              écran, on force une valeur vide plutôt que de laisser FormData renvoyer null. */}
+          <input type="hidden" name="description" value="" />
+          <input type="hidden" name="exercisesJson" value={exercisesJson} />
+        </form>
 
-        {/* description est requis (string) côté schéma de validation : sans champ visible sur cet
-            écran, on force une valeur vide plutôt que de laisser FormData renvoyer null. */}
-        <input type="hidden" name="description" value="" />
+        {exercisesSection}
 
         {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#00C896] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {pending ? "Création..." : submitLabel}
-        </button>
-      </form>
+        <FormNavBar>
+          <button
+            type="submit"
+            form={formId}
+            disabled={pending}
+            className="h-11 flex-1 rounded-full bg-[#00C896] text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {pending ? "Création..." : submitLabel}
+          </button>
+        </FormNavBar>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <form id={formId} action={formAction} className="space-y-4">
         <div>
           <Label htmlFor="name">Nom de la séance</Label>
@@ -159,103 +218,55 @@ export function WorkoutTemplateForm({
           <FieldError messages={state.fieldErrors?.name} />
         </div>
 
-        <div>
-          <Label htmlFor="description">Note / description (facultatif)</Label>
-          <Textarea
-            id="description"
-            name="description"
-            defaultValue={defaultValues?.description ?? ""}
-            placeholder="Ex : séance haut du corps, pousser..."
-          />
-          <FieldError messages={state.fieldErrors?.description} />
-        </div>
-
-        <div>
-          <Label>Jours planifiés (facultatif)</Label>
-          <div className="flex flex-wrap gap-2">
-            {WEEKDAYS.map((day) => (
-              <label
-                key={day.value}
-                className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-sm has-checked:border-neutral-900 has-checked:bg-neutral-900 has-checked:text-white"
-              >
-                <input
-                  type="checkbox"
-                  name="scheduleDays"
-                  value={day.value}
-                  defaultChecked={defaultValues?.scheduleDays.includes(day.value)}
-                  className="sr-only"
-                />
-                {day.label}
-              </label>
-            ))}
-          </div>
-        </div>
-
         <input type="hidden" name="exercisesJson" value={exercisesJson} />
+        {/* Jours planifiés retirés du formulaire (retour utilisateur, trop peu utilisé pour
+            justifier sa place) : on reconduit la planification existante telle quelle plutôt que
+            de la supprimer silencieusement au prochain enregistrement. */}
+        {defaultValues?.scheduleDays.map((day) => (
+          <input key={day} type="hidden" name="scheduleDays" value={day} />
+        ))}
       </form>
 
+      {exercisesSection}
+
+      {/* Toujours associé au formulaire via l'attribut form malgré sa position hors du <form> :
+          en bas, car secondaire par rapport au nom et aux exercices. */}
       <div>
-        <Label>Exercices</Label>
-
-        {rows.length === 0 ? (
-          <p className="text-sm text-neutral-500">Aucun exercice ajouté pour l&apos;instant.</p>
-        ) : mounted ? (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={rows.map((row) => row.key)} strategy={verticalListSortingStrategy}>
-              <ul className="space-y-2">
-                {rows.map((row) => (
-                  <ExerciseRow
-                    key={row.key}
-                    row={row}
-                    exerciseName={namesById[row.exerciseId] ?? "Exercice"}
-                    onRemove={removeRow}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        ) : (
-          <ul className="space-y-2">
-            {rows.map((row) => (
-              <StaticExerciseRow
-                key={row.key}
-                row={row}
-                exerciseName={namesById[row.exerciseId] ?? "Exercice"}
-                onRemove={removeRow}
-              />
-            ))}
-          </ul>
-        )}
-        <FieldError messages={state.fieldErrors?.exercises} />
-
-        {addableExercises.length > 0 && (
-          <div className="mt-3 flex gap-2">
-            <Select
-              value={exerciseToAdd}
-              onChange={(event) => setExerciseToAdd(event.target.value)}
-              className="flex-1"
-            >
-              <option value="">Ajouter un exercice existant...</option>
-              {addableExercises.map((exercise) => (
-                <option key={exercise.id} value={exercise.id}>
-                  {exercise.name} · {exercise.muscle.join(", ")}
-                </option>
-              ))}
-            </Select>
-            <Button type="button" variant="secondary" onClick={addExercise} disabled={!exerciseToAdd}>
-              Ajouter
-            </Button>
-          </div>
-        )}
-
-        <CreateExerciseInline onCreated={handleExerciseCreated} />
+        <Label htmlFor="description">Note / description (facultatif)</Label>
+        <Textarea
+          id="description"
+          name="description"
+          form={formId}
+          defaultValue={defaultValues?.description ?? ""}
+          placeholder="Ex : séance haut du corps, pousser..."
+        />
+        <FieldError messages={state.fieldErrors?.description} />
       </div>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
-      <Button type="submit" form={formId} disabled={pending} className="w-full">
-        {pending ? "Enregistrement..." : submitLabel}
-      </Button>
+      <FormNavBar>
+        <Button type="submit" form={formId} disabled={pending} className="h-11 flex-1 rounded-full">
+          {pending ? "Enregistrement..." : submitLabel}
+        </Button>
+      </FormNavBar>
+    </div>
+  );
+}
+
+// Remplace la nav à onglets (masquée sur cet écran, voir BottomNav) par le bouton de validation :
+// même pastille flottante, pour rester accessible en permanence sans ajouter de deuxième barre
+// au-dessus de la nav quand le formulaire s'allonge (plusieurs exercices, panneau de création
+// d'exercice ouvert...).
+function FormNavBar({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="fixed inset-x-0 bottom-0 z-10 flex justify-center px-4"
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+    >
+      <div className="flex w-full max-w-lg items-center gap-0.5 rounded-full border border-neutral-200/80 bg-neutral-100/90 p-0.5 shadow-lg shadow-black/5 backdrop-blur-md">
+        {children}
+      </div>
     </div>
   );
 }

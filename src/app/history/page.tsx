@@ -3,7 +3,6 @@ import { format, isToday, isYesterday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
-import { PageHeader } from "@/components/nav/page-header";
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
@@ -28,40 +27,37 @@ export default async function HistoryPage() {
   });
 
   return (
-    <>
-      <PageHeader />
-      <Container>
-        <PageTitle>Historique</PageTitle>
+    <Container topSafeArea>
+      <PageTitle>Historique</PageTitle>
 
-        {sessions.length === 0 ? (
-          <p className="text-neutral-500">
-            Aucune séance enregistrée pour l&apos;instant. Démarrez-en une depuis l&apos;onglet
-            Séances.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {sessions.map((session) => {
-              const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
-              const completedSets = session.sets.filter((set) => set.completed).length;
+      {sessions.length === 0 ? (
+        <p className="text-neutral-500">
+          Aucune séance enregistrée pour l&apos;instant. Démarrez-en une depuis l&apos;onglet
+          Séances.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {sessions.map((session) => {
+            const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
+            const completedSets = session.sets.filter((set) => set.completed).length;
 
-              return (
-                <li key={session.id}>
-                  <Link href={`/sessions/${session.id}`}>
-                    <Card className="transition-colors hover:border-neutral-400">
-                      <p className="font-medium">{session.name}</p>
-                      <p className="mt-1 text-sm text-neutral-500">
-                        {formatSessionDate(session.startedAt)} · {exerciseCount} exercice
-                        {exerciseCount > 1 ? "s" : ""} · {completedSets} série
-                        {completedSets > 1 ? "s" : ""}
-                      </p>
-                    </Card>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Container>
-    </>
+            return (
+              <li key={session.id}>
+                <Link href={`/sessions/${session.id}`}>
+                  <Card className="transition-colors hover:border-neutral-400">
+                    <p className="font-medium">{session.name}</p>
+                    <p className="mt-1 text-sm text-neutral-500">
+                      {formatSessionDate(session.startedAt)} · {exerciseCount} exercice
+                      {exerciseCount > 1 ? "s" : ""} · {completedSets} série
+                      {completedSets > 1 ? "s" : ""}
+                    </p>
+                  </Card>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Container>
   );
 }
