@@ -27,7 +27,7 @@ export default async function LoginPage({
       <WelcomeIllustration />
 
       <div>
-        <h1 className="text-2xl font-semibold">GymLog</h1>
+        <h1 className="text-xl font-semibold">GymLog</h1>
         <p className="mt-2 text-sm text-neutral-500">
           Suis tes séances, progresse à chaque passage à la salle.
         </p>

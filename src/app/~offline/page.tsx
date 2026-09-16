@@ -70,7 +70,7 @@ export default function OfflineFallbackPage() {
   if (state.kind === "never-authenticated") {
     return (
       <Container className="flex min-h-screen flex-col items-center justify-center gap-3 text-center">
-        <h1 className="text-2xl font-semibold">Connexion impossible hors ligne</h1>
+        <h1 className="text-xl font-semibold">Connexion impossible hors ligne</h1>
         <p className="text-neutral-500">
           Cet appareil ne s&apos;est encore jamais connecté : il n&apos;a donc aucune donnée ni espace
           personnel en local. La toute première connexion se fait avec Google, ce qui demande du
@@ -91,7 +91,7 @@ export default function OfflineFallbackPage() {
     if (state.templates.length === 0) {
       return (
         <Container className="flex min-h-screen flex-col items-center justify-center gap-3 text-center">
-          <h1 className="text-2xl font-semibold">Hors ligne</h1>
+          <h1 className="text-xl font-semibold">Hors ligne</h1>
           <p className="text-neutral-500">
             Aucun programme n&apos;est encore disponible hors ligne sur cet appareil.
             Reconnecte-toi une fois : la liste se mettra en cache automatiquement pour la
@@ -106,7 +106,7 @@ export default function OfflineFallbackPage() {
 
     return (
       <Container className="pt-6">
-        <h1 className="text-2xl font-semibold">Démarrer une séance</h1>
+        <h1 className="text-xl font-semibold">Démarrer une séance</h1>
         <p className="mt-1 text-sm text-neutral-500">Hors ligne — choisis un programme.</p>
         <ul className="mt-6 space-y-2">
           {state.templates.map((template) => (

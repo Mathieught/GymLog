@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 export function PageTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-6 flex min-h-9 items-center justify-between">
-      <h1 className="text-2xl font-semibold">{children}</h1>
+      <h1 className="text-xl font-semibold">{children}</h1>
       {action}
     </div>
   );

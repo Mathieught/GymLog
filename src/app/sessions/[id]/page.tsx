@@ -64,7 +64,7 @@ export default async function SessionDetailPage({
       <>
         <PageHeader backHref="/history" />
         <Container>
-          <h1 className="text-2xl font-semibold">{session.name}</h1>
+          <h1 className="text-xl font-semibold">{session.name}</h1>
           <p className="mt-4 text-neutral-500">Aucun exercice dans cette séance.</p>
         </Container>
       </>
@@ -76,7 +76,7 @@ export default async function SessionDetailPage({
       <>
         <PageHeader backHref="/history" />
         <Container>
-          <h1 className="text-2xl font-semibold">{session.name}</h1>
+          <h1 className="text-xl font-semibold">{session.name}</h1>
           <p className="text-sm text-neutral-500">
             {format(completedAt, "EEEE d MMMM", { locale: fr })}
           </p>
