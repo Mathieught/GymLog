@@ -5,11 +5,9 @@ import { getWorkoutTemplateDetail } from "@/lib/queries/workout-templates";
 import { getActiveExercises } from "@/lib/queries/exercises";
 import { getCurrentUserId } from "@/lib/current-user";
 import { Card } from "@/components/ui/card";
-import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { WorkoutEditTrigger } from "@/components/workouts/workout-edit-trigger";
-import { archiveWorkoutTemplate } from "@/lib/actions/workout-templates";
 
 export default async function WorkoutTemplateDetailPage({
   params,
@@ -100,17 +98,6 @@ export default async function WorkoutTemplateDetailPage({
             </ul>
           </>
         )}
-
-        <form action={archiveWorkoutTemplate.bind(null, template.id)} className="mt-8">
-          <ConfirmSubmitButton
-            type="submit"
-            variant="danger"
-            size="sm"
-            confirmMessage={`Supprimer "${template.name}" ? Elle n'apparaîtra plus dans vos listes, mais l'historique existant sera conservé.`}
-          >
-            Supprimer la séance
-          </ConfirmSubmitButton>
-        </form>
       </Container>
     </>
   );

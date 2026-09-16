@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Search, X } from "lucide-react";
+import { ChevronLeft, Search } from "lucide-react";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -68,21 +68,26 @@ export function ExercisePickerSheet({
     <div className="fixed inset-0 z-50">
       <button
         type="button"
-        aria-label="Fermer"
+        aria-label="Retour"
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
       <div className="absolute inset-x-0 bottom-0 flex h-[95vh] flex-col overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
-          <span className="text-sm font-medium text-neutral-500">Ajouter un exercice</span>
+        {/* Toujours ouverte depuis une autre popup (WorkoutFormSheet) : flèche retour plutôt
+            qu'une croix, puisque fermer celle-ci révèle la popup précédente. */}
+        <div className="flex items-center gap-2 border-b border-neutral-100 px-2 py-2.5">
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
-            className="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900"
+            aria-label="Retour"
+            className="rounded-full p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900"
           >
-            <X className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
+          <span className="flex-1 truncate text-center text-sm font-medium text-neutral-500">
+            Ajouter un exercice
+          </span>
+          <div className="h-9 w-9" />
         </div>
 
         <div className="space-y-3 border-b border-neutral-100 px-4 py-3">
