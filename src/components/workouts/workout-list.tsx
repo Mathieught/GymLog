@@ -20,7 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { ConfirmSheet } from "@/components/ui/confirm-sheet";
 import { PageTitle } from "@/components/ui/page-title";
 import { archiveWorkoutTemplate, reorderWorkoutTemplates } from "@/lib/actions/workout-templates";
 
@@ -43,6 +43,9 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
     setItems(templates);
   }
   const [editing, setEditing] = useState(false);
+  // Séance dont la suppression est en attente de confirmation (popup) : reste en mode
+  // modification après validation ou annulation, contrairement à avant où supprimer en sortait.
+  const [pendingDelete, setPendingDelete] = useState<TemplateItem | null>(null);
   // dnd-kit attribue un id d'accessibilité auto-incrémenté à chaque useSortable, différent entre
   // le rendu serveur et la première passe client : on n'active DndContext qu'après l'hydratation
   // (même précaution que pour l'ordre des exercices dans WorkoutTemplateForm).
@@ -60,6 +63,12 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
     // depuis la callback de setItems mettait à jour le routeur pendant le rendu de WorkoutList.
     setItems(next);
     reorderWorkoutTemplates(next.map((item) => item.id)).catch(() => {});
+  }
+
+  function confirmDelete() {
+    if (!pendingDelete) return;
+    archiveWorkoutTemplate(pendingDelete.id).catch(() => {});
+    setPendingDelete(null);
   }
 
   return (
@@ -90,7 +99,7 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
           <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
             <ul className="space-y-2">
               {items.map((item) => (
-                <SortableWorkoutRow key={item.id} item={item} onDeleted={() => setEditing(false)} />
+                <SortableWorkoutRow key={item.id} item={item} onRequestDelete={setPendingDelete} />
               ))}
             </ul>
           </SortableContext>
@@ -98,7 +107,7 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
       ) : editing ? (
         <ul className="space-y-2">
           {items.map((item) => (
-            <StaticWorkoutRow key={item.id} item={item} onDeleted={() => setEditing(false)} />
+            <StaticWorkoutRow key={item.id} item={item} onRequestDelete={setPendingDelete} />
           ))}
         </ul>
       ) : (
@@ -118,30 +127,34 @@ export function WorkoutList({ templates }: { templates: TemplateItem[] }) {
           ))}
         </ul>
       )}
+
+      {pendingDelete && (
+        <ConfirmSheet
+          message={`Supprimer "${pendingDelete.name}" ? Elle n'apparaîtra plus dans vos listes, mais l'historique existant sera conservé.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
     </>
   );
 }
 
-type RowProps = { item: TemplateItem; onDeleted: () => void };
+type RowProps = { item: TemplateItem; onRequestDelete: (item: TemplateItem) => void };
 
-function DeleteButton({ item, onDeleted }: RowProps) {
+function DeleteButton({ item, onRequestDelete }: RowProps) {
   return (
-    <form action={archiveWorkoutTemplate.bind(null, item.id)} onSubmit={onDeleted}>
-      <ConfirmSubmitButton
-        type="submit"
-        variant="ghost"
-        size="sm"
-        confirmMessage={`Supprimer "${item.name}" ? Elle n'apparaîtra plus dans vos listes, mais l'historique existant sera conservé.`}
-        className="px-2 text-neutral-400 hover:text-red-600"
-        aria-label={`Supprimer ${item.name}`}
-      >
-        <Trash2 className="h-4 w-4" />
-      </ConfirmSubmitButton>
-    </form>
+    <button
+      type="button"
+      onClick={() => onRequestDelete(item)}
+      className="p-2 text-neutral-400 hover:text-red-600"
+      aria-label={`Supprimer ${item.name}`}
+    >
+      <Trash2 className="h-4 w-4" />
+    </button>
   );
 }
 
-function SortableWorkoutRow({ item, onDeleted }: RowProps) {
+function SortableWorkoutRow({ item, onRequestDelete }: RowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
@@ -173,7 +186,7 @@ function SortableWorkoutRow({ item, onDeleted }: RowProps) {
           {item.scheduleLabel ? ` · ${item.scheduleLabel}` : ""}
         </p>
       </div>
-      <DeleteButton item={item} onDeleted={onDeleted} />
+      <DeleteButton item={item} onRequestDelete={onRequestDelete} />
     </li>
   );
 }
@@ -181,7 +194,7 @@ function SortableWorkoutRow({ item, onDeleted }: RowProps) {
 // Rendu avant hydratation (voir le commentaire sur `mounted` plus haut) : même contenu, sans
 // useSortable puisque le drag-and-drop n'est de toute façon pas utilisable avant que React ait
 // attaché ses gestionnaires d'évènements côté client.
-function StaticWorkoutRow({ item, onDeleted }: RowProps) {
+function StaticWorkoutRow({ item, onRequestDelete }: RowProps) {
   return (
     <li className="flex items-center gap-2 rounded-2xl border border-neutral-200 bg-white p-3">
       <span className="text-neutral-300" aria-hidden="true">
@@ -194,7 +207,7 @@ function StaticWorkoutRow({ item, onDeleted }: RowProps) {
           {item.scheduleLabel ? ` · ${item.scheduleLabel}` : ""}
         </p>
       </div>
-      <DeleteButton item={item} onDeleted={onDeleted} />
+      <DeleteButton item={item} onRequestDelete={onRequestDelete} />
     </li>
   );
 }

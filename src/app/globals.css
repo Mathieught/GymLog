@@ -11,3 +11,12 @@ html {
      pixels par rapport aux onglets sans scrollbar — d'où le "saut" en changeant d'onglet. */
   scrollbar-gutter: stable;
 }
+
+/* Safari iOS zoome automatiquement la page quand on touche un champ dont la taille de police est
+   inférieure à 16px (ex. text-sm = 14px, utilisé sur la plupart des champs de l'app). !important
+   pour primer sur ces classes Tailwind déjà appliquées, quel que soit le champ concerné. */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
