@@ -14,3 +14,12 @@ export const getActiveExercises = unstable_cache(
   ["active-exercises"],
   { tags: ["exercises"] }
 );
+
+// Page détail/édition consultée sur (presque) chaque tape sur un exercice : sans cache, chaque
+// visite refaisait l'aller-retour vers la base distante (même symptôme corrigé côté séances, voir
+// getWorkoutTemplateDetail). Même tag que ci-dessus, déjà invalidé par create/update/archiveExercise.
+export const getExerciseDetail = unstable_cache(
+  async (id: string) => prisma.exercise.findUnique({ where: { id } }),
+  ["exercise-detail"],
+  { tags: ["exercises"] }
+);

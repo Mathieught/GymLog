@@ -1,16 +1,16 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { ExerciseEditTrigger } from "@/components/exercises/exercise-edit-trigger";
 import { archiveExercise } from "@/lib/actions/exercises";
+import { getExerciseDetail } from "@/lib/queries/exercises";
 
 export default async function ExerciseDetailPage({
   params,
 }: PageProps<"/exercises/[id]">) {
   const { id } = await params;
-  const exercise = await prisma.exercise.findUnique({ where: { id } });
+  const exercise = await getExerciseDetail(id);
   if (!exercise || exercise.isArchived) notFound();
 
   return (
