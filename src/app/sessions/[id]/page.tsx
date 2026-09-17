@@ -97,10 +97,10 @@ export default async function SessionDetailPage({
                         className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
                       >
                         <span className="text-neutral-500">Série {set.setNumber}</span>
-                        <span className="font-medium">
+                        <span className="font-mono font-medium">
                           {set.actualReps ?? "—"} × {set.actualWeight ?? "—"} kg
                         </span>
-                        {set.completed && <Check className="h-4 w-4 text-neutral-900" />}
+                        {set.completed && <Check className="h-4 w-4 text-accent-deep" />}
                       </li>
                     ))}
                   </ul>
