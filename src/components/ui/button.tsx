@@ -8,7 +8,9 @@ const variantClasses = {
   // Réservé aux confirmations de réussite (ex. séance entièrement complétée) — jamais une action
   // neutre : c'est le seul endroit où l'accent remplit un bouton plutôt que de marquer un état.
   accent: "bg-accent text-accent-contrast hover:brightness-95",
-  danger: "bg-red-50 text-red-700 hover:bg-red-100",
+  // Teinte translucide plutôt qu'un rouge-50 plein (illisible/trop clair sur fond sombre) : la
+  // même transparence fonctionnerait aussi bien sur un fond clair, mais l'app n'en a plus.
+  danger: "bg-red-500/15 text-red-400 hover:bg-red-500/25",
   ghost: "text-neutral-600 hover:bg-neutral-100",
 } as const;
 

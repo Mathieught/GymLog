@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { auth } from "@/lib/auth";
@@ -21,8 +21,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GymLog",
   description: "Suivi de musculation",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "GymLog" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "GymLog" },
   icons: { apple: "/apple-touch-icon.png" },
+};
+
+// Teinte la barre d'état/barre d'adresse (Android, PWA installée) pour qu'elle se fonde dans le
+// fond sombre de l'app plutôt que de rester claire par défaut.
+export const viewport: Viewport = {
+  themeColor: "#131310",
 };
 
 // Données personnelles toujours à jour : pas de pré-rendu statique pour cette app.

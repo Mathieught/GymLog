@@ -120,7 +120,7 @@ export function SetRow({
               // progression de la rangée) ; la corbeille d'une série vierge reste neutre/rouge.
               set.completed
                 ? "text-accent-deep hover:bg-accent-soft active:bg-accent-soft/70"
-                : "text-neutral-400 hover:bg-red-50 hover:text-red-600 active:bg-red-100",
+                : "text-neutral-400 hover:bg-red-500/15 hover:text-red-400 active:bg-red-500/25",
               "disabled:pointer-events-none disabled:opacity-30",
               locked && "ml-auto"
             )}

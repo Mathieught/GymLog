@@ -116,7 +116,7 @@ export function WheelPicker({
             }}
             style={{ height: ITEM_HEIGHT }}
             className={cn(
-              "flex cursor-pointer items-center justify-center text-base tabular-nums transition-colors",
+              "flex cursor-pointer items-center justify-center font-mono text-base tabular-nums transition-colors",
               index === centerIndex ? "font-semibold text-neutral-900" : "text-neutral-400"
             )}
           >
