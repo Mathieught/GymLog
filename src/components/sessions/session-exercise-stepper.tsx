@@ -1,6 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Check, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MUSCLE_ICONS } from "@/components/exercises/muscle-group-picker";
+
+const FLASH_VISIBLE_MS = 1200;
+const FLASH_FADE_MS = 300;
 
 type StepperGroup = {
   exerciseId: string;
@@ -52,5 +58,40 @@ export function SessionExerciseStepper({
         );
       })}
     </ol>
+  );
+}
+
+// Remonte (via la key sur exerciseId côté appelant, voir SessionTracker) à chaque changement
+// d'exercice, ce qui réarme naturellement l'affichage temporaire sans setState synchrone dans un
+// effect du parent. Purement informatif (non cliquable) : juste de quoi se repérer un instant.
+// Rendue dans le `below` du header (voir PageHeader) — fait donc partie du même bloc sticky, et
+// disparaît proprement une fois démontée sans jamais laisser de blanc réservé sous le header.
+export function SessionStepperFlash({
+  groups,
+  activeExerciseId,
+}: {
+  groups: StepperGroup[];
+  activeExerciseId: string;
+}) {
+  const [phase, setPhase] = useState<"visible" | "fading" | "hidden">("visible");
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setPhase("fading"), FLASH_VISIBLE_MS);
+    const hideTimer = setTimeout(() => setPhase("hidden"), FLASH_VISIBLE_MS + FLASH_FADE_MS);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
+
+  if (phase === "hidden") return null;
+
+  return (
+    <div
+      className={cn("transition-opacity duration-300", phase === "visible" ? "opacity-100" : "opacity-0")}
+      aria-hidden={phase !== "visible"}
+    >
+      <SessionExerciseStepper groups={groups} activeExerciseId={activeExerciseId} />
+    </div>
   );
 }

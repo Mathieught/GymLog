@@ -18,6 +18,7 @@ export type LocalSession = {
   workoutTemplateId: string;
   name: string;
   completedAt: string | null;
+  startedAt: string | null;
   // Instantané des exercices du programme au démarrage de la séance : source des groupes
   // affichés (même logique que session.workoutTemplate.exercises côté serveur).
   exercises: { exerciseId: string; exerciseOrder: number; exercise: LocalExercise }[];

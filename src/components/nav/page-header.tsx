@@ -8,6 +8,7 @@ export function PageHeader({
   backHref,
   title,
   right,
+  below,
   className,
 }: {
   backHref?: string;
@@ -17,6 +18,11 @@ export function PageHeader({
   // grand titre dans le contenu.
   title?: ReactNode;
   right?: ReactNode;
+  // Contenu additionnel sous la ligne principale, dans le même bloc sticky (ex : le fil de suivi
+  // des exercices d'une séance) — reste donc ancré juste sous le header sans jamais réserver
+  // d'espace une fois retiré : il fait partie du même élément sticky, pas d'un `fixed` séparé à
+  // repositionner à la main pour chaque hauteur d'encoche.
+  below?: ReactNode;
   className?: string;
 }) {
   return (
@@ -46,6 +52,7 @@ export function PageHeader({
         )}
         <div className="flex shrink-0 items-center gap-2">{right ?? (title !== undefined ? null : <HeaderOptions />)}</div>
       </div>
+      {below && <div className="mx-auto max-w-lg px-4 pb-2">{below}</div>}
     </header>
   );
 }

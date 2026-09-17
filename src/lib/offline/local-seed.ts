@@ -10,6 +10,7 @@ export function seedToLocalSession(seed: SessionSeed, sessionId: string): LocalS
     workoutTemplateId: seed.workoutTemplateId,
     name: seed.templateName,
     completedAt: seed.completedAt,
+    startedAt: seed.startedAt,
     exercises: seed.groups.map((g) => ({
       exerciseId: g.exerciseId,
       exerciseOrder: g.exerciseOrder,
@@ -53,6 +54,7 @@ export async function localSessionToSeed(local: LocalSession): Promise<SessionSe
     groups,
     history,
     completedAt: local.completedAt,
+    startedAt: local.startedAt,
   };
 }
 
@@ -75,5 +77,6 @@ export function templateSnapshotToSeed(template: TemplateSnapshot): SessionSeed 
       })),
     history: {},
     completedAt: null,
+    startedAt: null,
   };
 }

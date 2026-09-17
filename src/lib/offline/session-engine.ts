@@ -15,6 +15,10 @@ export type SessionSeed = {
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
   completedAt: string | null;
+  // null tant qu'aucune séance n'existe encore (aperçu) — voir addSet/logSet, qui la fixent au
+  // moment même où ils créent la séance locale, pour que le chrono (voir SessionTimer) démarre
+  // pile à la première série plutôt qu'à un chargement de page ultérieur.
+  startedAt: string | null;
 };
 
 type EngineState = {
@@ -22,6 +26,7 @@ type EngineState = {
   completedAt: string | null;
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
+  startedAt: string | null;
 };
 
 type MutationResult = { next: EngineState; ops: OutboxOp[]; sessionId: string | null } | null;
@@ -36,6 +41,7 @@ export function useSessionEngine(seed: SessionSeed) {
     completedAt: seed.completedAt,
     groups: seed.groups,
     history: seed.history,
+    startedAt: seed.startedAt,
   }));
 
   // Toujours la version la plus fraîche de l'état pour les handlers (évite les closures périmées
@@ -65,6 +71,7 @@ export function useSessionEngine(seed: SessionSeed) {
           completedAt: local.completedAt,
           groups: localSessionToGroups(local),
           history: seed.history,
+          startedAt: local.startedAt,
         });
       } else {
         await putLocalSession(seedToLocalSession(seed, seed.sessionId));
@@ -100,7 +107,10 @@ export function useSessionEngine(seed: SessionSeed) {
 
       if (sessionId) {
         await putLocalSession(
-          seedToLocalSession({ ...seed, sessionId, groups: next.groups, completedAt: next.completedAt }, sessionId)
+          seedToLocalSession(
+            { ...seed, sessionId, groups: next.groups, completedAt: next.completedAt, startedAt: next.startedAt },
+            sessionId
+          )
         );
         if (previousSessionId !== sessionId) {
           await setMeta("activeSessionId", sessionId);
@@ -122,6 +132,7 @@ export function useSessionEngine(seed: SessionSeed) {
         const setId = crypto.randomUUID();
         const isNewSession = current.sessionId === null;
         const sessionId = current.sessionId ?? crypto.randomUUID();
+        const startedAt = current.startedAt ?? new Date().toISOString();
 
         const newSet: SessionRowSet = {
           id: setId,
@@ -136,7 +147,7 @@ export function useSessionEngine(seed: SessionSeed) {
         );
 
         return {
-          next: { ...current, sessionId, groups },
+          next: { ...current, sessionId, groups, startedAt },
           ops: [
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
@@ -158,6 +169,7 @@ export function useSessionEngine(seed: SessionSeed) {
         const setId = crypto.randomUUID();
         const isNewSession = current.sessionId === null;
         const sessionId = current.sessionId ?? crypto.randomUUID();
+        const startedAt = current.startedAt ?? new Date().toISOString();
 
         const newSet: SessionRowSet = { id: setId, setNumber, actualWeight, actualReps, completed: true };
         const groups = current.groups.map((g) =>
@@ -165,7 +177,7 @@ export function useSessionEngine(seed: SessionSeed) {
         );
 
         return {
-          next: { ...current, sessionId, groups },
+          next: { ...current, sessionId, groups, startedAt },
           ops: [
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
@@ -196,8 +208,9 @@ export function useSessionEngine(seed: SessionSeed) {
     [applyMutation]
   );
 
-  // Annule le résultat d'une série déjà validée : redevient une série vierge (pré-remplie par
-  // l'historique côté UI, voir SetRow), sans changer sa place ni renuméroter les autres — à la
+  // Annule le résultat d'une série déjà validée : redevient une série vierge (voir SetRow, qui
+  // vide aussi son affichage local plutôt que de re-suggérer l'historique — sinon la réinitialisation
+  // a l'air de n'avoir rien fait), sans changer sa place ni renuméroter les autres — à la
   // différence de removeSet, qui retire vraiment la série de la liste.
   const resetSet = useCallback(
     (setId: string) => {
@@ -260,6 +273,7 @@ export function useSessionEngine(seed: SessionSeed) {
     completedAt: state.completedAt,
     groups: state.groups,
     history: state.history,
+    startedAt: state.startedAt,
     addSet,
     logSet,
     updateSet,

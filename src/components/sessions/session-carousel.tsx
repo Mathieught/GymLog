@@ -2,17 +2,14 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { SessionExerciseStepper } from "@/components/sessions/session-exercise-stepper";
 import { SetRow } from "@/components/sessions/set-row";
 import { PreviousSetRow } from "@/components/sessions/previous-set-row";
 import { SessionCompletionPrompt } from "@/components/sessions/session-completion-prompt";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
-import { cn } from "@/lib/utils";
 
 const SWIPE_THRESHOLD_PX = 60;
 const DEADZONE_PX = 8;
-const INDICATOR_DURATION_MS = 1200;
 
 // Toutes les données (séries + historique) de tous les exercices sont déjà en mémoire côté
 // client : changer d'exercice — par swipe ou par les boutons Précédent/Suivant — ne déclenche
@@ -28,6 +25,7 @@ export function SessionCarousel({
   history,
   initialActiveExerciseId,
   templateName,
+  onActiveExerciseChange,
   onAddSet,
   onLogSet,
   onUpdateSet,
@@ -49,6 +47,10 @@ export function SessionCarousel({
   // l'exercice quand il correspond au nom de la séance (ex. séance "Dos" contenant un exercice
   // ciblant "Dos") — voir ExercisePanel.
   templateName: string;
+  // Notifie le parent (SessionTracker) du changement d'exercice actif : le fil de suivi vit
+  // maintenant dans le header (voir PageHeader `below`), pas ici, car ce composant ne connaît que
+  // le panneau visible, pas la zone sticky au-dessus de lui.
+  onActiveExerciseChange?: (exerciseId: string) => void;
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
@@ -114,6 +116,11 @@ export function SessionCarousel({
     window.history.replaceState(null, "", url);
   }, [activeIndex, basePath, groups]);
 
+  useEffect(() => {
+    onActiveExerciseChange?.(groups[activeIndex].exerciseId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex, groups]);
+
   function goTo(index: number) {
     setActiveIndex(Math.min(Math.max(index, 0), groups.length - 1));
   }
@@ -172,12 +179,8 @@ export function SessionCarousel({
     }
   }
 
-  const activeGroup = groups[activeIndex];
-
   return (
     <div className="relative">
-      <StepperFlash key={activeGroup.exerciseId} groups={groups} activeExerciseId={activeGroup.exerciseId} />
-
       <div
         className="relative touch-pan-y select-none overflow-hidden"
         onPointerDown={handlePointerDown}
@@ -229,48 +232,6 @@ export function SessionCarousel({
           onContinue={() => setShowCompletionPrompt(false)}
         />
       )}
-    </div>
-  );
-}
-
-// Remonte (via la key sur exerciseId côté appelant) à chaque changement d'exercice, ce qui
-// réarme naturellement l'affichage temporaire sans setState synchrone dans un effect du parent.
-// Purement informatif (non cliquable) : juste de quoi se repérer un instant. `fixed` en bas de
-// l'écran (plutôt que l'ancien `sticky` en haut, qui restait dans le flux même invisible et
-// laissait un grand blanc entre l'en-tête et l'exercice) : indépendant du scroll et du contenu du
-// panneau actif, et ne réserve aucun espace une fois masqué.
-function StepperFlash({
-  groups,
-  activeExerciseId,
-}: {
-  groups: SessionRowGroup[];
-  activeExerciseId: string;
-}) {
-  const [phase, setPhase] = useState<"visible" | "fading" | "hidden">("visible");
-
-  useEffect(() => {
-    const fadeTimer = setTimeout(() => setPhase("fading"), INDICATOR_DURATION_MS);
-    const hideTimer = setTimeout(() => setPhase("hidden"), INDICATOR_DURATION_MS + 300);
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
-  }, []);
-
-  if (phase === "hidden") return null;
-
-  return (
-    <div
-      className={cn(
-        "pointer-events-none fixed inset-x-0 z-20 flex justify-center transition-opacity duration-300",
-        phase === "visible" ? "opacity-100" : "opacity-0"
-      )}
-      style={{ bottom: "max(env(safe-area-inset-bottom), 1rem)" }}
-      aria-hidden={phase !== "visible"}
-    >
-      <div className="rounded-xl border border-neutral-200 bg-white/95 p-2 shadow-md backdrop-blur">
-        <SessionExerciseStepper groups={groups} activeExerciseId={activeExerciseId} />
-      </div>
     </div>
   );
 }

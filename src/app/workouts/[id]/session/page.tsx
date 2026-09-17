@@ -49,6 +49,7 @@ export default async function WorkoutTemplateSessionPreviewPage({
     groups,
     history,
     completedAt: null,
+    startedAt: null,
   };
 
   return (

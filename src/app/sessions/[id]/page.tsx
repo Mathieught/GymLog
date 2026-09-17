@@ -131,6 +131,7 @@ export default async function SessionDetailPage({
     groups,
     history,
     completedAt: null,
+    startedAt: session.startedAt.toISOString(),
   };
 
   return (

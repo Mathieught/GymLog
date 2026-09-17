@@ -5,6 +5,7 @@ import { RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type SetForRow = {
   id: string;
@@ -46,6 +47,7 @@ export function SetRow({
   onRemove: (setId: string) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [pendingRemove, setPendingRemove] = useState(false);
   const [weight, setWeight] = useState(set.actualWeight ?? previousSet?.actualWeight ?? 0);
   const [reps, setReps] = useState(set.actualReps ?? previousSet?.actualReps ?? 0);
 
@@ -55,20 +57,21 @@ export function SetRow({
   }
 
   // Deux gestes différents derrière ce bouton, selon qu'il y a déjà un résultat à perdre :
-  // - série déjà validée : on annule juste le résultat (retour à l'historique, ou vierge s'il n'y
-  //   en a pas) — la série reste à sa place, prête à être resaisie. Pas de confirmation : c'est
-  //   réversible, il suffit de la resaisir.
+  // - série déjà validée : on annule le résultat et on vide vraiment la série (pas de retour à
+  //   l'historique ici — sinon le nouvel affichage ressemble à s'y méprendre à l'ancienne valeur
+  //   encore présente, et la réinitialisation a l'air de n'avoir rien fait). La série reste à sa
+  //   place, prête à être resaisie depuis zéro. Pas de confirmation : c'est réversible, il suffit
+  //   de la resaisir.
   // - série jamais renseignée (juste ajoutée) : rien à perdre en valeur, mais la retirer change la
   //   structure de la séance (renumérotation) — ça, ça se confirme.
   function handleAction() {
     if (set.completed) {
-      setWeight(previousSet?.actualWeight ?? 0);
-      setReps(previousSet?.actualReps ?? 0);
+      setWeight(0);
+      setReps(0);
       onReset(set.id);
       return;
     }
-    if (!window.confirm("Supprimer cette série de la séance ?")) return;
-    onRemove(set.id);
+    setPendingRemove(true);
   }
 
   return (
@@ -134,6 +137,17 @@ export function SetRow({
           onChangeReps={setReps}
           onClose={() => setSheetOpen(false)}
           onValidate={validate}
+        />
+      )}
+
+      {pendingRemove && (
+        <ConfirmDialog
+          message="Supprimer cette série de la séance ?"
+          onConfirm={() => {
+            setPendingRemove(false);
+            onRemove(set.id);
+          }}
+          onCancel={() => setPendingRemove(false)}
         />
       )}
     </>

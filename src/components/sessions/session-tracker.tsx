@@ -7,6 +7,8 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SessionCarousel } from "@/components/sessions/session-carousel";
+import { SessionStepperFlash } from "@/components/sessions/session-exercise-stepper";
+import { SessionTimer } from "@/components/sessions/session-timer";
 import { useSessionEngine, type SessionSeed } from "@/lib/offline/session-engine";
 
 // Point d'entrée unique du suivi de séance : possède le moteur local (voir
@@ -30,6 +32,10 @@ export function SessionTracker({
   const engine = useSessionEngine(seed);
   const { sessionId, completedAt, groups, history } = engine;
   const [pendingComplete, setPendingComplete] = useState(false);
+  // Reflète l'exercice affiché par le carousel (voir onActiveExerciseChange) : le fil de suivi
+  // vit maintenant dans le header (below), un cran au-dessus du carousel, donc ne peut pas lire
+  // son état interne directement.
+  const [currentExerciseId, setCurrentExerciseId] = useState(activeExerciseId);
 
   const basePath = sessionId ? `/sessions/${sessionId}` : `/workouts/${seed.workoutTemplateId}/session`;
 
@@ -64,13 +70,17 @@ export function SessionTracker({
           sessionId && completedAt ? (
             <p className="text-xs text-neutral-400">Terminée</p>
           ) : sessionId ? (
-            <Button type="button" variant="secondary" size="sm" onClick={() => setPendingComplete(true)}>
-              Terminer
-            </Button>
+            <div className="flex items-center gap-2">
+              {engine.startedAt && <SessionTimer startedAt={engine.startedAt} />}
+              <Button type="button" variant="secondary" size="sm" onClick={() => setPendingComplete(true)}>
+                Terminer
+              </Button>
+            </div>
           ) : (
             <p className="text-xs text-neutral-400">À démarrer</p>
           )
         }
+        below={<SessionStepperFlash key={currentExerciseId} groups={groups} activeExerciseId={currentExerciseId} />}
       />
       <Container className="max-w-2xl">
         <SessionCarousel
@@ -82,6 +92,7 @@ export function SessionTracker({
           history={history}
           initialActiveExerciseId={activeExerciseId}
           templateName={seed.templateName}
+          onActiveExerciseChange={setCurrentExerciseId}
           onAddSet={engine.addSet}
           onLogSet={engine.logSet}
           onUpdateSet={engine.updateSet}
