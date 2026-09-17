@@ -27,7 +27,11 @@ export async function GET() {
       exercises: template.exercises.map((workoutExercise, exerciseOrder) => ({
         exerciseId: workoutExercise.exerciseId,
         exerciseOrder,
-        exercise: { name: workoutExercise.exercise.name, muscle: workoutExercise.exercise.muscle },
+        exercise: {
+          name: workoutExercise.exercise.name,
+          muscle: workoutExercise.exercise.muscle,
+          targetSets: workoutExercise.exercise.targetSets,
+        },
       })),
     })),
   });
