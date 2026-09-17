@@ -66,7 +66,15 @@ function NavItem({
         active ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:bg-white/60"
       )}
     >
-      <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
+      <span className="relative">
+        <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
+        {/* Seul marqueur de couleur de la barre du bas : l'onglet actif se distinguait déjà par la
+            pastille blanche, ce point n'ajoute qu'un repère de progression cohérent avec le reste
+            de l'accent (chrono, série validée), pas une redite du "actif". */}
+        {active && (
+          <span className="absolute -top-0.5 -right-0.5 h-[5px] w-[5px] rounded-full bg-accent" />
+        )}
+      </span>
       <span className="text-[9px] font-medium leading-none">{label}</span>
     </Link>
   );

@@ -33,7 +33,7 @@ export function SessionTimer({ startedAt }: { startedAt: string }) {
   if (elapsedMs === null) return null;
 
   return (
-    <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium tabular-nums text-neutral-600">
+    <span className="flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 font-mono text-xs font-medium tabular-nums text-accent-deep">
       <Timer className="h-3.5 w-3.5" aria-hidden="true" />
       {formatElapsed(elapsedMs)}
     </span>

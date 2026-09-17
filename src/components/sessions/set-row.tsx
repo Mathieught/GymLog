@@ -88,7 +88,7 @@ export function SetRow({
             {set.setNumber}
           </span>
           {locked ? (
-            <span className="flex-1 text-sm font-medium tabular-nums text-neutral-400">
+            <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-400">
               {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
               <span className="text-xs font-normal text-neutral-300">kg</span>
             </span>
@@ -97,7 +97,7 @@ export function SetRow({
               type="button"
               onClick={() => setSheetOpen(true)}
               className={cn(
-                "h-full flex-1 text-left text-sm font-medium tabular-nums outline-none",
+                "h-full flex-1 text-left font-mono text-sm font-medium tabular-nums outline-none",
                 // Grisé tant que ce n'est pas validé cette séance (série vierge, ou tout juste
                 // réinitialisée) : sans ça, la suggestion pré-remplie ressemble à s'y méprendre à
                 // un résultat déjà enregistré — surtout gênant juste après une suppression/reset
@@ -115,10 +115,12 @@ export function SetRow({
             onClick={handleAction}
             disabled={!canRemove}
             className={cn(
-              "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-400",
+              "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+              // L'icône d'annulation d'une série déjà validée porte l'accent (seul indicateur de
+              // progression de la rangée) ; la corbeille d'une série vierge reste neutre/rouge.
               set.completed
-                ? "hover:bg-neutral-100 hover:text-neutral-700 active:bg-neutral-200"
-                : "hover:bg-red-50 hover:text-red-600 active:bg-red-100",
+                ? "text-accent-deep hover:bg-accent-soft active:bg-accent-soft/70"
+                : "text-neutral-400 hover:bg-red-50 hover:text-red-600 active:bg-red-100",
               "disabled:pointer-events-none disabled:opacity-30",
               locked && "ml-auto"
             )}

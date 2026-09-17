@@ -2,6 +2,14 @@
 
 @theme inline {
   --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Seul accent de l'app (voir Button "accent" et son usage ciblé : progression, état actif,
+     chrono) — jamais une couleur de base, toujours ce même vert sur toute l'app. */
+  --color-accent: #a6d608;
+  --color-accent-deep: #5c7209;
+  --color-accent-soft: #eef6ce;
+  --color-accent-contrast: #16210a;
 }
 
 html {

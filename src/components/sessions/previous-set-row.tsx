@@ -48,7 +48,7 @@ export function PreviousSetRow({
           <span className="w-5 shrink-0 text-center text-sm font-medium text-neutral-300">
             {previousSet.setNumber}
           </span>
-          <span className="flex-1 text-sm font-medium tabular-nums text-neutral-300">
+          <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-300">
             {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
             <span className="text-xs font-normal text-neutral-300">kg</span>
           </span>
@@ -72,7 +72,7 @@ export function PreviousSetRow({
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
-            className="h-full flex-1 text-left text-sm font-medium tabular-nums text-neutral-400 outline-none"
+            className="h-full flex-1 text-left font-mono text-sm font-medium tabular-nums text-neutral-400 outline-none"
           >
             {reps} <span className="text-xs font-normal text-neutral-400">×</span> {weight}{" "}
             <span className="text-xs font-normal text-neutral-400">kg</span>

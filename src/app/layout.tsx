@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { auth } from "@/lib/auth";
 import { BottomNav } from "@/components/nav/bottom-nav";
@@ -8,6 +8,13 @@ import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+// Réservée aux chiffres qui s'alignent en colonnes (poids, répétitions, chrono, dates) — voir
+// font-mono ciblé dans SetRow/PreviousSetRow/SessionTimer/SetHistoryRecap, jamais le corps de texte.
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -25,7 +32,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
 
   return (
-    <html lang="fr" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full bg-neutral-50 font-sans text-neutral-900">
         <SerwistProvider swUrl="/serwist/sw.js">
           <OfflineSyncManager isAuthenticated={!!session?.user} />

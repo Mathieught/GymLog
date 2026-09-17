@@ -20,7 +20,7 @@ export function SetHistoryRecap({ entries }: { entries: HistoryEntry[] }) {
       {entries.map((entry, index) => (
         <li
           key={index}
-          className="flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[11px] tabular-nums text-neutral-500"
+          className="flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-neutral-500"
         >
           <span className="font-medium text-neutral-600">
             {entry.actualReps ?? "—"}×{entry.actualWeight ?? "—"}kg
