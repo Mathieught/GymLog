@@ -134,7 +134,5 @@ export default async function SessionDetailPage({
     startedAt: session.startedAt.toISOString(),
   };
 
-  return (
-    <SessionTracker backHref="/history" seed={seed} activeExerciseId={activeExerciseId} allowRemove />
-  );
+  return <SessionTracker backHref="/history" seed={seed} activeExerciseId={activeExerciseId} />;
 }

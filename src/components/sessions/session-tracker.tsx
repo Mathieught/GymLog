@@ -21,12 +21,10 @@ export function SessionTracker({
   backHref,
   seed,
   activeExerciseId,
-  allowRemove,
 }: {
   backHref: string;
   seed: SessionSeed;
   activeExerciseId: string;
-  allowRemove: boolean;
 }) {
   const router = useRouter();
   const engine = useSessionEngine(seed);
@@ -86,7 +84,7 @@ export function SessionTracker({
         <SessionCarousel
           basePath={basePath}
           sessionId={sessionId}
-          allowRemove={allowRemove && !completedAt}
+          allowRemove={!completedAt}
           readOnly={!!completedAt}
           groups={groups}
           history={history}

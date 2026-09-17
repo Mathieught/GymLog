@@ -129,7 +129,6 @@ export default function OfflineFallbackPage() {
       backHref="/history"
       seed={state.seed}
       activeExerciseId={state.seed.groups[0]?.exerciseId ?? ""}
-      allowRemove
     />
   );
 }

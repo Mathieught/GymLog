@@ -57,7 +57,6 @@ export default async function WorkoutTemplateSessionPreviewPage({
       backHref={`/workouts/${template.id}`}
       seed={seed}
       activeExerciseId={activeExerciseId}
-      allowRemove={false}
     />
   );
 }
