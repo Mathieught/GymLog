@@ -26,10 +26,20 @@ export type SessionRow = {
 // Les séries se remplissent dans l'ordre : une série n'est modifiable que si la précédente a été
 // validée (série 1 toujours ouverte). Le plus récent de l'historique sert de suggestion de valeurs
 // (prefill) ; l'historique complet (jusqu'à 3 séances) alimente le petit récap sous chaque série.
-export function buildSessionRows(group: SessionRowGroup, history: PreviousPerformance[]): SessionRow[] {
+//
+// `touched` (voir touchedExerciseIds dans session-engine.ts) coupe l'extension par l'historique dès
+// que l'exercice a eu au moins une vraie série cette séance : sans ça, supprimer sa dernière série
+// la fait aussitôt "réapparaître" grisée sous forme de suggestion, comme si la suppression n'avait
+// rien fait. Avant ce premier contact, l'historique sert au contraire à proposer un démarrage
+// rapide (voir PreviousSetRow) avec les valeurs de la dernière fois.
+export function buildSessionRows(
+  group: SessionRowGroup,
+  history: PreviousPerformance[],
+  touched: boolean
+): SessionRow[] {
   const previousPerformance = history[0];
   const previousSets = previousPerformance?.sets ?? [];
-  const rowCount = Math.max(group.sets.length, previousSets.length);
+  const rowCount = touched ? group.sets.length : Math.max(group.sets.length, previousSets.length);
 
   return Array.from({ length: rowCount }, (_, i) => i + 1).reduce<SessionRow[]>((acc, setNumber) => {
     const current = group.sets.find((s) => s.setNumber === setNumber);

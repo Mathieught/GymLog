@@ -27,6 +27,11 @@ type EngineState = {
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
   startedAt: string | null;
+  // Exercices ayant eu au moins une série réelle cette séance, même si elles ont toutes été
+  // supprimées depuis — jamais retiré par removeSet (voir buildSessionRows, qui s'en sert pour ne
+  // plus jamais re-suggérer une série d'après l'historique une fois l'exercice entamé : sinon
+  // supprimer sa dernière série la fait aussitôt réapparaître grisée, comme si de rien n'était).
+  touchedExerciseIds: string[];
 };
 
 type MutationResult = { next: EngineState; ops: OutboxOp[]; sessionId: string | null } | null;
@@ -42,6 +47,7 @@ export function useSessionEngine(seed: SessionSeed) {
     groups: seed.groups,
     history: seed.history,
     startedAt: seed.startedAt,
+    touchedExerciseIds: seed.groups.filter((g) => g.sets.length > 0).map((g) => g.exerciseId),
   }));
 
   // Toujours la version la plus fraîche de l'état pour les handlers (évite les closures périmées
@@ -66,12 +72,14 @@ export function useSessionEngine(seed: SessionSeed) {
       });
       if (cancelled) return;
       if (local && hasPendingOpsForSession) {
+        const groups = localSessionToGroups(local);
         setState({
           sessionId: local.id,
           completedAt: local.completedAt,
-          groups: localSessionToGroups(local),
+          groups,
           history: seed.history,
           startedAt: local.startedAt,
+          touchedExerciseIds: groups.filter((g) => g.sets.length > 0).map((g) => g.exerciseId),
         });
       } else {
         await putLocalSession(seedToLocalSession(seed, seed.sessionId));
@@ -145,9 +153,12 @@ export function useSessionEngine(seed: SessionSeed) {
         const groups = current.groups.map((g) =>
           g.exerciseId === exerciseId ? { ...g, sets: [...g.sets, newSet] } : g
         );
+        const touchedExerciseIds = current.touchedExerciseIds.includes(exerciseId)
+          ? current.touchedExerciseIds
+          : [...current.touchedExerciseIds, exerciseId];
 
         return {
-          next: { ...current, sessionId, groups, startedAt },
+          next: { ...current, sessionId, groups, startedAt, touchedExerciseIds },
           ops: [
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
@@ -175,9 +186,12 @@ export function useSessionEngine(seed: SessionSeed) {
         const groups = current.groups.map((g) =>
           g.exerciseId === exerciseId ? { ...g, sets: [...g.sets, newSet] } : g
         );
+        const touchedExerciseIds = current.touchedExerciseIds.includes(exerciseId)
+          ? current.touchedExerciseIds
+          : [...current.touchedExerciseIds, exerciseId];
 
         return {
-          next: { ...current, sessionId, groups, startedAt },
+          next: { ...current, sessionId, groups, startedAt, touchedExerciseIds },
           ops: [
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
@@ -274,6 +288,7 @@ export function useSessionEngine(seed: SessionSeed) {
     groups: state.groups,
     history: state.history,
     startedAt: state.startedAt,
+    touchedExerciseIds: state.touchedExerciseIds,
     addSet,
     logSet,
     updateSet,

@@ -88,6 +88,7 @@ export function SessionTracker({
           readOnly={!!completedAt}
           groups={groups}
           history={history}
+          touchedExerciseIds={engine.touchedExerciseIds}
           initialActiveExerciseId={activeExerciseId}
           templateName={seed.templateName}
           onActiveExerciseChange={setCurrentExerciseId}

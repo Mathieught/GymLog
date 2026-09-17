@@ -23,6 +23,7 @@ export function SessionCarousel({
   readOnly,
   groups,
   history,
+  touchedExerciseIds,
   initialActiveExerciseId,
   templateName,
   onActiveExerciseChange,
@@ -42,6 +43,9 @@ export function SessionCarousel({
   readOnly: boolean;
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
+  // Exercices ayant eu une vraie série cette séance (voir touchedExerciseIds dans
+  // session-engine.ts) : coupe les suggestions d'historique pour ceux-là dans ExercisePanel.
+  touchedExerciseIds: string[];
   initialActiveExerciseId: string;
   // Nom de la séance (déjà affiché dans l'en-tête) : sert à ne pas répéter le muscle ciblé de
   // l'exercice quand il correspond au nom de la séance (ex. séance "Dos" contenant un exercice
@@ -78,7 +82,9 @@ export function SessionCarousel({
     // encore validées cette séance), pas juste de celles déjà enregistrées : sinon, valider
     // l'avant-dernière série d'un exercice qui en propose une de plus déclenche la popup trop tôt.
     const allDone = groups.every((g) => {
-      const rows = buildSessionRows(g, history[g.exerciseId] ?? []);
+      // false volontaire ici (pas touchedExerciseIds) : "Terminé" doit continuer à tenir compte
+      // des séries encore seulement suggérées par l'historique, indépendamment de l'affichage.
+      const rows = buildSessionRows(g, history[g.exerciseId] ?? [], false);
       return rows.length > 0 && rows.every((row) => row.current?.completed === true);
     });
     if (sessionId && !readOnly && allDone) {
@@ -207,6 +213,7 @@ export function SessionCarousel({
               <ExercisePanel
                 group={group}
                 history={history[group.exerciseId] ?? []}
+                touched={touchedExerciseIds.includes(group.exerciseId)}
                 allowRemove={allowRemove}
                 readOnly={readOnly}
                 templateName={templateName}
@@ -251,6 +258,7 @@ export function SessionCarousel({
 function ExercisePanel({
   group,
   history,
+  touched,
   allowRemove,
   readOnly,
   templateName,
@@ -262,6 +270,7 @@ function ExercisePanel({
 }: {
   group: SessionRowGroup;
   history: PreviousPerformance[];
+  touched: boolean;
   allowRemove: boolean;
   readOnly: boolean;
   templateName: string;
@@ -271,7 +280,7 @@ function ExercisePanel({
   onResetSet: (setId: string) => void;
   onRemoveSet: (setId: string) => void;
 }) {
-  const rows = buildSessionRows(group, history);
+  const rows = buildSessionRows(group, history, touched);
   // Le nom de la séance est déjà affiché juste au-dessus (en-tête) : ne pas répéter un muscle qui
   // le reprend mot pour mot (ex. séance "Dos" listant un exercice ciblant "Dos"). Les autres
   // muscles ciblés par l'exercice restent affichés normalement.
