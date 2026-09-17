@@ -96,7 +96,14 @@ export function SetRow({
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
-              className="h-full flex-1 text-left text-sm font-medium tabular-nums outline-none"
+              className={cn(
+                "h-full flex-1 text-left text-sm font-medium tabular-nums outline-none",
+                // Grisé tant que ce n'est pas validé cette séance (série vierge, ou tout juste
+                // réinitialisée) : sans ça, la suggestion pré-remplie ressemble à s'y méprendre à
+                // un résultat déjà enregistré — surtout gênant juste après une suppression/reset
+                // dont la valeur retombe par coïncidence sur celle de l'historique.
+                !set.completed && "text-neutral-400"
+              )}
             >
               {reps} <span className="text-xs font-normal text-neutral-400">×</span> {weight}{" "}
               <span className="text-xs font-normal text-neutral-400">kg</span>

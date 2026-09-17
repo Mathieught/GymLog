@@ -72,7 +72,7 @@ export function PreviousSetRow({
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
-            className="h-full flex-1 text-left text-sm font-medium tabular-nums outline-none"
+            className="h-full flex-1 text-left text-sm font-medium tabular-nums text-neutral-400 outline-none"
           >
             {reps} <span className="text-xs font-normal text-neutral-400">×</span> {weight}{" "}
             <span className="text-xs font-normal text-neutral-400">kg</span>
