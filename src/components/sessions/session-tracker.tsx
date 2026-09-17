@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
-import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SessionCarousel } from "@/components/sessions/session-carousel";
 import { useSessionEngine, type SessionSeed } from "@/lib/offline/session-engine";
 
@@ -27,12 +29,18 @@ export function SessionTracker({
   const router = useRouter();
   const engine = useSessionEngine(seed);
   const { sessionId, completedAt, groups, history } = engine;
+  const [pendingComplete, setPendingComplete] = useState(false);
 
   const basePath = sessionId ? `/sessions/${sessionId}` : `/workouts/${seed.workoutTemplateId}/session`;
 
   function handleComplete() {
     engine.completeSession();
     router.push("/history");
+  }
+
+  function confirmComplete() {
+    setPendingComplete(false);
+    handleComplete();
   }
 
   if (groups.length === 0) {
@@ -56,15 +64,9 @@ export function SessionTracker({
           sessionId && completedAt ? (
             <p className="text-xs text-neutral-400">Terminée</p>
           ) : sessionId ? (
-            <ConfirmSubmitButton
-              type="button"
-              variant="secondary"
-              size="sm"
-              confirmMessage="Terminer la séance ? Vous ne pourrez plus modifier les séries après."
-              onClick={handleComplete}
-            >
+            <Button type="button" variant="secondary" size="sm" onClick={() => setPendingComplete(true)}>
               Terminer
-            </ConfirmSubmitButton>
+            </Button>
           ) : (
             <p className="text-xs text-neutral-400">À démarrer</p>
           )
@@ -88,6 +90,15 @@ export function SessionTracker({
           onCompleteSession={handleComplete}
         />
       </Container>
+
+      {pendingComplete && (
+        <ConfirmDialog
+          message="Terminer la séance ? Vous ne pourrez plus modifier les séries après."
+          confirmLabel="Terminer"
+          onConfirm={confirmComplete}
+          onCancel={() => setPendingComplete(false)}
+        />
+      )}
     </>
   );
 }

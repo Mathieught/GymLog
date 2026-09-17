@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
-import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { ExerciseEditTrigger } from "@/components/exercises/exercise-edit-trigger";
-import { archiveExercise } from "@/lib/actions/exercises";
+import { ExerciseDeleteButton } from "@/components/exercises/exercise-delete-button";
 import { getExerciseDetail } from "@/lib/queries/exercises";
 
 export default async function ExerciseDetailPage({
@@ -44,16 +43,9 @@ export default async function ExerciseDetailPage({
           séances enregistrées.
         </p>
 
-        <form action={archiveExercise.bind(null, exercise.id)} className="mt-8">
-          <ConfirmSubmitButton
-            type="submit"
-            variant="danger"
-            size="sm"
-            confirmMessage={`Supprimer "${exercise.name}" ? Il n'apparaîtra plus dans vos listes, mais l'historique existant sera conservé.`}
-          >
-            Supprimer l&apos;exercice
-          </ConfirmSubmitButton>
-        </form>
+        <div className="mt-8">
+          <ExerciseDeleteButton exerciseId={exercise.id} exerciseName={exercise.name} />
+        </div>
       </Container>
     </>
   );
