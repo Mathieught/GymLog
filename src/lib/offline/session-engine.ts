@@ -27,11 +27,12 @@ type EngineState = {
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
   startedAt: string | null;
-  // Exercices ayant eu au moins une série réelle cette séance, même si elles ont toutes été
-  // supprimées depuis — jamais retiré par removeSet (voir buildSessionRows, qui s'en sert pour ne
-  // plus jamais re-suggérer une série d'après l'historique une fois l'exercice entamé : sinon
-  // supprimer sa dernière série la fait aussitôt réapparaître grisée, comme si de rien n'était).
-  touchedExerciseIds: string[];
+  // Nombre de séries supprimées cette séance, par exercice (voir buildSessionRows) : chaque
+  // suppression réduit d'autant le nombre de suggestions encore proposées au-delà des séries
+  // réelles, pour qu'une série supprimée ne réapparaisse jamais grisée comme si de rien n'était —
+  // sans pour autant masquer les AUTRES séries encore jamais touchées d'un même exercice (ex. un
+  // exercice à 3 séries cibles : valider la 1ère ne doit pas faire disparaître les 2 suivantes).
+  removedSetCounts: Record<string, number>;
 };
 
 type MutationResult = { next: EngineState; ops: OutboxOp[]; sessionId: string | null } | null;
@@ -47,7 +48,7 @@ export function useSessionEngine(seed: SessionSeed) {
     groups: seed.groups,
     history: seed.history,
     startedAt: seed.startedAt,
-    touchedExerciseIds: seed.groups.filter((g) => g.sets.length > 0).map((g) => g.exerciseId),
+    removedSetCounts: {},
   }));
 
   // Toujours la version la plus fraîche de l'état pour les handlers (évite les closures périmées
@@ -72,14 +73,13 @@ export function useSessionEngine(seed: SessionSeed) {
       });
       if (cancelled) return;
       if (local && hasPendingOpsForSession) {
-        const groups = localSessionToGroups(local);
         setState({
           sessionId: local.id,
           completedAt: local.completedAt,
-          groups,
+          groups: localSessionToGroups(local),
           history: seed.history,
           startedAt: local.startedAt,
-          touchedExerciseIds: groups.filter((g) => g.sets.length > 0).map((g) => g.exerciseId),
+          removedSetCounts: {},
         });
       } else {
         await putLocalSession(seedToLocalSession(seed, seed.sessionId));
@@ -153,12 +153,9 @@ export function useSessionEngine(seed: SessionSeed) {
         const groups = current.groups.map((g) =>
           g.exerciseId === exerciseId ? { ...g, sets: [...g.sets, newSet] } : g
         );
-        const touchedExerciseIds = current.touchedExerciseIds.includes(exerciseId)
-          ? current.touchedExerciseIds
-          : [...current.touchedExerciseIds, exerciseId];
 
         return {
-          next: { ...current, sessionId, groups, startedAt, touchedExerciseIds },
+          next: { ...current, sessionId, groups, startedAt },
           ops: [
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
@@ -186,12 +183,9 @@ export function useSessionEngine(seed: SessionSeed) {
         const groups = current.groups.map((g) =>
           g.exerciseId === exerciseId ? { ...g, sets: [...g.sets, newSet] } : g
         );
-        const touchedExerciseIds = current.touchedExerciseIds.includes(exerciseId)
-          ? current.touchedExerciseIds
-          : [...current.touchedExerciseIds, exerciseId];
 
         return {
-          next: { ...current, sessionId, groups, startedAt, touchedExerciseIds },
+          next: { ...current, sessionId, groups, startedAt },
           ops: [
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
@@ -259,9 +253,13 @@ export function useSessionEngine(seed: SessionSeed) {
               }
             : g
         );
+        const removedSetCounts = {
+          ...current.removedSetCounts,
+          [owningGroup.exerciseId]: (current.removedSetCounts[owningGroup.exerciseId] ?? 0) + 1,
+        };
 
         return {
-          next: { ...current, groups },
+          next: { ...current, groups, removedSetCounts },
           ops: [{ type: "removeSet" as const, setId, sessionId: current.sessionId, exerciseId: owningGroup.exerciseId }],
           sessionId: current.sessionId,
         };
@@ -288,7 +286,7 @@ export function useSessionEngine(seed: SessionSeed) {
     groups: state.groups,
     history: state.history,
     startedAt: state.startedAt,
-    touchedExerciseIds: state.touchedExerciseIds,
+    removedSetCounts: state.removedSetCounts,
     addSet,
     logSet,
     updateSet,

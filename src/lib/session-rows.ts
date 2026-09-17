@@ -27,22 +27,23 @@ export type SessionRow = {
 // validée (série 1 toujours ouverte). Le plus récent de l'historique sert de suggestion de valeurs
 // (prefill) ; l'historique complet (jusqu'à 3 séances) alimente le petit récap sous chaque série.
 //
-// `touched` (voir touchedExerciseIds dans session-engine.ts) coupe l'extension par l'historique dès
-// que l'exercice a eu au moins une vraie série cette séance : sans ça, supprimer sa dernière série
-// la fait aussitôt "réapparaître" grisée sous forme de suggestion, comme si la suppression n'avait
-// rien fait. Avant ce premier contact, l'historique (ou, à défaut, l'objectif de séries configuré
-// sur l'exercice — voir targetSets) sert au contraire à proposer un démarrage rapide (voir
-// PreviousSetRow) : un exercice jamais fait affiche déjà ses N séries à blanc plutôt que rien.
+// Au-delà des séries réelles, on propose jusqu'à `Math.max(historique, objectif de séries)` séries
+// suggérées (voir PreviousSetRow) pour démarrer rapidement — un exercice jamais fait affiche déjà
+// ses N séries cibles à blanc plutôt que rien. `removedCount` (voir removedSetCounts dans
+// session-engine.ts) réduit d'autant ce nombre de suggestions : sans ça, supprimer une série la
+// ferait aussitôt réapparaître grisée, comme si la suppression n'avait rien fait. Il ne réduit que
+// le nombre de suggestions encore proposées — jamais les séries réelles déjà entrées, ni les
+// suggestions des AUTRES séries pas encore touchées du même exercice.
 export function buildSessionRows(
   group: SessionRowGroup,
   history: PreviousPerformance[],
-  touched: boolean
+  removedCount: number
 ): SessionRow[] {
   const previousPerformance = history[0];
   const previousSets = previousPerformance?.sets ?? [];
-  const rowCount = touched
-    ? group.sets.length
-    : Math.max(group.sets.length, previousSets.length, group.exercise.targetSets);
+  const maxSuggested = Math.max(previousSets.length, group.exercise.targetSets);
+  const extraSuggested = Math.max(0, maxSuggested - group.sets.length - removedCount);
+  const rowCount = group.sets.length + extraSuggested;
 
   return Array.from({ length: rowCount }, (_, i) => i + 1).reduce<SessionRow[]>((acc, setNumber) => {
     const current = group.sets.find((s) => s.setNumber === setNumber);
