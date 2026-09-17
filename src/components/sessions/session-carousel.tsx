@@ -126,6 +126,18 @@ export function SessionCarousel({
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    // Un appui qui démarre sur la petite icône d'action d'une série (reset/suppression, voir
+    // data-no-swipe dans SetRow) ne doit jamais pouvoir être requalifié en swipe : au toucher, un
+    // micro-mouvement du doigt pendant l'appui est quasi inévitable, ce qui basculait
+    // dragging=true, capturait le pointeur, et avalait ensuite le clic destiné au bouton (voir
+    // handleClickCapture) — le bouton semblait alors ne "rien faire". Volontairement limité à ce
+    // seul bouton (pas au gros bouton "valeur" ni à "+ Ajouter une série", qui occupent presque
+    // toute la largeur de la rangée) : sinon un swipe qui démarre normalement au milieu de l'écran
+    // ne pourrait quasiment plus jamais s'amorcer.
+    if ((event.target as HTMLElement).closest("[data-no-swipe]")) {
+      pointerStart.current = null;
+      return;
+    }
     pointerStart.current = { x: event.clientX, y: event.clientY };
     dragging.current = false;
   }

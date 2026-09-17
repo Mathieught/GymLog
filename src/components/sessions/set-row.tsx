@@ -111,6 +111,7 @@ export function SetRow({
           )}
           <button
             type="button"
+            data-no-swipe
             onClick={handleAction}
             disabled={!canRemove}
             className={cn(
