@@ -34,5 +34,26 @@ export function OfflineSyncManager({ isAuthenticated }: { isAuthenticated: boole
     }).catch(() => {});
   }, [isAuthenticated, pathname]);
 
+  // Même raison qu'au-dessus (navigation client = jamais de nouveau document) : un onglet resté
+  // ouvert pendant qu'un déploiement passe continue d'exécuter l'ancien JS indéfiniment, même en
+  // changeant d'onglet dans l'app (Séances/Historique/...) — rien ne le force jamais à recharger.
+  // Le service worker (skipWaiting + clientsClaim, voir sw.ts) prend la main dès qu'une nouvelle
+  // version est prête ; on écoute ce changement de contrôleur pour recharger une seule fois, mais
+  // seulement si l'onglet était déjà contrôlé par un ancien SW — sinon (tout premier lancement,
+  // pas encore de service worker actif) ce même événement se déclenche aussi et provoquerait un
+  // rechargement inutile dès la première visite.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    if (!navigator.serviceWorker.controller) return;
+    let reloaded = false;
+    function handleControllerChange() {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    }
+    navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+    return () => navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+  }, []);
+
   return null;
 }
