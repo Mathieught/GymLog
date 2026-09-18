@@ -39,8 +39,8 @@ export function SetCountPicker({
               className={cn(
                 "flex h-11 items-center justify-center rounded-xl border text-sm font-medium transition-colors",
                 selected
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 text-neutral-900 hover:border-neutral-400"
+                  ? "border-accent bg-accent text-accent-contrast"
+                  : "border-neutral-200 text-neutral-900 hover:border-accent-deep/50 hover:bg-accent-soft/40"
               )}
             >
               {count}
@@ -66,7 +66,7 @@ export function SetCountPicker({
             }
           }}
           placeholder="Nombre de séries"
-          className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm focus:border-neutral-400 focus:outline-none"
+          className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm focus:border-accent-deep focus:outline-none"
         />
       ) : (
         <button

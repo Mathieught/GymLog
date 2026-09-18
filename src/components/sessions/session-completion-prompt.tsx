@@ -28,7 +28,7 @@ export function SessionCompletionPrompt({
           séance.
         </p>
         <div className="mt-5 flex flex-col gap-2">
-          <Button type="button" variant="accent" className="w-full" onClick={onComplete}>
+          <Button type="button" variant="primary" className="w-full" onClick={onComplete}>
             Terminer la séance
           </Button>
           <Button type="button" variant="secondary" className="w-full" onClick={onContinue}>

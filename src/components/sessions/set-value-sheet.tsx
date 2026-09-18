@@ -59,7 +59,7 @@ export function SetValueSheet({
           <button
             type="button"
             onClick={onValidate}
-            className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-neutral-700"
+            className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-accent-contrast hover:brightness-95"
           >
             Valider
           </button>

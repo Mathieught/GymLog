@@ -127,7 +127,7 @@ export function SetRow({
                 // rouge seulement au survol.
                 set.completed
                   ? "bg-accent-soft text-accent-deep hover:brightness-110 active:brightness-95"
-                  : "text-neutral-400 ring-1 ring-inset ring-neutral-300 hover:bg-red-500/15 hover:text-red-400 hover:ring-red-400/40 active:bg-red-500/25",
+                  : "text-neutral-400 ring-1 ring-inset ring-neutral-300 hover:bg-danger/15 hover:text-danger hover:ring-danger/40 active:bg-danger/25",
                 "disabled:pointer-events-none disabled:opacity-30"
               )}
               aria-label={set.completed ? "Annuler le résultat de cette série" : "Supprimer cette série"}

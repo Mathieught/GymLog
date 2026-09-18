@@ -3,14 +3,13 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const variantClasses = {
-  primary: "bg-neutral-900 text-white hover:bg-neutral-700",
+  // L'accent vert est la couleur de marque de l'app : action principale partout (au lieu du
+  // noir/blanc neutre), pas seulement les confirmations de réussite.
+  primary: "bg-accent text-accent-contrast hover:brightness-95",
   secondary: "border border-neutral-300 bg-neutral-100 text-neutral-900 hover:bg-neutral-200",
-  // Réservé aux confirmations de réussite (ex. séance entièrement complétée) — jamais une action
-  // neutre : c'est le seul endroit où l'accent remplit un bouton plutôt que de marquer un état.
-  accent: "bg-accent text-accent-contrast hover:brightness-95",
-  // Teinte translucide plutôt qu'un rouge-50 plein (illisible/trop clair sur fond sombre) : la
-  // même transparence fonctionnerait aussi bien sur un fond clair, mais l'app n'en a plus.
-  danger: "bg-red-500/15 text-red-400 hover:bg-red-500/25",
+  // Teinte translucide de l'orange corail défini dans globals.css (--color-danger), plutôt qu'un
+  // rouge Tailwind par défaut — couleur de suppression validée dans la proposition d'origine.
+  danger: "bg-danger/15 text-danger hover:bg-danger/25",
   ghost: "text-neutral-600 hover:bg-neutral-100",
 } as const;
 

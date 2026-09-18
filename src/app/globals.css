@@ -34,6 +34,11 @@
   --color-accent-deep: #c9f22b;
   --color-accent-soft: #2a3308;
   --color-accent-contrast: #10150a;
+
+  /* Couleur de suppression/alerte de la proposition d'origine (orange corail, pas un rouge
+     Tailwind par défaut) — un seul jeton pour que chaque usage (Button "danger", icônes de
+     suppression, messages d'erreur de formulaire) reste visuellement identique. */
+  --color-danger: #e2694e;
 }
 
 html {

@@ -53,9 +53,11 @@ export default async function ExercisesPage({ searchParams }: PageProps<"/exerci
               href="/exercises"
               className={cn(
                 "rounded-full border px-3 py-1 text-sm transition-colors",
+                // Même convention que MuscleGroupPicker : l'accent marque "sélectionné/actif",
+                // pas le remplissage noir/blanc réservé aux boutons d'action.
                 selectedMuscles.size === 0
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                  ? "border-accent bg-accent text-accent-contrast"
+                  : "border-neutral-200 text-neutral-600 hover:border-accent-deep/50 hover:bg-accent-soft/40"
               )}
             >
               Tous
@@ -67,8 +69,8 @@ export default async function ExercisesPage({ searchParams }: PageProps<"/exerci
                 className={cn(
                   "rounded-full border px-3 py-1 text-sm transition-colors",
                   selectedMuscles.has(muscle)
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                    ? "border-accent bg-accent text-accent-contrast"
+                    : "border-neutral-200 text-neutral-600 hover:border-accent-deep/50 hover:bg-accent-soft/40"
                 )}
               >
                 {muscle}

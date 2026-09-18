@@ -2,7 +2,7 @@ import { type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLA
 import { cn } from "@/lib/utils";
 
 const controlClasses =
-  "w-full rounded-xl border border-neutral-200 bg-white px-3 h-11 text-sm outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900";
+  "w-full rounded-xl border border-neutral-200 bg-white px-3 h-11 text-sm outline-none focus:border-accent-deep focus:ring-1 focus:ring-accent-deep";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => (
@@ -48,5 +48,5 @@ export function Label({
 
 export function FieldError({ messages }: { messages?: string[] }) {
   if (!messages?.length) return null;
-  return <p className="mt-1 text-sm text-red-400">{messages[0]}</p>;
+  return <p className="mt-1 text-sm text-danger">{messages[0]}</p>;
 }

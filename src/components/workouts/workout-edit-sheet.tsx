@@ -134,7 +134,7 @@ function WorkoutRow({
       <button
         type="button"
         onClick={() => onRequestDelete(item)}
-        className="p-2 text-neutral-400 hover:text-red-400"
+        className="p-2 text-neutral-400 hover:text-danger"
         aria-label={`Supprimer ${item.name}`}
       >
         <Trash2 className="h-4 w-4" />

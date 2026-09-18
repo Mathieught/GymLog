@@ -62,9 +62,12 @@ export function MuscleGroupPicker({
               aria-pressed={selected}
               className={cn(
                 "flex flex-col items-center gap-1.5 rounded-xl border p-2 text-center transition-colors",
+                // L'accent marque un état "sélectionné/actif" partout ailleurs dans l'app (onglet
+                // actif, série faite, rail de progression) : cette sélection suit la même
+                // convention plutôt que le remplissage noir/blanc réservé aux boutons d'action.
                 selected
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 text-neutral-900 hover:border-neutral-400"
+                  ? "border-accent bg-accent text-accent-contrast"
+                  : "border-neutral-200 text-neutral-900 hover:border-accent-deep/50 hover:bg-accent-soft/40"
               )}
             >
               <Icon className="h-5 w-5" />

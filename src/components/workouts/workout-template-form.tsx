@@ -236,7 +236,7 @@ export function WorkoutTemplateForm({
 
         {exercisesSection}
 
-        {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+        {state.error && <p className="text-sm text-danger">{state.error}</p>}
       </div>
     );
   }
@@ -281,7 +281,7 @@ export function WorkoutTemplateForm({
         <FieldError messages={state.fieldErrors?.description} />
       </div>
 
-      {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state.error && <p className="text-sm text-danger">{state.error}</p>}
     </div>
   );
 }
@@ -356,7 +356,7 @@ function CreateExerciseInline({
         <FieldError messages={state.fieldErrors?.targetSets} />
       </div>
 
-      {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={pending}>
@@ -405,7 +405,7 @@ function ExerciseRow({ row, exerciseName, onRemove }: RowProps) {
       <button
         type="button"
         onClick={() => onRemove(row.key)}
-        className="text-neutral-400 hover:text-red-400"
+        className="text-neutral-400 hover:text-danger"
         aria-label="Retirer l'exercice"
       >
         <Trash2 className="h-4 w-4" />
@@ -427,7 +427,7 @@ function StaticExerciseRow({ row, exerciseName, onRemove }: RowProps) {
       <button
         type="button"
         onClick={() => onRemove(row.key)}
-        className="text-neutral-400 hover:text-red-400"
+        className="text-neutral-400 hover:text-danger"
         aria-label="Retirer l'exercice"
       >
         <Trash2 className="h-4 w-4" />

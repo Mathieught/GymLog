@@ -98,7 +98,7 @@ export function ExercisePickerSheet({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Rechercher un exercice..."
-              className="h-11 w-full rounded-xl border border-neutral-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
+              className="h-11 w-full rounded-xl border border-neutral-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-accent-deep focus:ring-1 focus:ring-accent-deep"
             />
           </div>
 
@@ -110,8 +110,8 @@ export function ExercisePickerSheet({
                 className={cn(
                   "rounded-full border px-3 py-1 text-sm transition-colors",
                   muscle === null
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                    ? "border-accent bg-accent text-accent-contrast"
+                    : "border-neutral-200 text-neutral-600 hover:border-accent-deep/50 hover:bg-accent-soft/40"
                 )}
               >
                 Tous
@@ -124,8 +124,8 @@ export function ExercisePickerSheet({
                   className={cn(
                     "rounded-full border px-3 py-1 text-sm transition-colors",
                     muscle === m
-                      ? "border-neutral-900 bg-neutral-900 text-white"
-                      : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                      ? "border-accent bg-accent text-accent-contrast"
+                      : "border-neutral-200 text-neutral-600 hover:border-accent-deep/50 hover:bg-accent-soft/40"
                   )}
                 >
                   {m}

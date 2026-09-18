@@ -40,7 +40,7 @@ export function ExerciseFormSheet({
           form={formId}
           disabled={pending}
           aria-label="Valider"
-          className="rounded-full bg-neutral-900 p-1.5 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-full bg-accent p-1.5 text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           <Check className="h-4 w-4" />
         </button>
