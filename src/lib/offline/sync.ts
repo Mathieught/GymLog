@@ -11,9 +11,15 @@ let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Déclenchée après chaque mutation locale et au retour du réseau : vide la file d'attente
 // (outbox) vers le serveur, dans l'ordre. Ne bloque jamais l'UI — appelée en fire-and-forget.
+//
+// Pas de garde sur navigator.onLine ici : cette API ment couramment (faux "hors ligne" sur
+// certains navigateurs mobiles/PWA installées, y compris avec une vraie connexion) — un faux
+// négatif bloquait alors toute synchro indéfiniment, y compris le sondage de repli toutes les
+// 30s (voir useOfflineSync), puisque ce sondage rappelle syncNow() sans jamais passer par cette
+// vérification autrement. Un vrai hors-ligne échoue de toute façon dès le fetch, géré par le
+// catch/scheduleRetry ci-dessous — donc rien à perdre à toujours tenter.
 export function syncNow() {
   if (syncing) return;
-  if (typeof navigator !== "undefined" && !navigator.onLine) return;
   syncing = true;
   drain().finally(() => {
     syncing = false;
