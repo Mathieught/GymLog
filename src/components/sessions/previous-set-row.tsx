@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
-import { SetStateBadge } from "@/components/sessions/set-state-badge";
 
 type PreviousSetForRow = {
   setNumber: number;
@@ -38,12 +37,17 @@ export function PreviousSetRow({
 
   if (locked) {
     return (
-      <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50">
+      <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50 opacity-45">
         <div className="flex h-14 items-center gap-3 px-3">
-          <SetStateBadge setNumber={previousSet.setNumber} state="locked" />
+          <span className="w-4 shrink-0 text-center text-sm font-medium text-neutral-500">
+            {previousSet.setNumber}
+          </span>
           <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-300">
             {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
             <span className="text-xs font-normal text-neutral-300">kg</span>
+          </span>
+          <span aria-hidden className="shrink-0 pr-1 text-sm tracking-wider text-neutral-400">
+            ⋯
           </span>
         </div>
       </div>
@@ -54,7 +58,9 @@ export function PreviousSetRow({
     <>
       <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:bg-neutral-100 active:bg-neutral-200">
         <div className="flex h-14 items-center gap-3 px-3">
-          <SetStateBadge setNumber={previousSet.setNumber} state="pending" />
+          <span className="w-4 shrink-0 text-center text-sm font-medium text-neutral-500">
+            {previousSet.setNumber}
+          </span>
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
@@ -63,6 +69,10 @@ export function PreviousSetRow({
             {reps} <span className="text-xs font-normal text-neutral-400">×</span> {weight}{" "}
             <span className="text-xs font-normal text-neutral-400">kg</span>
           </button>
+          <span
+            aria-hidden
+            className="h-4 w-4 shrink-0 rounded-full border border-neutral-300"
+          />
         </div>
       </div>
 

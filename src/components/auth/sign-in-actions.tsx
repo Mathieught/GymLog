@@ -35,7 +35,7 @@ export function SignInActions({
 
   if (!isOnline) {
     return (
-      <p className="w-full rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <p className="w-full rounded-xl border border-neutral-200 bg-neutral-100 px-4 py-3 text-sm text-neutral-600">
         Hors ligne — active le Wi-Fi ou les données mobiles pour te connecter.
       </p>
     );

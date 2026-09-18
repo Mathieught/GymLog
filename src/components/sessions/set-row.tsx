@@ -5,7 +5,6 @@ import { RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { SetStateBadge } from "@/components/sessions/set-state-badge";
 
 type SetForRow = {
   id: string;
@@ -71,13 +70,22 @@ export function SetRow({
     <>
       <div
         className={cn(
-          "rounded-xl border bg-white transition-colors",
-          set.completed ? "border-accent" : "border-dashed border-neutral-300",
-          !locked && "hover:bg-neutral-50 active:bg-neutral-100"
+          "rounded-xl border transition-colors",
+          // Verrouillée : même traitement visuel quel que soit l'état de complétion, pour ne
+          // signaler qu'une seule chose ("pas encore accessible") sans se mélanger avec
+          // faite/à faire — voir aussi PreviousSetRow (verrou identique).
+          locked
+            ? "border-dashed border-neutral-200 opacity-45"
+            : set.completed
+              ? "border-accent bg-accent-soft"
+              : "border-dashed border-neutral-300 bg-white",
+          !locked && !set.completed && "hover:bg-neutral-50 active:bg-neutral-100"
         )}
       >
         <div className="flex h-14 items-center gap-3 px-3">
-          <SetStateBadge setNumber={set.setNumber} state={set.completed ? "done" : "pending"} />
+          <span className="w-4 shrink-0 text-center text-sm font-medium text-neutral-500">
+            {set.setNumber}
+          </span>
           {locked ? (
             <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-400">
               {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
@@ -100,25 +108,33 @@ export function SetRow({
               <span className="text-xs font-normal text-neutral-400">kg</span>
             </button>
           )}
-          <button
-            type="button"
-            data-no-swipe
-            onClick={handleAction}
-            disabled={!canRemove}
-            className={cn(
-              "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-              // L'icône d'annulation d'une série déjà validée porte l'accent (seul indicateur de
-              // progression de la rangée) ; la corbeille d'une série vierge reste neutre/rouge.
-              set.completed
-                ? "text-accent-deep hover:bg-accent-soft active:bg-accent-soft/70"
-                : "text-neutral-400 hover:bg-red-500/15 hover:text-red-400 active:bg-red-500/25",
-              "disabled:pointer-events-none disabled:opacity-30",
-              locked && "ml-auto"
-            )}
-            aria-label={set.completed ? "Annuler le résultat de cette série" : "Supprimer cette série"}
-          >
-            {set.completed ? <RotateCcw className="h-[18px] w-[18px]" /> : <Trash2 className="h-[18px] w-[18px]" />}
-          </button>
+          {locked ? (
+            <span aria-hidden className="shrink-0 pr-1 text-sm tracking-wider text-neutral-400">
+              ⋯
+            </span>
+          ) : (
+            <button
+              type="button"
+              data-no-swipe
+              onClick={handleAction}
+              disabled={!canRemove}
+              className={cn(
+                "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                // L'icône d'annulation d'une série déjà validée porte un fond accent permanent
+                // (pas seulement au survol) : c'est le seul repère de progression de la rangée,
+                // il doit rester visible sans interaction. La corbeille d'une série vierge garde
+                // un anneau neutre au repos (écho du glyphe "à faire" de la maquette) et vire au
+                // rouge seulement au survol.
+                set.completed
+                  ? "bg-accent-soft text-accent-deep hover:brightness-110 active:brightness-95"
+                  : "text-neutral-400 ring-1 ring-inset ring-neutral-300 hover:bg-red-500/15 hover:text-red-400 hover:ring-red-400/40 active:bg-red-500/25",
+                "disabled:pointer-events-none disabled:opacity-30"
+              )}
+              aria-label={set.completed ? "Annuler le résultat de cette série" : "Supprimer cette série"}
+            >
+              {set.completed ? <RotateCcw className="h-[18px] w-[18px]" /> : <Trash2 className="h-[18px] w-[18px]" />}
+            </button>
+          )}
         </div>
       </div>
 

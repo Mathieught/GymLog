@@ -1,16 +1,15 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 
-// Remplace l'ancien fil d'icônes purement informatif (SessionExerciseStepper) : ce rail reste
-// affiché en permanence dans le header (plus de disparition après quelques secondes) et chaque
-// segment est tappable pour sauter directement à l'exercice correspondant, sans passer par le
-// swipe. L'état "fait" utilise `buildSessionRows(..., 0)` (comme le prompt de fin de séance) pour
-// tenir compte des séries encore seulement suggérées par l'historique/l'objectif, pas seulement
-// des séries réellement enregistrées.
+// Remplace l'ancien fil d'icônes purement informatif (SessionExerciseStepper, qui disparaissait
+// 1,5s après un changement d'exercice) : une barre de segments reste affichée en permanence sous
+// l'en-tête, et chaque segment est tappable pour sauter directement à l'exercice correspondant,
+// sans passer par le swipe. L'état "fait" utilise `buildSessionRows(..., 0)` (comme le prompt de
+// fin de séance) pour tenir compte des séries encore seulement suggérées par l'historique/
+// l'objectif, pas seulement des séries réellement enregistrées.
 export function SessionProgressRail({
   groups,
   history,
@@ -23,34 +22,35 @@ export function SessionProgressRail({
   onSelect: (index: number) => void;
 }) {
   return (
-    <ol className="flex flex-shrink-0 flex-row items-center gap-1">
-      {groups.map((group, index) => {
-        const rows = buildSessionRows(group, history[group.exerciseId] ?? [], 0);
-        const isDone = rows.length > 0 && rows.every((row) => row.current?.completed === true);
-        const isActive = index === activeIndex;
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-1">
+        {groups.map((group, index) => {
+          const rows = buildSessionRows(group, history[group.exerciseId] ?? [], 0);
+          const isDone = rows.length > 0 && rows.every((row) => row.current?.completed === true);
+          const isActive = index === activeIndex;
 
-        return (
-          <li key={group.exerciseId} className="flex flex-row items-center gap-1">
+          return (
             <button
+              key={group.exerciseId}
               type="button"
               onClick={() => onSelect(index)}
               title={group.exercise.name}
               aria-current={isActive ? "step" : undefined}
+              aria-label={`Aller à l'exercice ${index + 1} : ${group.exercise.name}`}
               className={cn(
-                "flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold tabular-nums transition-all",
-                isActive
-                  ? "scale-110 bg-accent text-accent-contrast shadow-sm"
-                  : isDone
-                    ? "bg-accent-soft text-accent-deep"
-                    : "bg-neutral-100 text-neutral-400"
+                "h-1 flex-1 rounded-full transition-colors",
+                isActive ? "bg-neutral-900" : isDone ? "bg-accent" : "bg-neutral-300"
               )}
-            >
-              {isDone && !isActive ? <Check className="h-3.5 w-3.5" /> : index + 1}
-            </button>
-            {index < groups.length - 1 && <div className="h-px w-3 bg-neutral-200" aria-hidden="true" />}
-          </li>
-        );
-      })}
-    </ol>
+            />
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between font-mono text-xs text-neutral-500">
+        <span>
+          Exercice <span className="font-semibold text-neutral-900">{activeIndex + 1}</span>/{groups.length}
+        </span>
+        <span className="text-accent-deep">toucher pour naviguer</span>
+      </div>
+    </div>
   );
 }

@@ -72,7 +72,13 @@ export function SessionTracker({
           ) : sessionId ? (
             <div className="flex items-center gap-2">
               {engine.startedAt && <SessionTimer startedAt={engine.startedAt} />}
-              <Button type="button" variant="secondary" size="sm" onClick={() => setPendingComplete(true)}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="border-0"
+                onClick={() => setPendingComplete(true)}
+              >
                 Terminer
               </Button>
             </div>
