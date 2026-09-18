@@ -17,27 +17,32 @@ export function SetRecap({ entries }: { entries: SessionRowRecapEntry[] }) {
   // fonds neutres des autres états.
   return (
     <div className="flex gap-1.5 border-t border-neutral-900/10 px-3 pb-2.5 pt-2">
-      {entries.map((entry, i) => (
-        <div
-          key={entry.sessionDate.toISOString()}
-          className={cn(
-            "flex flex-1 flex-col items-center gap-0.5 rounded-md px-1.5 py-1",
-            i === 0 ? "bg-accent-soft" : entry.set ? "bg-neutral-100" : "border border-dashed border-neutral-300"
-          )}
-        >
-          <span className={cn("font-mono text-[10px]", i === 0 ? "text-accent-deep/70" : "text-neutral-500")}>
-            {formatSessionDate(entry.sessionDate)}
-          </span>
-          <span
+      {entries.map((entry, i) => {
+        // Un set peut exister sans valeur (créé puis jamais renseigné, actualReps/actualWeight
+        // null) : traité comme absent ici, sinon on afficherait littéralement "null×null".
+        const hasValue = entry.set?.actualReps != null && entry.set?.actualWeight != null;
+        return (
+          <div
+            key={entry.sessionDate.toISOString()}
             className={cn(
-              "font-mono text-xs font-semibold tabular-nums",
-              i === 0 ? "text-accent-deep" : entry.set ? "text-neutral-600" : "font-medium text-neutral-400"
+              "flex flex-1 flex-col items-center gap-0.5 rounded-md px-1.5 py-1",
+              i === 0 ? "bg-accent-soft" : hasValue ? "bg-neutral-100" : "border border-dashed border-neutral-300"
             )}
           >
-            {entry.set ? `${entry.set.actualReps}×${entry.set.actualWeight}` : "—"}
-          </span>
-        </div>
-      ))}
+            <span className={cn("font-mono text-[10px]", i === 0 ? "text-accent-deep/70" : "text-neutral-500")}>
+              {formatSessionDate(entry.sessionDate)}
+            </span>
+            <span
+              className={cn(
+                "font-mono text-xs font-semibold tabular-nums",
+                i === 0 ? "text-accent-deep" : hasValue ? "text-neutral-600" : "font-medium text-neutral-400"
+              )}
+            >
+              {hasValue ? `${entry.set!.actualReps}×${entry.set!.actualWeight}` : "—"}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

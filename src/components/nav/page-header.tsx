@@ -33,7 +33,7 @@ export function PageHeader({
       className="sticky top-0 z-10 bg-neutral-50"
       style={{ paddingTop: "max(env(safe-area-inset-top), 24px)" }}
     >
-      <div className={cn("mx-auto flex max-w-lg items-center justify-between gap-2 px-4 pb-1.5", className)}>
+      <div className={cn("mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 pb-1.5", className)}>
         {backHref ? (
           <Link
             href={backHref}
@@ -52,12 +52,13 @@ export function PageHeader({
         )}
         <div className="flex shrink-0 items-center gap-2">{right ?? (title !== undefined ? null : <HeaderOptions />)}</div>
       </div>
-      {/* Même largeur maximale que la ligne titre juste au-dessus (via `className`, ex.
-          "max-w-2xl"), mais sans son px-4 : le rail de progression d'une séance (voir
+      {/* Même largeur maximale que la ligne titre juste au-dessus (via `className`, pour une
+          page qui la personnalise), mais sans son px-4 : le rail de progression d'une séance (voir
           SessionProgressRail) doit atteindre les bords de la colonne de contenu plutôt que d'en
           rester à distance — mais pas déborder au-delà sur un grand écran, où la colonne de
-          contenu est bien plus étroite que la fenêtre du navigateur. */}
-      {below && <div className={cn("mx-auto max-w-lg pb-2", className)}>{below}</div>}
+          contenu est plafonnée à une largeur "tablette" (max-w-3xl) plutôt que de suivre la
+          fenêtre du navigateur. */}
+      {below && <div className={cn("mx-auto max-w-3xl pb-2", className)}>{below}</div>}
     </header>
   );
 }

@@ -9,9 +9,8 @@ export function SessionTrackerSkeleton({ backHref }: { backHref: string }) {
         backHref={backHref}
         title={<Skeleton className="h-6 w-32" />}
         right={<Skeleton className="h-8 w-20 rounded-full" />}
-        className="max-w-2xl"
       />
-      <Container className="max-w-2xl">
+      <Container>
         <div className="mb-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="mt-2 h-3 w-20" />

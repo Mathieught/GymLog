@@ -65,7 +65,6 @@ export function SessionTracker({
       <PageHeader
         backHref={backHref}
         title={seed.templateName}
-        className="max-w-2xl"
         right={
           sessionId && completedAt ? (
             <p className="text-xs text-neutral-400">Terminée</p>
@@ -95,7 +94,7 @@ export function SessionTracker({
           />
         }
       />
-      <Container className="max-w-2xl">
+      <Container>
         <SessionCarousel
           basePath={basePath}
           sessionId={sessionId}

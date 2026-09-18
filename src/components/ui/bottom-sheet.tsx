@@ -41,7 +41,7 @@ export function BottomSheet({
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
-      <div className="absolute inset-x-0 bottom-0 mx-auto flex h-[95vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
+      <div className="absolute inset-x-0 bottom-0 mx-auto flex h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
         <div className="flex items-center gap-2 border-b border-neutral-100 px-2 py-2.5">
           <button
             type="button"

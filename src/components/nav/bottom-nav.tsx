@@ -38,7 +38,7 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-10 flex justify-center px-4"
       style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
     >
-      <div className="flex w-full max-w-lg items-center gap-0.5 rounded-full border border-neutral-200/80 bg-neutral-100/90 p-0.5 shadow-lg shadow-black/5 backdrop-blur-md">
+      <div className="flex w-full max-w-3xl items-center gap-0.5 rounded-full border border-neutral-200/80 bg-neutral-100/90 p-0.5 shadow-lg shadow-black/5 backdrop-blur-md">
         {navItems.map((item) => (
           <NavItem key={item.href} {...item} active={isActive(item.href)} />
         ))}
