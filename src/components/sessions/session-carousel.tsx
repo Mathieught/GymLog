@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type Poi
 import { Button } from "@/components/ui/button";
 import { SetRow } from "@/components/sessions/set-row";
 import { PreviousSetRow } from "@/components/sessions/previous-set-row";
+import { ExerciseHistorySummary } from "@/components/sessions/exercise-history-summary";
 import { SessionCompletionPrompt } from "@/components/sessions/session-completion-prompt";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
@@ -24,9 +25,9 @@ export function SessionCarousel({
   groups,
   history,
   removedSetCounts,
-  initialActiveExerciseId,
+  activeIndex,
   templateName,
-  onActiveExerciseChange,
+  onActiveIndexChange,
   onAddSet,
   onLogSet,
   onUpdateSet,
@@ -46,15 +47,15 @@ export function SessionCarousel({
   // Séries supprimées cette séance, par exercice (voir removedSetCounts dans session-engine.ts) :
   // réduit d'autant les suggestions encore proposées pour cet exercice dans ExercisePanel.
   removedSetCounts: Record<string, number>;
-  initialActiveExerciseId: string;
+  // Index de l'exercice affiché : possédé par le parent (SessionTracker) pour que le rail de
+  // progression dans le header (voir SessionProgressRail) puisse aussi le piloter, pas seulement
+  // le swipe/les boutons Précédent-Suivant de ce composant.
+  activeIndex: number;
   // Nom de la séance (déjà affiché dans l'en-tête) : sert à ne pas répéter le muscle ciblé de
   // l'exercice quand il correspond au nom de la séance (ex. séance "Dos" contenant un exercice
   // ciblant "Dos") — voir ExercisePanel.
   templateName: string;
-  // Notifie le parent (SessionTracker) du changement d'exercice actif : le fil de suivi vit
-  // maintenant dans le header (voir PageHeader `below`), pas ici, car ce composant ne connaît que
-  // le panneau visible, pas la zone sticky au-dessus de lui.
-  onActiveExerciseChange?: (exerciseId: string) => void;
+  onActiveIndexChange: (index: number) => void;
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
@@ -62,11 +63,6 @@ export function SessionCarousel({
   onRemoveSet: (setId: string) => void;
   onCompleteSession: () => void;
 }) {
-  const initialIndex = Math.max(
-    0,
-    groups.findIndex((g) => g.exerciseId === initialActiveExerciseId)
-  );
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
 
   // Propose la popup de fin de séance à chaque série (re)validée tant que tout est complet — pas
@@ -122,13 +118,8 @@ export function SessionCarousel({
     window.history.replaceState(null, "", url);
   }, [activeIndex, basePath, groups]);
 
-  useEffect(() => {
-    onActiveExerciseChange?.(groups[activeIndex].exerciseId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex, groups]);
-
   function goTo(index: number) {
-    setActiveIndex(Math.min(Math.max(index, 0), groups.length - 1));
+    onActiveIndexChange(Math.min(Math.max(index, 0), groups.length - 1));
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -298,6 +289,8 @@ function ExercisePanel({
         )}
       </div>
 
+      <ExerciseHistorySummary history={history} />
+
       {rows.length === 0 ? (
         <p className="text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
       ) : (
@@ -309,7 +302,6 @@ function ExercisePanel({
                   set={row.current}
                   canRemove={allowRemove}
                   previousSet={row.previous}
-                  recap={row.recap}
                   locked={readOnly || !row.unlocked}
                   onUpdate={onUpdateSet}
                   onReset={onResetSet}
@@ -322,7 +314,6 @@ function ExercisePanel({
                   previousSet={row.previous!}
                   exerciseId={group.exerciseId}
                   exerciseOrder={group.exerciseOrder}
-                  recap={row.recap}
                   locked={readOnly || !row.unlocked}
                   onLog={onLogSet}
                 />

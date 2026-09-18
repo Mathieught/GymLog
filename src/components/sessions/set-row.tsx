@@ -4,8 +4,8 @@ import { useState } from "react";
 import { RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
-import { SetHistoryRecap } from "@/components/sessions/set-history-recap";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SetStateBadge } from "@/components/sessions/set-state-badge";
 
 type SetForRow = {
   id: string;
@@ -20,18 +20,12 @@ type PreviousSetForRow = {
   actualReps: number | null;
 };
 
-type RecapEntry = { sessionDate: Date; actualWeight: number | null; actualReps: number | null };
-
 // Une série existante se modifie en la touchant : la popup s'ouvre pré-remplie, et "Valider"
-// l'enregistre (marquée terminée) en un seul geste — plus de case à cocher séparée. Le récap de
-// l'historique (recap) est rendu à l'intérieur de ce même bloc, séparé par un filet, plutôt qu'en
-// ligne flottante entre deux séries : chaque bloc reste un tout, sans ambiguïté sur à quelle série
-// le récap appartient.
+// l'enregistre (marquée terminée) en un seul geste — plus de case à cocher séparée.
 export function SetRow({
   set,
   canRemove,
   previousSet,
-  recap,
   locked = false,
   onUpdate,
   onReset,
@@ -40,7 +34,6 @@ export function SetRow({
   set: SetForRow;
   canRemove: boolean;
   previousSet?: PreviousSetForRow;
-  recap: RecapEntry[];
   locked?: boolean;
   onUpdate: (setId: string, actualWeight: number, actualReps: number) => void;
   onReset: (setId: string) => void;
@@ -79,14 +72,12 @@ export function SetRow({
       <div
         className={cn(
           "rounded-xl border bg-white transition-colors",
-          set.completed ? "border-neutral-900" : "border-dashed border-neutral-300",
+          set.completed ? "border-accent" : "border-dashed border-neutral-300",
           !locked && "hover:bg-neutral-50 active:bg-neutral-100"
         )}
       >
         <div className="flex h-14 items-center gap-3 px-3">
-          <span className="w-5 shrink-0 text-center text-sm font-medium text-neutral-400">
-            {set.setNumber}
-          </span>
+          <SetStateBadge setNumber={set.setNumber} state={set.completed ? "done" : "pending"} />
           {locked ? (
             <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-400">
               {reps} <span className="text-xs font-normal text-neutral-300">×</span> {weight}{" "}
@@ -129,12 +120,6 @@ export function SetRow({
             {set.completed ? <RotateCcw className="h-[18px] w-[18px]" /> : <Trash2 className="h-[18px] w-[18px]" />}
           </button>
         </div>
-
-        {recap.length > 0 && (
-          <div className="border-t border-neutral-100 px-3 py-1.5">
-            <SetHistoryRecap entries={recap} />
-          </div>
-        )}
       </div>
 
       {!locked && (

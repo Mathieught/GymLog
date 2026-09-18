@@ -7,7 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SessionCarousel } from "@/components/sessions/session-carousel";
-import { SessionStepperFlash } from "@/components/sessions/session-exercise-stepper";
+import { SessionProgressRail } from "@/components/sessions/session-progress-rail";
 import { SessionTimer } from "@/components/sessions/session-timer";
 import { useSessionEngine, type SessionSeed } from "@/lib/offline/session-engine";
 
@@ -30,10 +30,12 @@ export function SessionTracker({
   const engine = useSessionEngine(seed);
   const { sessionId, completedAt, groups, history } = engine;
   const [pendingComplete, setPendingComplete] = useState(false);
-  // Reflète l'exercice affiché par le carousel (voir onActiveExerciseChange) : le fil de suivi
-  // vit maintenant dans le header (below), un cran au-dessus du carousel, donc ne peut pas lire
-  // son état interne directement.
-  const [currentExerciseId, setCurrentExerciseId] = useState(activeExerciseId);
+  // Index de l'exercice affiché par le carousel : possédé ici (pas par SessionCarousel) pour que
+  // le rail de progression du header (voir SessionProgressRail, dans PageHeader `below`) puisse
+  // aussi le piloter, pas seulement le swipe/les boutons Précédent-Suivant du carousel.
+  const [activeIndex, setActiveIndex] = useState(() =>
+    Math.max(0, groups.findIndex((g) => g.exerciseId === activeExerciseId))
+  );
 
   const basePath = sessionId ? `/sessions/${sessionId}` : `/workouts/${seed.workoutTemplateId}/session`;
 
@@ -78,7 +80,14 @@ export function SessionTracker({
             <p className="text-xs text-neutral-400">À démarrer</p>
           )
         }
-        below={<SessionStepperFlash key={currentExerciseId} groups={groups} activeExerciseId={currentExerciseId} />}
+        below={
+          <SessionProgressRail
+            groups={groups}
+            history={history}
+            activeIndex={activeIndex}
+            onSelect={setActiveIndex}
+          />
+        }
       />
       <Container className="max-w-2xl">
         <SessionCarousel
@@ -89,9 +98,9 @@ export function SessionTracker({
           groups={groups}
           history={history}
           removedSetCounts={engine.removedSetCounts}
-          initialActiveExerciseId={activeExerciseId}
+          activeIndex={activeIndex}
           templateName={seed.templateName}
-          onActiveExerciseChange={setCurrentExerciseId}
+          onActiveIndexChange={setActiveIndex}
           onAddSet={engine.addSet}
           onLogSet={engine.logSet}
           onUpdateSet={engine.updateSet}

@@ -19,13 +19,13 @@ export type SessionRow = {
   setNumber: number;
   current: SessionRowSet | undefined;
   previous: PreviousPerformance["sets"][number] | undefined;
-  recap: { sessionDate: Date; actualWeight: number | null; actualReps: number | null }[];
   unlocked: boolean;
 };
 
 // Les séries se remplissent dans l'ordre : une série n'est modifiable que si la précédente a été
 // validée (série 1 toujours ouverte). Le plus récent de l'historique sert de suggestion de valeurs
-// (prefill) ; l'historique complet (jusqu'à 3 séances) alimente le petit récap sous chaque série.
+// (prefill) ; l'historique complet (jusqu'à 3 séances) alimente le bloc "Dernières fois" affiché une
+// fois par exercice (voir ExerciseHistorySummary), plus au cas par cas sous chaque série.
 //
 // Au-delà des séries réelles, on propose jusqu'à `Math.max(historique, objectif de séries)` séries
 // suggérées (voir PreviousSetRow) pour démarrer rapidement — un exercice jamais fait affiche déjà
@@ -57,12 +57,6 @@ export function buildSessionRows(
       // `undefined` : PreviousSetRow s'appuie sur sa présence dès que `current` est absent (voir
       // ExercisePanel), qu'il y ait ou non un historique réel derrière.
       previous: current ? historicalPrevious : (historicalPrevious ?? { setNumber, actualWeight: null, actualReps: null }),
-      recap: history.flatMap((session) => {
-        const match = session.sets.find((s) => s.setNumber === setNumber);
-        return match
-          ? [{ sessionDate: session.sessionDate, actualWeight: match.actualWeight, actualReps: match.actualReps }]
-          : [];
-      }),
       unlocked,
     });
     return acc;
