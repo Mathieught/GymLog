@@ -23,6 +23,8 @@ export function SessionProgressRail({
 }) {
   return (
     <div className="flex flex-col gap-2">
+      {/* Bord à bord (pas de px-4) : contrairement à la ligne titre au-dessus, le rail profite de
+          toute la largeur de l'écran plutôt que de rester cantonné à la colonne de contenu. */}
       <div className="flex gap-1">
         {groups.map((group, index) => {
           const rows = buildSessionRows(group, history[group.exerciseId] ?? [], 0);
@@ -38,14 +40,16 @@ export function SessionProgressRail({
               aria-current={isActive ? "step" : undefined}
               aria-label={`Aller à l'exercice ${index + 1} : ${group.exercise.name}`}
               className={cn(
-                "h-1 flex-1 rounded-full transition-colors",
+                "h-1 flex-1 transition-colors",
+                index === 0 && "rounded-l-full",
+                index === groups.length - 1 && "rounded-r-full",
                 isActive ? "bg-neutral-900" : isDone ? "bg-accent" : "bg-neutral-300"
               )}
             />
           );
         })}
       </div>
-      <div className="flex items-center justify-between font-mono text-xs text-neutral-500">
+      <div className="flex items-center justify-between px-4 font-mono text-xs text-neutral-500">
         <span>
           Exercice <span className="font-semibold text-neutral-900">{activeIndex + 1}</span>/{groups.length}
         </span>
