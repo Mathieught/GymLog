@@ -132,7 +132,7 @@ export function SetRow({
               )}
               aria-label={set.completed ? "Annuler le résultat de cette série" : "Supprimer cette série"}
             >
-              {set.completed ? <RotateCcw className="h-[18px] w-[18px]" /> : <Trash2 className="h-[18px] w-[18px]" />}
+              {set.completed ? <RotateCcw className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
             </button>
           )}
         </div>
