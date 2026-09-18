@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ListChecks, History, Dumbbell, Settings, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavHidden } from "@/components/nav/nav-visibility";
 
 const navItems = [
   { href: "/workouts", label: "Séances", icon: ListChecks },
@@ -12,20 +13,25 @@ const navItems = [
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
 
-// Toute page liée à une séance précise sous /workouts (détail, suivi en cours — les formulaires de
-// création/édition sont désormais des popups, pas des pages, voir WorkoutFormSheet) : dès qu'on
-// quitte la liste pour entrer "dans" une séance, on s'y concentre. Le bouton retour de l'en-tête
-// suffit pour en sortir. La page détail d'une séance passée (/sessions/[id], accessible depuis
-// l'historique) garde la nav.
-const HIDDEN_NAV_PATTERNS = [/^\/workouts\/.+/];
+// L'aperçu d'un programme (avant toute séance) : dès qu'on quitte la liste pour entrer "dans" un
+// programme, on s'y concentre. Le bouton retour de l'en-tête suffit pour en sortir. Repéré par
+// chemin puisque cette page n'a pas d'état de séance à interroger (voir useHideNav pour la suite du
+// parcours, une fois une séance — même juste démarrée — en jeu : /workouts/[id]/session puis
+// /sessions/[id], où le pathname seul ne suffit plus à distinguer "en cours" de "déjà terminée").
+const HIDDEN_NAV_PATTERNS = [/^\/workouts\/[^/]+$/];
 
 export function BottomNav() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname.startsWith(href);
+  const hiddenByActiveSession = useNavHidden();
 
   // Pas de menu tant qu'on n'est pas connecté : tous ses liens ramèneraient de toute façon à la
   // page de connexion.
-  if (pathname === "/login" || HIDDEN_NAV_PATTERNS.some((pattern) => pattern.test(pathname))) {
+  if (
+    pathname === "/login" ||
+    hiddenByActiveSession ||
+    HIDDEN_NAV_PATTERNS.some((pattern) => pattern.test(pathname))
+  ) {
     return null;
   }
 

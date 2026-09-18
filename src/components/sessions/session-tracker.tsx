@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SessionCarousel } from "@/components/sessions/session-carousel";
 import { SessionProgressRail } from "@/components/sessions/session-progress-rail";
 import { SessionTimer } from "@/components/sessions/session-timer";
+import { useHideNav } from "@/components/nav/nav-visibility";
 import { useSessionEngine, type SessionSeed } from "@/lib/offline/session-engine";
 
 // Point d'entrée unique du suivi de séance : possède le moteur local (voir
@@ -36,6 +37,11 @@ export function SessionTracker({
   const [activeIndex, setActiveIndex] = useState(() =>
     Math.max(0, groups.findIndex((g) => g.exerciseId === activeExerciseId))
   );
+  // Cache la nav du bas pendant toute la séance active, y compris pendant sa transition d'URL de
+  // /workouts/[id]/session vers /sessions/[id] au premier "addSet"/"logSet" (voir
+  // session-carousel.tsx) — un simple filtrage par chemin (l'ancienne approche) réaffichait la nav
+  // pile à ce moment-là, puisque /sessions/[id] reste normalement visible (séance déjà terminée).
+  useHideNav(!completedAt);
 
   const basePath = sessionId ? `/sessions/${sessionId}` : `/workouts/${seed.workoutTemplateId}/session`;
 

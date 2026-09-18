@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { auth } from "@/lib/auth";
 import { BottomNav } from "@/components/nav/bottom-nav";
+import { NavVisibilityProvider } from "@/components/nav/nav-visibility";
 import { OfflineSyncManager } from "@/components/offline-sync-manager";
 import "./globals.css";
 
@@ -42,8 +43,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full bg-neutral-50 font-sans text-neutral-900">
         <SerwistProvider swUrl="/serwist/sw.js">
           <OfflineSyncManager isAuthenticated={!!session?.user} />
-          <main className="pb-24">{children}</main>
-          <BottomNav />
+          <NavVisibilityProvider>
+            <main className="pb-24">{children}</main>
+            <BottomNav />
+          </NavVisibilityProvider>
         </SerwistProvider>
       </body>
     </html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { PageTitle } from "@/components/ui/page-title";
 import { WorkoutEditSheet } from "@/components/workouts/workout-edit-sheet";
 import { WorkoutFormSheet } from "@/components/workouts/workout-form-sheet";
 import { createWorkoutTemplate } from "@/lib/actions/workout-templates";
+import { getActiveLocalSessionTemplateIds } from "@/lib/offline/db";
 
 type TemplateItem = {
   id: string;
@@ -44,6 +45,18 @@ export function WorkoutList({
   }
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
+  // Séances locales non terminées, tous programmes confondus (voir session-engine.ts) : IndexedDB
+  // uniquement, donc jamais connu du rendu serveur — d'où l'effet plutôt qu'une prop.
+  const [activeTemplateIds, setActiveTemplateIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let cancelled = false;
+    getActiveLocalSessionTemplateIds().then((ids) => {
+      if (!cancelled) setActiveTemplateIds(ids);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <>
@@ -74,7 +87,14 @@ export function WorkoutList({
             <li key={item.id}>
               <Link href={`/workouts/${item.id}`}>
                 <Card className="transition-colors hover:border-neutral-400">
-                  <p className="font-medium">{item.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{item.name}</p>
+                    {activeTemplateIds.has(item.id) && (
+                      <span className="rounded-full bg-accent-soft px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-accent-deep">
+                        En cours
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-neutral-500">
                     {item.exerciseCount} exercice{item.exerciseCount > 1 ? "s" : ""}
                     {item.scheduleLabel ? ` · ${item.scheduleLabel}` : ""}

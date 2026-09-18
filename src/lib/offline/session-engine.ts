@@ -4,7 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SessionRowGroup, SessionRowSet } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 import type { OutboxOp } from "@/lib/offline/types";
-import { getLocalSession, putLocalSession, putLocalHistory, enqueueOp, getOutbox, setMeta } from "@/lib/offline/db";
+import {
+  getLocalSession,
+  getActiveLocalSessionForTemplate,
+  putLocalSession,
+  putLocalHistory,
+  enqueueOp,
+  getOutbox,
+  setMeta,
+} from "@/lib/offline/db";
 import { seedToLocalSession, localSessionToGroups } from "@/lib/offline/local-seed";
 import { syncNow } from "@/lib/offline/sync";
 
@@ -65,7 +73,30 @@ export function useSessionEngine(seed: SessionSeed) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!seed.sessionId) return;
+      if (!seed.sessionId) {
+        // Aperçu d'un programme : le serveur ne connaît aucune séance (normal, elle n'est créée
+        // que localement au premier "addSet"/"logSet" — voir plus bas). Mais une séance locale
+        // pour CE programme peut déjà exister si on revient sur cet aperçu après avoir commencé à
+        // renseigner des séries (retour arrière, app fermée puis rouverte) : la reprendre plutôt
+        // que de repartir d'un état vide, sinon tout ce qui a été renseigné semble perdu.
+        const local = await getActiveLocalSessionForTemplate(seed.workoutTemplateId);
+        if (cancelled || !local) return;
+        setState({
+          sessionId: local.id,
+          completedAt: local.completedAt,
+          groups: localSessionToGroups(local),
+          history: seed.history,
+          startedAt: local.startedAt,
+          removedSetCounts: {},
+        });
+        await Promise.all(
+          Object.entries(seed.history).map(([exerciseId, performances]) =>
+            putLocalHistory({ exerciseId, performances, updatedAt: Date.now() })
+          )
+        );
+        await setMeta("activeSessionId", local.id);
+        return;
+      }
       const [local, outbox] = await Promise.all([getLocalSession(seed.sessionId), getOutbox()]);
       const hasPendingOpsForSession = outbox.some((entry) => {
         const op = entry.op;
@@ -94,8 +125,11 @@ export function useSessionEngine(seed: SessionSeed) {
     return () => {
       cancelled = true;
     };
+    // workoutTemplateId en plus de sessionId : passer d'un aperçu de programme jamais démarré à un
+    // autre (les deux ont seed.sessionId === null) doit quand même redéclencher la recherche
+    // d'une séance locale active, propre à CE programme.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed.sessionId]);
+  }, [seed.sessionId, seed.workoutTemplateId]);
 
   const applyMutation = useCallback(
     async (compute: (current: EngineState) => MutationResult) => {

@@ -36,6 +36,27 @@ export async function getLocalSession(id: string) {
   return (await getDb()).get("sessions", id);
 }
 
+// Une séance locale existe dès la première série renseignée (voir addSet/logSet dans
+// session-engine.ts), avant même toute synchronisation serveur — donc avant qu'aucune page rendue
+// côté serveur (aperçu du programme, /sessions/[id]) ne puisse la connaître. Utilisé pour reprendre
+// une séance en cours quand on revient sur l'aperçu de son programme (retour arrière, app fermée
+// puis rouverte) au lieu de repartir d'un état vide comme si rien n'avait été renseigné.
+export async function getActiveLocalSessionForTemplate(workoutTemplateId: string) {
+  const db = await getDb();
+  const all = await db.getAll("sessions");
+  const candidates = all.filter((s) => s.workoutTemplateId === workoutTemplateId && s.completedAt === null);
+  candidates.sort((a, b) => b.updatedAt - a.updatedAt);
+  return candidates[0];
+}
+
+// Pour le petit tag "En cours" sur la liste des séances (voir WorkoutList) : l'ensemble des
+// programmes qui ont une séance locale non terminée, quel que soit l'état de synchronisation.
+export async function getActiveLocalSessionTemplateIds(): Promise<Set<string>> {
+  const db = await getDb();
+  const all = await db.getAll("sessions");
+  return new Set(all.filter((s) => s.completedAt === null).map((s) => s.workoutTemplateId));
+}
+
 export async function putLocalSession(session: LocalSession) {
   await (await getDb()).put("sessions", session);
 }
