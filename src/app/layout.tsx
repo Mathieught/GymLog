@@ -12,7 +12,7 @@ const geistSans = Geist({
 });
 
 // Réservée aux chiffres qui s'alignent en colonnes (poids, répétitions, chrono, dates) — voir
-// font-mono ciblé dans SetRow/PreviousSetRow/SessionTimer/ExerciseHistorySummary, jamais le corps de texte.
+// font-mono ciblé dans SetRow/PreviousSetRow/SessionTimer/SetRecap, jamais le corps de texte.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],

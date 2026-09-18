@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type Poi
 import { Button } from "@/components/ui/button";
 import { SetRow } from "@/components/sessions/set-row";
 import { PreviousSetRow } from "@/components/sessions/previous-set-row";
-import { ExerciseHistorySummary } from "@/components/sessions/exercise-history-summary";
 import { SessionCompletionPrompt } from "@/components/sessions/session-completion-prompt";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
@@ -282,19 +281,17 @@ function ExercisePanel({
 
   return (
     <div className="pr-1">
-      <div className="mb-4 border-b border-neutral-100 pb-3">
-        <p className="font-medium">{group.exercise.name}</p>
+      <div>
+        <p className="font-bold">{group.exercise.name}</p>
         {displayedMuscles.length > 0 && (
           <p className="text-sm text-neutral-500">{displayedMuscles.join(", ")}</p>
         )}
       </div>
 
-      <ExerciseHistorySummary history={history} />
-
       {rows.length === 0 ? (
-        <p className="text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
+        <p className="mt-3.5 text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="mt-3.5 space-y-2">
           {rows.map((row) =>
             row.current ? (
               <li key={row.current.id}>
@@ -302,6 +299,7 @@ function ExercisePanel({
                   set={row.current}
                   canRemove={allowRemove}
                   previousSet={row.previous}
+                  recap={row.recap}
                   locked={readOnly || !row.unlocked}
                   onUpdate={onUpdateSet}
                   onReset={onResetSet}
@@ -314,6 +312,7 @@ function ExercisePanel({
                   previousSet={row.previous!}
                   exerciseId={group.exerciseId}
                   exerciseOrder={group.exerciseOrder}
+                  recap={row.recap}
                   locked={readOnly || !row.unlocked}
                   onLog={onLogSet}
                 />

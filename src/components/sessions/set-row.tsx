@@ -5,6 +5,8 @@ import { RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SetRecap } from "@/components/sessions/set-recap";
+import type { SessionRowRecapEntry } from "@/lib/session-rows";
 
 type SetForRow = {
   id: string;
@@ -20,11 +22,14 @@ type PreviousSetForRow = {
 };
 
 // Une série existante se modifie en la touchant : la popup s'ouvre pré-remplie, et "Valider"
-// l'enregistre (marquée terminée) en un seul geste — plus de case à cocher séparée.
+// l'enregistre (marquée terminée) en un seul geste — plus de case à cocher séparée. Le récap des 3
+// dernières séances sur cette même série (voir SetRecap) est rendu dans ce même bloc, séparé par un
+// filet, jamais en carte flottante entre deux séries.
 export function SetRow({
   set,
   canRemove,
   previousSet,
+  recap,
   locked = false,
   onUpdate,
   onReset,
@@ -33,6 +38,7 @@ export function SetRow({
   set: SetForRow;
   canRemove: boolean;
   previousSet?: PreviousSetForRow;
+  recap: SessionRowRecapEntry[];
   locked?: boolean;
   onUpdate: (setId: string, actualWeight: number, actualReps: number) => void;
   onReset: (setId: string) => void;
@@ -136,6 +142,7 @@ export function SetRow({
             </button>
           )}
         </div>
+        <SetRecap entries={recap} />
       </div>
 
       {!locked && (

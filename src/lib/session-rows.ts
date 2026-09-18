@@ -15,17 +15,27 @@ export type SessionRowGroup = {
   sets: SessionRowSet[];
 };
 
+// Une entrée de récap par séance passée (jusqu'à 3), datée, pour LE MÊME numéro de série que la
+// ligne qui la porte — `set` est `undefined` quand cette séance-là n'avait pas encore cette série
+// (objectif de séries augmenté depuis), distinct d'une valeur 0×0.
+export type SessionRowRecapEntry = {
+  sessionDate: Date;
+  set: PreviousPerformance["sets"][number] | undefined;
+};
+
 export type SessionRow = {
   setNumber: number;
   current: SessionRowSet | undefined;
   previous: PreviousPerformance["sets"][number] | undefined;
   unlocked: boolean;
+  recap: SessionRowRecapEntry[];
 };
 
 // Les séries se remplissent dans l'ordre : une série n'est modifiable que si la précédente a été
 // validée (série 1 toujours ouverte). Le plus récent de l'historique sert de suggestion de valeurs
-// (prefill) ; l'historique complet (jusqu'à 3 séances) alimente le bloc "Dernières fois" affiché une
-// fois par exercice (voir ExerciseHistorySummary), plus au cas par cas sous chaque série.
+// (prefill) ; le récap (jusqu'à 3 séances) est calculé par série — même numéro de série d'une
+// séance à l'autre — et rendu directement sous chaque ligne (voir SetRow/PreviousSetRow), pas dans
+// un bloc séparé.
 //
 // Au-delà des séries réelles, on propose jusqu'à `Math.max(historique, objectif de séries)` séries
 // suggérées (voir PreviousSetRow) pour démarrer rapidement — un exercice jamais fait affiche déjà
@@ -58,6 +68,10 @@ export function buildSessionRows(
       // ExercisePanel), qu'il y ait ou non un historique réel derrière.
       previous: current ? historicalPrevious : (historicalPrevious ?? { setNumber, actualWeight: null, actualReps: null }),
       unlocked,
+      recap: history.map((performance) => ({
+        sessionDate: performance.sessionDate,
+        set: performance.sets.find((s) => s.setNumber === setNumber),
+      })),
     });
     return acc;
   }, []);

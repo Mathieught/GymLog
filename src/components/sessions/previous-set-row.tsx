@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
+import { SetRecap } from "@/components/sessions/set-recap";
+import type { SessionRowRecapEntry } from "@/lib/session-rows";
 
 type PreviousSetForRow = {
   setNumber: number;
@@ -17,12 +19,14 @@ export function PreviousSetRow({
   previousSet,
   exerciseId,
   exerciseOrder,
+  recap,
   locked = false,
   onLog,
 }: {
   previousSet: PreviousSetForRow;
   exerciseId: string;
   exerciseOrder: number;
+  recap: SessionRowRecapEntry[];
   locked?: boolean;
   onLog: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
 }) {
@@ -50,6 +54,7 @@ export function PreviousSetRow({
             ⋯
           </span>
         </div>
+        <SetRecap entries={recap} />
       </div>
     );
   }
@@ -74,6 +79,7 @@ export function PreviousSetRow({
             className="h-4 w-4 shrink-0 rounded-full border border-neutral-300"
           />
         </div>
+        <SetRecap entries={recap} />
       </div>
 
       <SetValueSheet

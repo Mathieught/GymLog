@@ -40,7 +40,7 @@ export function SessionProgressRail({
               aria-current={isActive ? "step" : undefined}
               aria-label={`Aller à l'exercice ${index + 1} : ${group.exercise.name}`}
               className={cn(
-                "h-1 flex-1 transition-colors",
+                "h-1.5 flex-1 transition-colors",
                 index === 0 && "rounded-l-full",
                 index === groups.length - 1 && "rounded-r-full",
                 isActive ? "bg-neutral-900" : isDone ? "bg-accent" : "bg-neutral-300"
