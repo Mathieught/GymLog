@@ -132,6 +132,12 @@ model WorkoutSession {
   workoutTemplate   WorkoutTemplate? @relation(fields: [workoutTemplateId], references: [id])
   name              String
   startedAt         DateTime         @default(now())
+  // Dernière modification de la séance (série ajoutée/loguée/modifiée/supprimée) — voir
+  // session-mutations.ts, qui la met à jour à chaque mutation. Sert de référence à la fermeture
+  // automatique par inactivité (voir SESSION_AUTO_CLOSE_MS dans session-status.ts) : `startedAt`
+  // ne bouge jamais une fois la séance créée, donc une longue séance activement suivie serait sinon
+  // clôturée en plein milieu.
+  lastActivityAt    DateTime         @default(now())
   completedAt       DateTime?
   note              String?
 

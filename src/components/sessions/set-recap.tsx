@@ -13,11 +13,10 @@ export function SetRecap({ entries }: { entries: SessionRowRecapEntry[] }) {
   if (entries.length === 0) return null;
 
   // neutral-900/10 (pas white/10 : --color-white est le fond sombre de l'app, pas du blanc) pour un
-  // filet clair discret, lisible aussi bien sur le fond accent-soft (série faite) que sur les
-  // fonds neutres des autres états.
+  // filet clair discret, lisible aussi bien sur les fonds neutres des différents états.
   return (
     <div className="flex gap-1.5 border-t border-neutral-900/10 px-3 pb-2.5 pt-2">
-      {entries.map((entry, i) => {
+      {entries.map((entry) => {
         // Un set peut exister sans valeur (créé puis jamais renseigné, actualReps/actualWeight
         // null) : traité comme absent ici, sinon on afficherait littéralement "null×null".
         const hasValue = entry.set?.actualReps != null && entry.set?.actualWeight != null;
@@ -26,16 +25,19 @@ export function SetRecap({ entries }: { entries: SessionRowRecapEntry[] }) {
             key={entry.sessionDate.toISOString()}
             className={cn(
               "flex flex-1 flex-col items-center gap-0.5 rounded-md px-1.5 py-1",
-              i === 0 ? "bg-accent-soft" : hasValue ? "bg-neutral-100" : "border border-dashed border-neutral-300"
+              // Superposition noire translucide (pas bg-neutral-100, une teinte fixe) : la pastille
+              // s'assombrit relativement au fond qui la porte plutôt que de plaquer une couleur figée
+              // par-dessus — elle se fond aussi bien dans une carte neutre (série pas encore validée)
+              // que dans le fond vert accent-soft d'une série validée, au lieu d'y ressortir comme un
+              // pavé gris étranger.
+              hasValue ? "bg-black/20" : "border border-dashed border-neutral-300"
             )}
           >
-            <span className={cn("font-mono text-[10px]", i === 0 ? "text-accent-deep/70" : "text-neutral-500")}>
-              {formatSessionDate(entry.sessionDate)}
-            </span>
+            <span className="font-mono text-[10px] text-neutral-500">{formatSessionDate(entry.sessionDate)}</span>
             <span
               className={cn(
                 "font-mono text-xs font-semibold tabular-nums",
-                i === 0 ? "text-accent-deep" : hasValue ? "text-neutral-600" : "font-medium text-neutral-400"
+                hasValue ? "text-neutral-600" : "font-medium text-neutral-400"
               )}
             >
               {hasValue ? `${entry.set!.actualReps}×${entry.set!.actualWeight}` : "—"}

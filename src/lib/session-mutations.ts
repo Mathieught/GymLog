@@ -34,6 +34,13 @@ export async function ensureSession(
   });
 }
 
+async function touchSessionActivity(sessionId: string) {
+  await prisma.workoutSession.update({
+    where: { id: sessionId },
+    data: { lastActivityAt: new Date() },
+  });
+}
+
 export async function addSet(
   userId: string,
   params: { setId: string; sessionId: string; exerciseId: string; exerciseOrder: number; setNumber: number }
@@ -51,6 +58,7 @@ export async function addSet(
     },
     update: {},
   });
+  await touchSessionActivity(params.sessionId);
 }
 
 export async function logSet(
@@ -81,19 +89,28 @@ export async function logSet(
     },
     update: { actualWeight: params.actualWeight, actualReps: params.actualReps, completed: true },
   });
+  await touchSessionActivity(params.sessionId);
 }
 
 export async function updateSet(
   userId: string,
   params: { setId: string; actualWeight: number | null; actualReps: number | null; completed: boolean }
 ) {
-  const result = await prisma.workoutSet.updateMany({
+  // findFirst plutôt que updateMany : il faut le workoutSessionId pour rafraîchir lastActivityAt
+  // (pas fourni par l'appelant ici, à la différence des autres mutations — voir
+  // src/lib/offline/session-engine.ts).
+  const set = await prisma.workoutSet.findFirst({
     where: { id: params.setId, workoutSession: { userId, completedAt: null } },
-    data: { actualWeight: params.actualWeight, actualReps: params.actualReps, completed: params.completed },
+    select: { workoutSessionId: true },
   });
-  if (result.count === 0) {
+  if (!set) {
     throw new InvalidMutationError("Série introuvable, non autorisée, ou séance déjà terminée");
   }
+  await prisma.workoutSet.update({
+    where: { id: params.setId },
+    data: { actualWeight: params.actualWeight, actualReps: params.actualReps, completed: params.completed },
+  });
+  await touchSessionActivity(set.workoutSessionId);
 }
 
 export async function removeSet(
@@ -113,6 +130,10 @@ export async function removeSet(
         tx.workoutSet.update({ where: { id: remainingSet.id }, data: { setNumber: index + 1 } })
       )
     );
+    await tx.workoutSession.update({
+      where: { id: params.sessionId },
+      data: { lastActivityAt: new Date() },
+    });
   });
 }
 
