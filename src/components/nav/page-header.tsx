@@ -52,12 +52,10 @@ export function PageHeader({
         )}
         <div className="flex shrink-0 items-center gap-2">{right ?? (title !== undefined ? null : <HeaderOptions />)}</div>
       </div>
-      {/* Même largeur maximale que la ligne titre juste au-dessus (via `className`, pour une
-          page qui la personnalise), mais sans son px-4 : le rail de progression d'une séance (voir
-          SessionProgressRail) doit atteindre les bords de la colonne de contenu plutôt que d'en
-          rester à distance — mais pas déborder au-delà sur un grand écran, où la colonne de
-          contenu est plafonnée à une largeur "tablette" (max-w-3xl) plutôt que de suivre la
-          fenêtre du navigateur. */}
+      {/* Même largeur maximale que la ligne titre juste au-dessus (via `className`, pour une page
+          qui la personnalise) : le padding horizontal reste au consommateur de `below` (voir
+          SessionProgressRail) puisque certains contenus veulent leur propre répartition interne,
+          mais l'alignement gauche/droite avec le reste du header doit toujours correspondre. */}
       {below && <div className={cn("mx-auto max-w-3xl pb-2", className)}>{below}</div>}
     </header>
   );

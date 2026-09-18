@@ -22,9 +22,10 @@ export function SessionProgressRail({
   onSelect: (index: number) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      {/* Bord à bord (pas de px-4) : contrairement à la ligne titre au-dessus, le rail profite de
-          toute la largeur de l'écran plutôt que de rester cantonné à la colonne de contenu. */}
+    // Même colonne padded (px-4) que la ligne titre au-dessus et que le contenu en dessous : le
+    // rail bord-à-bord dépassait de cette colonne sur les côtés (visible comme "désaligné"/qui
+    // "sort" sur un écran étroit), il reste maintenant dans le même alignement à toute largeur.
+    <div className="flex flex-col gap-2 px-4">
       <div className="flex gap-1">
         {groups.map((group, index) => {
           const rows = buildSessionRows(group, history[group.exerciseId] ?? [], 0);
@@ -40,16 +41,14 @@ export function SessionProgressRail({
               aria-current={isActive ? "step" : undefined}
               aria-label={`Aller à l'exercice ${index + 1} : ${group.exercise.name}`}
               className={cn(
-                "h-1.5 flex-1 transition-colors",
-                index === 0 && "rounded-l-full",
-                index === groups.length - 1 && "rounded-r-full",
+                "h-1.5 flex-1 rounded-full transition-colors",
                 isActive ? "bg-neutral-900" : isDone ? "bg-accent" : "bg-neutral-300"
               )}
             />
           );
         })}
       </div>
-      <div className="flex items-center justify-between px-4 font-mono text-xs text-neutral-500">
+      <div className="flex items-center justify-between font-mono text-xs text-neutral-500">
         <span>
           Exercice <span className="font-semibold text-neutral-900">{activeIndex + 1}</span>/{groups.length}
         </span>
