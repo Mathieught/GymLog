@@ -18,6 +18,7 @@ type SetForGrouping = {
   actualWeight: number | null;
   actualReps: number | null;
   completed: boolean;
+  note: string | null;
 };
 
 export default async function SessionDetailPage({

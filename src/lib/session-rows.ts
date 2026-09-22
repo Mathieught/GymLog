@@ -6,6 +6,7 @@ export type SessionRowSet = {
   actualWeight: number | null;
   actualReps: number | null;
   completed: boolean;
+  note: string | null;
 };
 
 export type SessionRowGroup = {
@@ -71,7 +72,9 @@ export function buildSessionRows(
       // Une série sans historique ni série en cours reçoit un repère vierge (0/0) plutôt que
       // `undefined` : PreviousSetRow s'appuie sur sa présence dès que `current` est absent (voir
       // ExercisePanel), qu'il y ait ou non un historique réel derrière.
-      previous: current ? historicalPrevious : (historicalPrevious ?? { setNumber, actualWeight: null, actualReps: null }),
+      previous: current
+        ? historicalPrevious
+        : (historicalPrevious ?? { id: "", setNumber, actualWeight: null, actualReps: null, note: null }),
       unlocked,
       recap: history.map((performance) => ({
         sessionDate: performance.sessionDate,

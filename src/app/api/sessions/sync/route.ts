@@ -17,6 +17,8 @@ async function applyOp(userId: string, op: OutboxOp) {
       return mutations.updateSet(userId, op);
     case "removeSet":
       return mutations.removeSet(userId, op);
+    case "updateSetNote":
+      return mutations.updateSetNote(userId, op);
     case "completeSession":
       return mutations.completeSession(userId, op.sessionId);
   }

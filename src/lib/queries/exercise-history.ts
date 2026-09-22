@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
 export type PreviousSet = {
+  id: string;
   setNumber: number;
   actualWeight: number | null;
   actualReps: number | null;
+  note: string | null;
 };
 
 export type PreviousPerformance = {
@@ -34,7 +36,7 @@ export async function getExerciseHistory(
       sets: {
         where: { exerciseId },
         orderBy: { setNumber: "asc" },
-        select: { setNumber: true, actualWeight: true, actualReps: true },
+        select: { id: true, setNumber: true, actualWeight: true, actualReps: true, note: true },
       },
     },
   });

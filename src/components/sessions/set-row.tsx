@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { RotateCcw, StickyNote, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
+import { NoteSheet } from "@/components/sessions/note-sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SetRecap } from "@/components/sessions/set-recap";
 import type { SessionRowRecapEntry } from "@/lib/session-rows";
@@ -14,6 +15,7 @@ type SetForRow = {
   actualWeight: number | null;
   actualReps: number | null;
   completed: boolean;
+  note: string | null;
 };
 
 type PreviousSetForRow = {
@@ -30,21 +32,28 @@ export function SetRow({
   canRemove,
   previousSet,
   recap,
+  exerciseId,
   locked = false,
   onUpdate,
   onReset,
   onRemove,
+  onUpdateNote,
+  onUpdateHistoryNote,
 }: {
   set: SetForRow;
   canRemove: boolean;
   previousSet?: PreviousSetForRow;
   recap: SessionRowRecapEntry[];
+  exerciseId: string;
   locked?: boolean;
   onUpdate: (setId: string, actualWeight: number, actualReps: number) => void;
   onReset: (setId: string) => void;
   onRemove: (setId: string) => void;
+  onUpdateNote: (setId: string, note: string | null) => void;
+  onUpdateHistoryNote: (exerciseId: string, setId: string, note: string | null) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
   const [pendingRemove, setPendingRemove] = useState(false);
   const [weight, setWeight] = useState(set.actualWeight ?? previousSet?.actualWeight ?? 0);
   const [reps, setReps] = useState(set.actualReps ?? previousSet?.actualReps ?? 0);
@@ -113,6 +122,25 @@ export function SetRow({
               <span className="text-xs font-normal text-neutral-400">kg</span>
             </button>
           )}
+          {!locked && (
+            <button
+              type="button"
+              data-no-swipe
+              onClick={() => setNoteSheetOpen(true)}
+              className={cn(
+                "-mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                // Repère plein dès qu'une note existe (écho du fond permanent de l'icône
+                // d'annulation ci-dessous) : sinon rien ne distingue une série notée d'une série
+                // qui ne l'est pas tant qu'on n'a pas rouvert la popup pour vérifier.
+                set.note
+                  ? "bg-accent-soft text-accent-deep hover:brightness-110 active:brightness-95"
+                  : "text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+              )}
+              aria-label={set.note ? "Modifier la note de cette série" : "Ajouter une note à cette série"}
+            >
+              <StickyNote className="h-4 w-4" />
+            </button>
+          )}
           {
             // Le verrouillage ne bloque que la saisie (une série ne se remplit que dans l'ordre,
             // voir session-rows.ts) : la suppression, elle, reste possible quelle que soit la
@@ -140,7 +168,7 @@ export function SetRow({
             {set.completed ? <RotateCcw className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
           </button>
         </div>
-        <SetRecap entries={recap} />
+        <SetRecap entries={recap} exerciseId={exerciseId} onUpdateNote={onUpdateHistoryNote} />
       </div>
 
       {!locked && (
@@ -153,6 +181,15 @@ export function SetRow({
           onChangeReps={setReps}
           onClose={() => setSheetOpen(false)}
           onValidate={validate}
+        />
+      )}
+
+      {noteSheetOpen && (
+        <NoteSheet
+          title={`Note — Série ${set.setNumber}`}
+          initialNote={set.note ?? ""}
+          onClose={() => setNoteSheetOpen(false)}
+          onSave={(note) => onUpdateNote(set.id, note)}
         />
       )}
 

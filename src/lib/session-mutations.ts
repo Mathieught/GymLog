@@ -113,6 +113,20 @@ export async function updateSet(
   await touchSessionActivity(set.workoutSessionId);
 }
 
+// Contrairement à updateSet, pas de restriction "séance active" : une note se modifie aussi sur
+// une série d'une séance déjà terminée (voir SetRecap, qui ouvre cette même mutation depuis
+// l'historique d'une séance en cours).
+export async function updateSetNote(userId: string, params: { setId: string; note: string | null }) {
+  const set = await prisma.workoutSet.findFirst({
+    where: { id: params.setId, workoutSession: { userId } },
+    select: { id: true },
+  });
+  if (!set) {
+    throw new InvalidMutationError("Série introuvable ou non autorisée");
+  }
+  await prisma.workoutSet.update({ where: { id: params.setId }, data: { note: params.note } });
+}
+
 export async function removeSet(
   userId: string,
   params: { setId: string; sessionId: string; exerciseId: string }

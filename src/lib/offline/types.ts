@@ -9,6 +9,7 @@ export type LocalSet = {
   actualWeight: number | null;
   actualReps: number | null;
   completed: boolean;
+  note: string | null;
 };
 
 export type LocalExercise = { name: string; muscle: string[]; targetSets: number };
@@ -73,6 +74,7 @@ export type OutboxOp =
       completed: boolean;
     }
   | { type: "removeSet"; setId: string; sessionId: string; exerciseId: string }
+  | { type: "updateSetNote"; setId: string; note: string | null }
   | { type: "completeSession"; sessionId: string };
 
 export type OutboxEntry = { id: string; createdAt: number; op: OutboxOp };
