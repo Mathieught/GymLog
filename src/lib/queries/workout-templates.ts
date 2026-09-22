@@ -35,3 +35,20 @@ export const getWorkoutTemplateDetail = unstable_cache(
   ["workout-template-detail"],
   { tags: ["workout-templates"] }
 );
+
+// Utilisée par /api/offline/snapshot, rappelée à chaque navigation pour alimenter IndexedDB : même
+// aller-retour évitable que ci-dessus. Taguée aussi "exercises" (pas seulement "workout-templates")
+// puisqu'elle embarque le détail de chaque exercice (nom, muscles, objectif de séries) — un
+// renommage d'exercice seul, sans toucher au programme, doit aussi l'invalider.
+export const getActiveWorkoutTemplatesWithExerciseDetail = unstable_cache(
+  async (userId: string) =>
+    prisma.workoutTemplate.findMany({
+      where: { userId, isArchived: false },
+      include: {
+        exercises: { include: { exercise: true }, orderBy: { order: "asc" } },
+      },
+      orderBy: { name: "asc" },
+    }),
+  ["active-workout-templates-with-exercises"],
+  { tags: ["workout-templates", "exercises"] }
+);

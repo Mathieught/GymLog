@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getActiveWorkoutTemplatesWithExerciseDetail } from "@/lib/queries/workout-templates";
 
 // Instantané léger des programmes actifs de l'utilisateur, pour alimenter IndexedDB (voir
 // src/lib/offline/snapshot.ts) : permet de démarrer une séance hors ligne depuis n'importe quel
@@ -12,13 +12,7 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const templates = await prisma.workoutTemplate.findMany({
-    where: { userId, isArchived: false },
-    include: {
-      exercises: { include: { exercise: true }, orderBy: { order: "asc" } },
-    },
-    orderBy: { name: "asc" },
-  });
+  const templates = await getActiveWorkoutTemplatesWithExerciseDetail(userId);
 
   return NextResponse.json({
     templates: templates.map((template) => ({
