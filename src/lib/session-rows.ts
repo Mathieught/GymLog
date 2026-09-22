@@ -32,7 +32,11 @@ export type SessionRow = {
 };
 
 // Les séries se remplissent dans l'ordre : une série n'est modifiable que si la précédente a été
-// validée (série 1 toujours ouverte). Le plus récent de l'historique sert de suggestion de valeurs
+// validée (série 1 toujours ouverte) — SAUF si elle a elle-même déjà un résultat : le verrouillage
+// ne sert qu'à empêcher de saisir une série pas encore atteinte hors ordre, pas à cacher une série
+// déjà renseignée. Sans cette exception, annuler le résultat d'une série antérieure grise aussitôt
+// toutes les séries suivantes déjà validées — leur valeur reste intacte, mais elles ont l'air
+// d'avoir disparu. Le plus récent de l'historique sert de suggestion de valeurs
 // (prefill) ; le récap (jusqu'à 3 séances) est calculé par série — même numéro de série d'une
 // séance à l'autre — et rendu directement sous chaque ligne (voir SetRow/PreviousSetRow), pas dans
 // un bloc séparé.
@@ -59,7 +63,8 @@ export function buildSessionRows(
     const current = group.sets.find((s) => s.setNumber === setNumber);
     const historicalPrevious = previousSets.find((s) => s.setNumber === setNumber);
     const previousRow = acc[acc.length - 1];
-    const unlocked = previousRow === undefined || previousRow.current?.completed === true;
+    const unlocked =
+      previousRow === undefined || previousRow.current?.completed === true || current?.completed === true;
     acc.push({
       setNumber,
       current,

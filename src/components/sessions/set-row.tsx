@@ -55,17 +55,16 @@ export function SetRow({
   }
 
   // Deux gestes différents derrière ce bouton, selon qu'il y a déjà un résultat à perdre :
-  // - série déjà validée : on annule le résultat et on vide vraiment la série (pas de retour à
-  //   l'historique ici — sinon le nouvel affichage ressemble à s'y méprendre à l'ancienne valeur
-  //   encore présente, et la réinitialisation a l'air de n'avoir rien fait). La série reste à sa
-  //   place, prête à être resaisie depuis zéro. Pas de confirmation : c'est réversible, il suffit
-  //   de la resaisir.
+  // - série déjà validée : on annule le résultat, qui revient à sa suggestion d'origine (la
+  //   dernière performance sur cette même série, comme une série jamais encore touchée) plutôt
+  //   qu'à 0×0 — sinon retrouver le poids/les répétitions d'avant demande de rouvrir l'historique
+  //   pour la resaisir. La série reste à sa place. Pas de confirmation : c'est réversible.
   // - série jamais renseignée (juste ajoutée) : rien à perdre en valeur, mais la retirer change la
   //   structure de la séance (renumérotation) — ça, ça se confirme.
   function handleAction() {
     if (set.completed) {
-      setWeight(0);
-      setReps(0);
+      setWeight(previousSet?.actualWeight ?? 0);
+      setReps(previousSet?.actualReps ?? 0);
       onReset(set.id);
       return;
     }
@@ -114,33 +113,32 @@ export function SetRow({
               <span className="text-xs font-normal text-neutral-400">kg</span>
             </button>
           )}
-          {locked ? (
-            <span aria-hidden className="shrink-0 pr-1 text-sm tracking-wider text-neutral-400">
-              ⋯
-            </span>
-          ) : (
-            <button
-              type="button"
-              data-no-swipe
-              onClick={handleAction}
-              disabled={!canRemove}
-              className={cn(
-                "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                // L'icône d'annulation d'une série déjà validée porte un fond accent permanent
-                // (pas seulement au survol) : c'est le seul repère de progression de la rangée,
-                // il doit rester visible sans interaction. La corbeille d'une série vierge garde
-                // un anneau neutre au repos (écho du glyphe "à faire" de la maquette) et vire au
-                // rouge seulement au survol.
-                set.completed
-                  ? "bg-accent-soft text-accent-deep hover:brightness-110 active:brightness-95"
-                  : "text-neutral-400 ring-1 ring-inset ring-neutral-300 hover:bg-danger/15 hover:text-danger hover:ring-danger/40 active:bg-danger/25",
-                "disabled:pointer-events-none disabled:opacity-30"
-              )}
-              aria-label={set.completed ? "Annuler le résultat de cette série" : "Supprimer cette série"}
-            >
-              {set.completed ? <RotateCcw className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
-            </button>
-          )}
+          {
+            // Le verrouillage ne bloque que la saisie (une série ne se remplit que dans l'ordre,
+            // voir session-rows.ts) : la suppression, elle, reste possible quelle que soit la
+            // position, une série non atteinte n'ayant jamais de résultat à perdre.
+          }
+          <button
+            type="button"
+            data-no-swipe
+            onClick={handleAction}
+            disabled={!canRemove}
+            className={cn(
+              "-mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+              // L'icône d'annulation d'une série déjà validée porte un fond accent permanent
+              // (pas seulement au survol) : c'est le seul repère de progression de la rangée,
+              // il doit rester visible sans interaction. La corbeille d'une série vierge garde
+              // un anneau neutre au repos (écho du glyphe "à faire" de la maquette) et vire au
+              // rouge seulement au survol.
+              set.completed
+                ? "bg-accent-soft text-accent-deep hover:brightness-110 active:brightness-95"
+                : "text-neutral-400 ring-1 ring-inset ring-neutral-300 hover:bg-danger/15 hover:text-danger hover:ring-danger/40 active:bg-danger/25",
+              "disabled:pointer-events-none disabled:opacity-30"
+            )}
+            aria-label={set.completed ? "Annuler le résultat de cette série" : "Supprimer cette série"}
+          >
+            {set.completed ? <RotateCcw className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
+          </button>
         </div>
         <SetRecap entries={recap} />
       </div>
