@@ -37,6 +37,26 @@ export function localSessionToGroups(local: LocalSession): SessionRowGroup[] {
     }));
 }
 
+// `local.exercises` est un instantané figé au démarrage de la séance (voir LocalSession) : si le
+// programme a gagné un exercice depuis (édité dans un autre onglet pendant la séance), la reprise
+// depuis IndexedDB seule le fait disparaître — visible dans le rendu serveur (`seedGroups`, relu à
+// chaque navigation), absent d'IndexedDB, donc plus rien ne s'aligne pour lui une fois qu'on revient
+// dans la séance. On repart donc de la liste d'exercices la plus fraîche (`seedGroups`) et on n'y
+// réinjecte que les séries locales, seules à pouvoir être en avance sur le serveur (pas encore
+// synchronisées).
+export function reconcileLocalGroups(local: LocalSession, seedGroups: SessionRowGroup[]): SessionRowGroup[] {
+  const localExerciseIds = new Set(local.exercises.map((e) => e.exerciseId));
+  return seedGroups.map((g) => {
+    // Exercice pas encore vu localement (ajouté au programme depuis) : rien à réconcilier, on
+    // garde tel quel les séries du serveur (vides, puisque personne n'a encore pu y toucher).
+    if (!localExerciseIds.has(g.exerciseId)) return g;
+    const localSets = local.sets
+      .filter((s) => s.exerciseId === g.exerciseId)
+      .sort((a, b) => a.setNumber - b.setNumber);
+    return { ...g, sets: localSets };
+  });
+}
+
 // Reconstruit un seed complet (pour SessionTracker) à partir d'une séance IndexedDB seule —
 // utilisé par la page de secours /~offline, quand aucun rendu serveur n'est disponible.
 export async function localSessionToSeed(local: LocalSession): Promise<SessionSeed> {

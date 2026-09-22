@@ -13,7 +13,7 @@ import {
   getOutbox,
   setMeta,
 } from "@/lib/offline/db";
-import { seedToLocalSession, localSessionToGroups } from "@/lib/offline/local-seed";
+import { seedToLocalSession, reconcileLocalGroups } from "@/lib/offline/local-seed";
 import { syncNow } from "@/lib/offline/sync";
 
 export type SessionSeed = {
@@ -84,7 +84,7 @@ export function useSessionEngine(seed: SessionSeed) {
         setState({
           sessionId: local.id,
           completedAt: local.completedAt,
-          groups: localSessionToGroups(local),
+          groups: reconcileLocalGroups(local, seed.groups),
           history: seed.history,
           startedAt: local.startedAt,
           removedSetCounts: {},
@@ -107,7 +107,7 @@ export function useSessionEngine(seed: SessionSeed) {
         setState({
           sessionId: local.id,
           completedAt: local.completedAt,
-          groups: localSessionToGroups(local),
+          groups: reconcileLocalGroups(local, seed.groups),
           history: seed.history,
           startedAt: local.startedAt,
           removedSetCounts: {},
@@ -251,9 +251,8 @@ export function useSessionEngine(seed: SessionSeed) {
   );
 
   // Annule le résultat d'une série déjà validée : redevient une série vierge (voir SetRow, qui
-  // vide aussi son affichage local plutôt que de re-suggérer l'historique — sinon la réinitialisation
-  // a l'air de n'avoir rien fait), sans changer sa place ni renuméroter les autres — à la
-  // différence de removeSet, qui retire vraiment la série de la liste.
+  // réaffiche alors la suggestion tirée de l'historique plutôt que 0×0), sans changer sa place ni
+  // renuméroter les autres — à la différence de removeSet, qui retire vraiment la série de la liste.
   const resetSet = useCallback(
     (setId: string) => {
       void applyMutation((current) => {
