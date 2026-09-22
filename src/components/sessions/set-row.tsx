@@ -32,25 +32,21 @@ export function SetRow({
   canRemove,
   previousSet,
   recap,
-  exerciseId,
   locked = false,
   onUpdate,
   onReset,
   onRemove,
   onUpdateNote,
-  onUpdateHistoryNote,
 }: {
   set: SetForRow;
   canRemove: boolean;
   previousSet?: PreviousSetForRow;
   recap: SessionRowRecapEntry[];
-  exerciseId: string;
   locked?: boolean;
   onUpdate: (setId: string, actualWeight: number, actualReps: number) => void;
   onReset: (setId: string) => void;
   onRemove: (setId: string) => void;
   onUpdateNote: (setId: string, note: string | null) => void;
-  onUpdateHistoryNote: (exerciseId: string, setId: string, note: string | null) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -168,7 +164,7 @@ export function SetRow({
             {set.completed ? <RotateCcw className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
           </button>
         </div>
-        <SetRecap entries={recap} exerciseId={exerciseId} onUpdateNote={onUpdateHistoryNote} />
+        <SetRecap entries={recap} />
       </div>
 
       {!locked && (

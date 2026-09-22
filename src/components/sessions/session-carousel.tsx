@@ -33,7 +33,6 @@ export function SessionCarousel({
   onResetSet,
   onRemoveSet,
   onUpdateNote,
-  onUpdateHistoryNote,
   onCompleteSession,
 }: {
   basePath: string;
@@ -63,7 +62,6 @@ export function SessionCarousel({
   onResetSet: (setId: string) => void;
   onRemoveSet: (setId: string) => void;
   onUpdateNote: (setId: string, note: string | null) => void;
-  onUpdateHistoryNote: (exerciseId: string, setId: string, note: string | null) => void;
   onCompleteSession: () => void;
 }) {
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
@@ -217,7 +215,6 @@ export function SessionCarousel({
                 onResetSet={onResetSet}
                 onRemoveSet={onRemoveSet}
                 onUpdateNote={onUpdateNote}
-                onUpdateHistoryNote={onUpdateHistoryNote}
               />
             </div>
           ))}
@@ -264,7 +261,6 @@ function ExercisePanel({
   onResetSet,
   onRemoveSet,
   onUpdateNote,
-  onUpdateHistoryNote,
 }: {
   group: SessionRowGroup;
   history: PreviousPerformance[];
@@ -278,7 +274,6 @@ function ExercisePanel({
   onResetSet: (setId: string) => void;
   onRemoveSet: (setId: string) => void;
   onUpdateNote: (setId: string, note: string | null) => void;
-  onUpdateHistoryNote: (exerciseId: string, setId: string, note: string | null) => void;
 }) {
   const rows = buildSessionRows(group, history, removedCount);
   // Le nom de la séance est déjà affiché juste au-dessus (en-tête) : ne pas répéter un muscle qui
@@ -310,13 +305,11 @@ function ExercisePanel({
                   canRemove={allowRemove}
                   previousSet={row.previous}
                   recap={row.recap}
-                  exerciseId={group.exerciseId}
                   locked={readOnly || !row.unlocked}
                   onUpdate={onUpdateSet}
                   onReset={onResetSet}
                   onRemove={onRemoveSet}
                   onUpdateNote={onUpdateNote}
-                  onUpdateHistoryNote={onUpdateHistoryNote}
                 />
               </li>
             ) : (
@@ -328,7 +321,6 @@ function ExercisePanel({
                   recap={row.recap}
                   locked={readOnly || !row.unlocked}
                   onLog={onLogSet}
-                  onUpdateHistoryNote={onUpdateHistoryNote}
                 />
               </li>
             )

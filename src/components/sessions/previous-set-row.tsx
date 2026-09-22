@@ -22,7 +22,6 @@ export function PreviousSetRow({
   recap,
   locked = false,
   onLog,
-  onUpdateHistoryNote,
 }: {
   previousSet: PreviousSetForRow;
   exerciseId: string;
@@ -30,7 +29,6 @@ export function PreviousSetRow({
   recap: SessionRowRecapEntry[];
   locked?: boolean;
   onLog: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
-  onUpdateHistoryNote: (exerciseId: string, setId: string, note: string | null) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [weight, setWeight] = useState(previousSet.actualWeight ?? 0);
@@ -56,7 +54,7 @@ export function PreviousSetRow({
             ⋯
           </span>
         </div>
-        <SetRecap entries={recap} exerciseId={exerciseId} onUpdateNote={onUpdateHistoryNote} />
+        <SetRecap entries={recap} />
       </div>
     );
   }
@@ -81,7 +79,7 @@ export function PreviousSetRow({
             className="h-4 w-4 shrink-0 rounded-full border border-neutral-300"
           />
         </div>
-        <SetRecap entries={recap} exerciseId={exerciseId} onUpdateNote={onUpdateHistoryNote} />
+        <SetRecap entries={recap} />
       </div>
 
       <SetValueSheet

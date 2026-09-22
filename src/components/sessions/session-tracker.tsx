@@ -118,7 +118,6 @@ export function SessionTracker({
           onResetSet={engine.resetSet}
           onRemoveSet={engine.removeSet}
           onUpdateNote={engine.updateNote}
-          onUpdateHistoryNote={engine.updateHistoryNote}
           onCompleteSession={handleComplete}
         />
       </Container>

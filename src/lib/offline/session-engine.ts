@@ -290,35 +290,6 @@ export function useSessionEngine(seed: SessionSeed) {
     [applyMutation]
   );
 
-  // Même opération serveur qu'updateNote, mais pour une série d'une séance PASSÉE affichée dans le
-  // récap (voir SetRecap) : ce n'est pas dans `groups` (séance en cours) mais dans `history`, sans
-  // lien avec `completedAt` de la séance en cours — updateSetNote n'a d'ailleurs aucune restriction
-  // de séance active côté serveur, contrairement à updateSet.
-  // ponytail : la mise à jour de `history` n'est pas répercutée dans le cache IndexedDB
-  // (putLocalHistory) comme le sont `groups` — un rechargement hors ligne juste après cette
-  // modification, avant la synchro, la ferait réapparaître vide. Cas limite négligeable pour une
-  // note ; à corriger si l'édition de notes doit être robuste hors ligne comme le reste.
-  const updateHistoryNote = useCallback(
-    (exerciseId: string, setId: string, note: string | null) => {
-      void applyMutation((current) => {
-        const performances = current.history[exerciseId] ?? [];
-        const history = {
-          ...current.history,
-          [exerciseId]: performances.map((performance) => ({
-            ...performance,
-            sets: performance.sets.map((s) => (s.id === setId ? { ...s, note } : s)),
-          })),
-        };
-        return {
-          next: { ...current, history },
-          ops: [{ type: "updateSetNote" as const, setId, note }],
-          sessionId: current.sessionId,
-        };
-      });
-    },
-    [applyMutation]
-  );
-
   const removeSet = useCallback(
     (setId: string) => {
       void applyMutation((current) => {
@@ -373,7 +344,6 @@ export function useSessionEngine(seed: SessionSeed) {
     logSet,
     updateSet,
     updateNote,
-    updateHistoryNote,
     resetSet,
     removeSet,
     completeSession,

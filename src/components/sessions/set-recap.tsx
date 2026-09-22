@@ -17,19 +17,10 @@ function formatSessionDate(date: Date): string {
 // NavItem dans bottom-nav.tsx), pour rester le seul vocabulaire de "petit point" de l'app.
 // Positionné à l'intérieur de la pastille (pas en débord sur les bords) puisqu'ici rien ne joue le
 // rôle du fond blanc qui l'isolait dans la barre de nav. Seules ces pastilles-là sont cliquables,
-// pour rouvrir la note dans la même popup que celle des exercices (voir NoteSheet) — une pastille
-// sans note ne réagit pas au clic, la prise de note rétroactive n'est pas un besoin exprimé pour
-// l'historique.
-export function SetRecap({
-  entries,
-  exerciseId,
-  onUpdateNote,
-}: {
-  entries: SessionRowRecapEntry[];
-  exerciseId: string;
-  onUpdateNote: (exerciseId: string, setId: string, note: string | null) => void;
-}) {
-  const [editing, setEditing] = useState<{ setId: string; setNumber: number; note: string } | null>(null);
+// pour rouvrir la note en LECTURE SEULE (voir NoteSheet, `onSave` omis) — seule la série de la
+// séance en cours se modifie (voir SetRow), pas l'historique.
+export function SetRecap({ entries }: { entries: SessionRowRecapEntry[] }) {
+  const [viewing, setViewing] = useState<{ setNumber: number; note: string } | null>(null);
 
   if (entries.length === 0) return null;
 
@@ -62,7 +53,7 @@ export function SetRecap({
                   <button
                     type="button"
                     aria-label={`Voir la note — série ${entry.set!.setNumber}`}
-                    onClick={() => setEditing({ setId: entry.set!.id, setNumber: entry.set!.setNumber, note })}
+                    onClick={() => setViewing({ setNumber: entry.set!.setNumber, note })}
                     className="absolute inset-0 rounded-md"
                   />
                   <span aria-hidden className="absolute right-1 top-1 h-[5px] w-[5px] rounded-full bg-accent" />
@@ -82,12 +73,11 @@ export function SetRecap({
         })}
       </div>
 
-      {editing && (
+      {viewing && (
         <NoteSheet
-          title={`Note — Série ${editing.setNumber}`}
-          initialNote={editing.note}
-          onClose={() => setEditing(null)}
-          onSave={(note) => onUpdateNote(exerciseId, editing.setId, note)}
+          title={`Note — Série ${viewing.setNumber}`}
+          initialNote={viewing.note}
+          onClose={() => setViewing(null)}
         />
       )}
     </>

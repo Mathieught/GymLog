@@ -74,7 +74,7 @@ export function buildSessionRows(
       // ExercisePanel), qu'il y ait ou non un historique réel derrière.
       previous: current
         ? historicalPrevious
-        : (historicalPrevious ?? { id: "", setNumber, actualWeight: null, actualReps: null, note: null }),
+        : (historicalPrevious ?? { setNumber, actualWeight: null, actualReps: null, note: null }),
       unlocked,
       recap: history.map((performance) => ({
         sessionDate: performance.sessionDate,
