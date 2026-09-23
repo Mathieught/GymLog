@@ -50,7 +50,7 @@ export function MuscleGroupPicker({
       {/* Les noms de muscle ne contiennent jamais de virgule : un champ texte joint suffit,
           pas besoin d'un <input> par valeur sélectionnée. */}
       <input type="hidden" id={id} name={name} value={value.join(",")} />
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         {MUSCLE_GROUPS.map((muscle) => {
           const Icon = MUSCLE_ICONS[muscle];
           const selected = value.includes(muscle);
@@ -61,17 +61,17 @@ export function MuscleGroupPicker({
               onClick={() => toggle(muscle)}
               aria-pressed={selected}
               className={cn(
-                "flex flex-col items-center gap-1.5 rounded-xl border p-2 text-center transition-colors",
+                "group flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center transition-colors",
                 // L'accent marque un état "sélectionné/actif" partout ailleurs dans l'app (onglet
                 // actif, série faite, rail de progression) : cette sélection suit la même
                 // convention plutôt que le remplissage noir/blanc réservé aux boutons d'action.
                 selected
-                  ? "border-accent bg-accent text-accent-contrast"
+                  ? "border-accent bg-accent text-accent-contrast/40"
                   : "border-neutral-200 text-neutral-900 hover:border-accent-deep/50 hover:bg-accent-soft/40"
               )}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-[10px] font-medium leading-tight">{muscle}</span>
+              <Icon className="h-9 w-9" />
+              <span className="text-xs font-medium leading-tight text-neutral-900 group-aria-pressed:text-accent-contrast">{muscle}</span>
             </button>
           );
         })}

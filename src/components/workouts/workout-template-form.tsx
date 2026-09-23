@@ -338,7 +338,7 @@ function CreateExerciseInline({
       <button
         type="button"
         onClick={() => onOpenChange(true)}
-        className="mt-3 text-sm font-medium text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
+        className="mt-3 flex w-full items-center justify-center rounded-xl border border-dashed border-neutral-300 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:border-accent-deep/50 hover:text-neutral-900"
       >
         + Créer un nouvel exercice
       </button>

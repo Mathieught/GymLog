@@ -24,7 +24,7 @@ export function SetCountPicker({
   return (
     <div>
       <input type="hidden" id={id} name={name} value={value} />
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         {QUICK_SET_COUNTS.map((count) => {
           const selected = !customMode && value === count;
           return (
@@ -37,7 +37,7 @@ export function SetCountPicker({
               }}
               aria-pressed={selected}
               className={cn(
-                "flex h-11 items-center justify-center rounded-xl border text-sm font-medium transition-colors",
+                "flex h-14 items-center justify-center rounded-xl border text-lg font-semibold transition-colors",
                 selected
                   ? "border-accent bg-accent text-accent-contrast"
                   : "border-neutral-200 text-neutral-900 hover:border-accent-deep/50 hover:bg-accent-soft/40"
@@ -47,9 +47,10 @@ export function SetCountPicker({
             </button>
           );
         })}
-      </div>
 
-      {customMode ? (
+        {/* 10 valeurs rapides sur 4 colonnes laissent 2 cases vides en 3e ligne : le champ
+            personnalisé les occupe au lieu d'ajouter une 4e ligne. */}
+        {customMode ? (
         <input
           type="number"
           min={1}
@@ -66,7 +67,7 @@ export function SetCountPicker({
             }
           }}
           placeholder="Nombre de séries"
-          className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm focus:border-accent-deep focus:outline-none"
+          className="col-span-2 h-14 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm focus:border-accent-deep focus:outline-none"
         />
       ) : (
         <button
@@ -75,11 +76,12 @@ export function SetCountPicker({
             setCustomMode(true);
             setCustomText("");
           }}
-          className="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-neutral-200 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-400"
+          className="col-span-2 flex h-14 w-full items-center justify-center rounded-xl border border-neutral-200 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-400"
         >
           Valeur personnalisée
         </button>
       )}
+      </div>
     </div>
   );
 }
