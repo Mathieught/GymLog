@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Input, Textarea, FieldError } from "@/components/ui/field";
 import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
@@ -48,14 +48,17 @@ export function ExerciseForm<S extends ActionState>({
   const [muscle, setMuscle] = useState<string[]>(defaultValues?.muscle ?? []);
   const [targetSets, setTargetSets] = useState(defaultValues?.targetSets ?? 3);
 
+  // Ids préfixés : cette popup s'ouvre aussi par-dessus le formulaire de séance, qui a déjà ses
+  // propres champs "name"/"description" (un label pointerait sinon vers le champ de derrière).
+  const ids = useId();
   // Note repliée par défaut (facultative) sauf si l'exercice en a déjà une.
   const [noteOpen, setNoteOpen] = useState(Boolean(defaultValues?.description));
 
   return (
     <form id={formId} action={formAction}>
-      <Step n={1} title="Nom" htmlFor="name">
+      <Step n={1} title="Nom" htmlFor={`${ids}-name`}>
         <Input
-          id="name"
+          id={`${ids}-name`}
           name="name"
           defaultValue={defaultValues?.name}
           placeholder="Ex : Développé couché"
@@ -67,32 +70,32 @@ export function ExerciseForm<S extends ActionState>({
       <Step
         n={2}
         title="Muscles ciblés"
-        htmlFor="muscle"
+        htmlFor={`${ids}-muscle`}
         aside={
           muscle.length === 0
             ? "Aucun"
             : `${muscle.length} sélectionné${muscle.length > 1 ? "s" : ""}`
         }
       >
-        <MuscleGroupPicker id="muscle" name="muscle" value={muscle} onChange={setMuscle} />
+        <MuscleGroupPicker id={`${ids}-muscle`} name="muscle" value={muscle} onChange={setMuscle} />
         <FieldError messages={state.fieldErrors?.muscle} />
       </Step>
 
       <Step
         n={3}
         title="Séries"
-        htmlFor="targetSets"
+        htmlFor={`${ids}-targetSets`}
         aside={`${targetSets} série${targetSets > 1 ? "s" : ""}`}
         last={!noteOpen}
       >
-        <SetCountPicker id="targetSets" name="targetSets" value={targetSets} onChange={setTargetSets} />
+        <SetCountPicker id={`${ids}-targetSets`} name="targetSets" value={targetSets} onChange={setTargetSets} />
         <FieldError messages={state.fieldErrors?.targetSets} />
       </Step>
 
       {noteOpen ? (
-        <Step n={4} title="Note" htmlFor="description" aside="Facultatif" last>
+        <Step n={4} title="Note" htmlFor={`${ids}-description`} aside="Facultatif" last>
           <Textarea
-            id="description"
+            id={`${ids}-description`}
             name="description"
             defaultValue={defaultValues?.description ?? ""}
             placeholder="Ex : buter légèrement les omoplates, prise large..."

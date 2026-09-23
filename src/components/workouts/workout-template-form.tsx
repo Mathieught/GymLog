@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {
   DndContext,
   closestCenter,
@@ -29,6 +29,9 @@ type ExerciseOption = {
   muscle: string[];
   targetSets: number;
 };
+
+// useSyncExternalStore sans source externe : false au rendu serveur/hydratation, true ensuite.
+const noopSubscribe = () => () => {};
 
 type Row = {
   key: string;
@@ -96,8 +99,11 @@ export function WorkoutTemplateForm({
   // dnd-kit attribue un id d'accessibilité auto-incrémenté (non basé sur useId) à chaque
   // useSortable : il diffère toujours entre le rendu serveur et la première passe client. On
   // n'active le rendu avec DndContext qu'après l'hydratation pour éviter le mismatch.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false
+  );
   const formId = formIdProp ?? `${idPrefix}-template-form`;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
