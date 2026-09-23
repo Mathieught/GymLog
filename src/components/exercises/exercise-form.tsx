@@ -9,7 +9,7 @@ import { initialActionState, type ActionState } from "@/lib/action-state";
 // Formulaire nu (pas d'en-tête ni de conteneur de page, pas de bouton de validation) : toujours
 // ouvert dans une popup (ExerciseFormSheet), qui fournit son propre en-tête/scroll et dont le
 // bouton de validation (icône dans l'en-tête) cible ce formulaire via son id.
-export function ExerciseForm({
+export function ExerciseForm<S extends ActionState>({
   formId,
   action,
   defaultValues,
@@ -17,7 +17,7 @@ export function ExerciseForm({
   onPendingChange,
 }: {
   formId?: string;
-  action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
+  action: (prevState: S, formData: FormData) => Promise<S>;
   defaultValues?: {
     name: string;
     muscle: string[];
@@ -26,18 +26,19 @@ export function ExerciseForm({
   };
   // Appelé après un enregistrement réussi (voir ActionState.nonce) pour refermer la popup : les
   // actions create/updateExercise ne font plus de redirect() (on reste sur la page derrière la
-  // popup, qui se revalide déjà toute seule).
-  onSuccess?: () => void;
+  // popup, qui se revalide déjà toute seule). Reçoit l'état renvoyé par l'action (ex : l'exercice
+  // créé par createExerciseInline).
+  onSuccess?: (state: S) => void;
   // Reflète `pending` (useActionState) au parent : le bouton de validation vit dans l'en-tête de
   // la popup, hors de ce composant, et doit pourtant se désactiver pendant l'enregistrement.
   onPendingChange?: (pending: boolean) => void;
 }) {
-  const [state, formAction, pending] = useActionState(action, initialActionState);
+  const [state, formAction, pending] = useActionState<S, FormData>(action, initialActionState as Awaited<S>);
   const handledNonce = useRef<number | undefined>(undefined);
   useEffect(() => {
     if (state.nonce !== undefined && state.nonce !== handledNonce.current) {
       handledNonce.current = state.nonce;
-      onSuccess?.();
+      onSuccess?.(state);
     }
   }, [state, onSuccess]);
   useEffect(() => {

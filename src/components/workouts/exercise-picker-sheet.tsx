@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, Search } from "lucide-react";
+import { ChevronLeft, Plus, Search } from "lucide-react";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -23,10 +23,13 @@ export function ExercisePickerSheet({
   exercises,
   onClose,
   onSelect,
+  onCreate,
 }: {
   exercises: ExerciseOption[];
   onClose: () => void;
   onSelect: (exercise: ExerciseOption) => void;
+  // Recherche sans résultat : propose de créer l'exercice avec le texte saisi comme nom.
+  onCreate?: (name: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState<string | null>(null);
@@ -136,7 +139,16 @@ export function ExercisePickerSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          {groups.length === 0 ? (
+          {groups.length === 0 && onCreate && query.trim() ? (
+            <button
+              type="button"
+              onClick={() => onCreate(query.trim())}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="truncate">Créer l&apos;exercice « {query.trim()} »</span>
+            </button>
+          ) : groups.length === 0 ? (
             <p className="py-6 text-center text-sm text-neutral-500">Aucun exercice trouvé.</p>
           ) : (
             <div className="space-y-4">

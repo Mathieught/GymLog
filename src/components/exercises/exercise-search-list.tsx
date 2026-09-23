@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { ExerciseFormSheet } from "@/components/exercises/exercise-form-sheet";
+import { createExercise } from "@/lib/actions/exercises";
 
 type ExerciseListItem = {
   id: string;
@@ -21,6 +23,8 @@ type ExerciseGroup = {
 // (ExercisePickerSheet), pour retrouver un exercice sans dérouler tous les groupes musculaires.
 export function ExerciseSearchList({ groups }: { groups: ExerciseGroup[] }) {
   const [query, setQuery] = useState("");
+  // Nom pré-rempli de la popup de création ouverte depuis une recherche sans résultat.
+  const [createName, setCreateName] = useState<string | null>(null);
 
   const filteredGroups = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -48,7 +52,16 @@ export function ExerciseSearchList({ groups }: { groups: ExerciseGroup[] }) {
         />
       </div>
 
-      {filteredGroups.length === 0 ? (
+      {filteredGroups.length === 0 && query.trim() ? (
+        <button
+          type="button"
+          onClick={() => setCreateName(query.trim())}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="truncate">Créer l&apos;exercice « {query.trim()} »</span>
+        </button>
+      ) : filteredGroups.length === 0 ? (
         <p className="text-sm text-neutral-500">Aucun exercice trouvé.</p>
       ) : (
         filteredGroups.map((group) => (
@@ -70,6 +83,18 @@ export function ExerciseSearchList({ groups }: { groups: ExerciseGroup[] }) {
             </ul>
           </section>
         ))
+      )}
+
+      {/* La page se revalide après createExercise : le nouvel exercice apparaît alors dans la
+          liste, toujours filtrée par la recherche en cours. */}
+      {createName !== null && (
+        <ExerciseFormSheet
+          title="Nouvel exercice"
+          action={createExercise}
+          defaultValues={{ name: createName, muscle: [], targetSets: 3, description: null }}
+          onClose={() => setCreateName(null)}
+          onSuccess={() => setCreateName(null)}
+        />
       )}
     </div>
   );

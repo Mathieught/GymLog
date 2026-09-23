@@ -22,6 +22,7 @@ import { Input, Textarea, Label, FieldError } from "@/components/ui/field";
 import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
 import { SetCountPicker } from "@/components/exercises/set-count-picker";
 import { ExercisePickerSheet } from "@/components/workouts/exercise-picker-sheet";
+import { ExerciseFormSheet } from "@/components/exercises/exercise-form-sheet";
 import { initialActionState, type ActionState } from "@/lib/action-state";
 import { createExerciseInline, type CreateExerciseInlineState } from "@/lib/actions/exercises";
 
@@ -93,6 +94,8 @@ export function WorkoutTemplateForm({
   const [namesById, setNamesById] = useState<Record<string, string>>(exerciseNamesById);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [createExerciseOpen, setCreateExerciseOpen] = useState(false);
+  // Nom pré-rempli de la popup de création ouverte depuis une recherche sans résultat du picker.
+  const [createSheetName, setCreateSheetName] = useState<string | null>(null);
   // Remonte en haut du formulaire une fois un exercice créé et ajouté (voir handleExerciseCreated) :
   // le panneau de création peut avoir été ouvert loin en bas d'une longue liste d'exercices.
   const topRef = useRef<HTMLDivElement>(null);
@@ -208,11 +211,30 @@ export function WorkoutTemplateForm({
         />
       </div>
 
+      {/* Avant le picker dans l'arbre : les deux se démontent ensemble après création, et le
+          nettoyage de body.overflow doit se faire dans cet ordre pour ne pas rester à "hidden".
+          Le portail étant monté après celui du picker, la popup s'affiche bien par-dessus. */}
+      {createSheetName !== null && (
+        <ExerciseFormSheet
+          title="Nouvel exercice"
+          action={createExerciseInline}
+          defaultValues={{ name: createSheetName, muscle: [], targetSets: 3, description: null }}
+          onClose={() => setCreateSheetName(null)}
+          onSuccess={(created) => {
+            if (!created.exercise) return;
+            handleExerciseCreated(created.exercise);
+            setCreateSheetName(null);
+            setPickerOpen(false);
+          }}
+        />
+      )}
+
       {pickerOpen && (
         <ExercisePickerSheet
           exercises={addableExercises}
           onClose={() => setPickerOpen(false)}
           onSelect={addExercise}
+          onCreate={setCreateSheetName}
         />
       )}
     </div>

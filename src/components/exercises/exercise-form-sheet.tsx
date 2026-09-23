@@ -9,7 +9,7 @@ import type { ActionState } from "@/lib/action-state";
 // Popup de création/édition d'exercice, ouverte depuis la liste des exercices ou depuis le détail
 // d'un exercice, au lieu de naviguer vers /exercises/new ou /exercises/[id]/edit. Fermer/valider
 // sont deux icônes dans l'en-tête de la popup (voir BottomSheet) plutôt qu'un gros bouton texte.
-export function ExerciseFormSheet({
+export function ExerciseFormSheet<S extends ActionState>({
   title,
   action,
   defaultValues,
@@ -17,7 +17,7 @@ export function ExerciseFormSheet({
   onSuccess,
 }: {
   title: string;
-  action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
+  action: (prevState: S, formData: FormData) => Promise<S>;
   defaultValues?: {
     name: string;
     muscle: string[];
@@ -25,7 +25,7 @@ export function ExerciseFormSheet({
     description: string | null;
   };
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (state: S) => void;
 }) {
   const formId = useId();
   const [pending, setPending] = useState(false);
