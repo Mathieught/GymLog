@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatWeight } from "@/lib/utils";
+import { formatReps, formatWeight } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { SetRecap } from "@/components/sessions/set-recap";
 import type { SessionRowRecapEntry } from "@/lib/session-rows";
@@ -48,7 +48,7 @@ export function PreviousSetRow({
             {previousSet.setNumber}
           </span>
           <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-300">
-            {reps} <span className="text-xs font-normal text-neutral-300">×</span> {formatWeight(weight)}{" "}
+            {formatReps(reps)} <span className="text-xs font-normal text-neutral-300">×</span> {formatWeight(weight)}{" "}
             <span className="text-xs font-normal text-neutral-300">kg</span>
           </span>
           <span aria-hidden className="shrink-0 pr-1 text-sm tracking-wider text-neutral-400">
@@ -72,7 +72,7 @@ export function PreviousSetRow({
             onClick={() => setSheetOpen(true)}
             className="h-full flex-1 text-left font-mono text-sm font-medium tabular-nums text-neutral-400 outline-none"
           >
-            {reps} <span className="text-xs font-normal text-neutral-400">×</span> {formatWeight(weight)}{" "}
+            {formatReps(reps)} <span className="text-xs font-normal text-neutral-400">×</span> {formatWeight(weight)}{" "}
             <span className="text-xs font-normal text-neutral-400">kg</span>
           </button>
           <span

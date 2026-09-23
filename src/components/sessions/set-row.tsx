@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { RotateCcw, StickyNote, Trash2 } from "lucide-react";
-import { cn, formatWeight } from "@/lib/utils";
+import { cn, formatReps, formatWeight } from "@/lib/utils";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { NoteSheet } from "@/components/sessions/note-sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -98,7 +98,7 @@ export function SetRow({
           </span>
           {locked ? (
             <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-400">
-              {reps} <span className="text-xs font-normal text-neutral-300">×</span> {formatWeight(weight)}{" "}
+              {formatReps(reps)} <span className="text-xs font-normal text-neutral-300">×</span> {formatWeight(weight)}{" "}
               <span className="text-xs font-normal text-neutral-300">kg</span>
             </span>
           ) : (
@@ -114,7 +114,7 @@ export function SetRow({
                 !set.completed && "text-neutral-400"
               )}
             >
-              {reps} <span className="text-xs font-normal text-neutral-400">×</span> {formatWeight(weight)}{" "}
+              {formatReps(reps)} <span className="text-xs font-normal text-neutral-400">×</span> {formatWeight(weight)}{" "}
               <span className="text-xs font-normal text-neutral-400">kg</span>
             </button>
           )}

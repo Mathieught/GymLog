@@ -156,7 +156,7 @@ model WorkoutSet {
   exerciseOrder    Int
   setNumber        Int
   actualWeight     Float?
-  actualReps       Int?
+  actualReps       Float?
   note             String?
   completed        Boolean        @default(false)
 

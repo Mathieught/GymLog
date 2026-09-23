@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "WorkoutSet" ALTER COLUMN "actualReps" SET DATA TYPE DOUBLE PRECISION;

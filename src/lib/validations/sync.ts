@@ -6,7 +6,7 @@ import { z } from "zod";
 // src/lib/validations/session.ts) s'appliquent ici aussi.
 const id = z.string().min(1);
 const actualWeight = z.number().min(0).max(1000);
-const actualReps = z.number().int().min(0).max(200);
+const actualReps = z.number().min(0).max(200);
 
 const outboxOpSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("ensureSession"), sessionId: id, workoutTemplateId: id, name: z.string().min(1).max(200) }),
