@@ -1,9 +1,9 @@
-import Link from "next/link";
+import type { ComponentProps } from "react";
 import { endOfWeek, format, isSameWeek, isToday, isYesterday, startOfWeek, subWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
-import { Card } from "@/components/ui/card";
+import { HistorySearchList } from "@/components/sessions/history-search-list";
 import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
 
@@ -42,15 +42,24 @@ export default async function HistoryPage() {
   // Un seul passage : les séances arrivent déjà triées du plus récent au plus ancien, donc celles
   // d'une même semaine se suivent forcément — pas besoin de regrouper puis retrier.
   const now = new Date();
-  const groups: { key: string; label: string; sessions: typeof sessions }[] = [];
+  const groups: ComponentProps<typeof HistorySearchList>["groups"] = [];
   for (const session of sessions) {
     const weekStart = startOfWeek(session.startedAt, { weekStartsOn: 1 });
     const key = weekStart.toISOString();
+    const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
+    const completedSets = session.sets.filter((set) => set.completed).length;
+    const item = {
+      id: session.id,
+      name: session.name,
+      details: `${formatSessionDate(session.startedAt)} · ${exerciseCount} exercice${
+        exerciseCount > 1 ? "s" : ""
+      } · ${completedSets} série${completedSets > 1 ? "s" : ""}`,
+    };
     const currentGroup = groups.at(-1);
     if (currentGroup?.key === key) {
-      currentGroup.sessions.push(session);
+      currentGroup.sessions.push(item);
     } else {
-      groups.push({ key, label: weekLabel(weekStart, now), sessions: [session] });
+      groups.push({ key, label: weekLabel(weekStart, now), sessions: [item] });
     }
   }
 
@@ -64,34 +73,7 @@ export default async function HistoryPage() {
           Séances.
         </p>
       ) : (
-        <div className="space-y-6">
-          {groups.map((group) => (
-            <section key={group.key}>
-              <h2 className="mb-2 text-sm font-medium text-neutral-500">{group.label}</h2>
-              <ul className="space-y-2">
-                {group.sessions.map((session) => {
-                  const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
-                  const completedSets = session.sets.filter((set) => set.completed).length;
-
-                  return (
-                    <li key={session.id}>
-                      <Link href={`/sessions/${session.id}`}>
-                        <Card className="transition-colors hover:border-neutral-400">
-                          <p className="font-medium">{session.name}</p>
-                          <p className="mt-1 text-sm text-neutral-500">
-                            {formatSessionDate(session.startedAt)} · {exerciseCount} exercice
-                            {exerciseCount > 1 ? "s" : ""} · {completedSets} série
-                            {completedSets > 1 ? "s" : ""}
-                          </p>
-                        </Card>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-        </div>
+        <HistorySearchList groups={groups} />
       )}
     </Container>
   );
