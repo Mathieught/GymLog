@@ -9,12 +9,16 @@ import { WorkoutEditSheet } from "@/components/workouts/workout-edit-sheet";
 import { WorkoutFormSheet } from "@/components/workouts/workout-form-sheet";
 import { createWorkoutTemplate } from "@/lib/actions/workout-templates";
 import { getActiveLocalSessionTemplateIds } from "@/lib/offline/db";
+import { cn } from "@/lib/utils";
 
 type TemplateItem = {
   id: string;
   name: string;
   exerciseCount: number;
   scheduleLabel: string | null;
+  muscles: string[];
+  lastSessionLabel: string;
+  lastSessionRecent: boolean;
 };
 
 type ExerciseOption = {
@@ -94,11 +98,22 @@ export function WorkoutList({
                         En cours
                       </span>
                     )}
+                    <span
+                      className={cn(
+                        "ml-auto shrink-0 font-mono text-[11px]",
+                        item.lastSessionRecent ? "text-accent-deep" : "text-neutral-500"
+                      )}
+                    >
+                      {item.lastSessionLabel}
+                    </span>
                   </div>
                   <p className="text-sm text-neutral-500">
                     {item.exerciseCount} exercice{item.exerciseCount > 1 ? "s" : ""}
                     {item.scheduleLabel ? ` · ${item.scheduleLabel}` : ""}
                   </p>
+                  {item.muscles.length > 0 && (
+                    <p className="truncate text-xs text-neutral-400">{item.muscles.join(" · ")}</p>
+                  )}
                 </Card>
               </Link>
             </li>

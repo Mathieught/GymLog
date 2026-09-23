@@ -2,11 +2,15 @@ import { Card } from "@/components/ui/card";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function formatDaysAgo(date: Date) {
+export function formatDaysAgo(date: Date) {
   const days = Math.floor((Date.now() - date.getTime()) / DAY_MS);
   if (days <= 0) return "Aujourd'hui";
   if (days === 1) return "Hier";
   return `Il y a ${days} j`;
+}
+
+export function isWithinDays(date: Date, days: number) {
+  return Date.now() - date.getTime() < days * DAY_MS;
 }
 
 function Label({ children }: { children: React.ReactNode }) {

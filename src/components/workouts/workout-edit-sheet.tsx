@@ -33,14 +33,14 @@ type TemplateItem = {
 // simple état affiché en place sur la liste normale, pour que le mode réorganisation/suppression
 // soit sans ambiguïté. Comme il ne se monte jamais côté serveur (seulement après un clic), pas
 // besoin du garde-fou d'hydratation utilisé ailleurs pour dnd-kit (voir WorkoutTemplateForm).
-export function WorkoutEditSheet({
+export function WorkoutEditSheet<T extends TemplateItem>({
   items,
   onReorder,
   onDeleted,
   onClose,
 }: {
-  items: TemplateItem[];
-  onReorder: (items: TemplateItem[]) => void;
+  items: T[];
+  onReorder: (items: T[]) => void;
   onDeleted: (id: string) => void;
   onClose: () => void;
 }) {

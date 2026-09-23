@@ -8,7 +8,7 @@ export const getActiveWorkoutTemplates = unstable_cache(
     prisma.workoutTemplate.findMany({
       where: { userId, isArchived: false },
       include: {
-        _count: { select: { exercises: true } },
+        exercises: { select: { exercise: { select: { muscle: true } } }, orderBy: { order: "asc" } },
         schedules: true,
       },
       orderBy: [{ order: "asc" }, { name: "asc" }],
@@ -16,8 +16,9 @@ export const getActiveWorkoutTemplates = unstable_cache(
   // v2 : change de clé pour forcer un cache froid après un peuplement de données fait en dehors de
   // l'app (script direct en base, sans passer par revalidateTag) — sans ça la liste restait
   // indéfiniment périmée sur le déploiement de prod tant que rien n'appelait updateTag.
-  ["active-workout-templates-v2"],
-  { tags: ["workout-templates"] }
+  // v3 : embarque les muscles des exercices, d'où aussi le tag "exercises".
+  ["active-workout-templates-v3"],
+  { tags: ["workout-templates", "exercises"] }
 );
 
 // Page détail/édition consultée sur (presque) chaque tape sur une séance : sans cache, chaque
@@ -45,6 +46,17 @@ export async function getLastSessionDate(templateId: string) {
     select: { startedAt: true },
   });
   return session?.startedAt ?? null;
+}
+
+// Date de la dernière séance de chaque programme, pour la liste : pas de cache, même raison que
+// getLastSessionDate.
+export async function getLastSessionDates(userId: string) {
+  const rows = await prisma.workoutSession.groupBy({
+    by: ["workoutTemplateId"],
+    where: { userId, workoutTemplateId: { not: null } },
+    _max: { startedAt: true },
+  });
+  return new Map(rows.map((row) => [row.workoutTemplateId, row._max.startedAt]));
 }
 
 // Utilisée par /api/offline/snapshot, rappelée à chaque navigation pour alimenter IndexedDB : même
