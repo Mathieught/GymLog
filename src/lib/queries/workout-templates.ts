@@ -36,6 +36,17 @@ export const getWorkoutTemplateDetail = unstable_cache(
   { tags: ["workout-templates"] }
 );
 
+// Pas de cache : change à chaque séance lancée, et aucune mutation de séance n'invalide le tag
+// "workout-templates".
+export async function getLastSessionDate(templateId: string) {
+  const session = await prisma.workoutSession.findFirst({
+    where: { workoutTemplateId: templateId },
+    orderBy: { startedAt: "desc" },
+    select: { startedAt: true },
+  });
+  return session?.startedAt ?? null;
+}
+
 // Utilisée par /api/offline/snapshot, rappelée à chaque navigation pour alimenter IndexedDB : même
 // aller-retour évitable que ci-dessus. Taguée aussi "exercises" (pas seulement "workout-templates")
 // puisqu'elle embarque le détail de chaque exercice (nom, muscles, objectif de séries) — un
