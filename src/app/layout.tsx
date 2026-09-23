@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { auth } from "@/lib/auth";
+import { APP_MODE_COOKIE, parseAppMode } from "@/lib/app-mode";
+import { AppModeProvider } from "@/components/app-mode";
 import { BottomNav } from "@/components/nav/bottom-nav";
 import { NavVisibilityProvider } from "@/components/nav/nav-visibility";
 import { OfflineSyncManager } from "@/components/offline-sync-manager";
@@ -37,16 +40,19 @@ export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
+  const appMode = parseAppMode((await cookies()).get(APP_MODE_COOKIE)?.value);
 
   return (
     <html lang="fr" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full bg-neutral-50 font-sans text-neutral-900">
         <SerwistProvider swUrl="/serwist/sw.js">
           <OfflineSyncManager isAuthenticated={!!session?.user} />
-          <NavVisibilityProvider>
-            <main className="pb-24">{children}</main>
-            <BottomNav />
-          </NavVisibilityProvider>
+          <AppModeProvider initialMode={appMode}>
+            <NavVisibilityProvider>
+              <main className="pb-24">{children}</main>
+              <BottomNav />
+            </NavVisibilityProvider>
+          </AppModeProvider>
         </SerwistProvider>
       </body>
     </html>

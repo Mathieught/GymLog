@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AppModeToggle } from "@/components/app-mode";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -29,6 +30,14 @@ export default async function SettingsPage() {
           </form>
         </Card>
       )}
+
+      <Card className="mt-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="font-medium">Mode</p>
+          <p className="text-sm text-neutral-500">Avancé affiche des fonctionnalités supplémentaires</p>
+        </div>
+        <AppModeToggle />
+      </Card>
     </Container>
   );
 }
