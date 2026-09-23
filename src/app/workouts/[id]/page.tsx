@@ -1,24 +1,22 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { getLastSessionDate, getWorkoutTemplateDetail } from "@/lib/queries/workout-templates";
+import { getWorkoutTemplateDetail } from "@/lib/queries/workout-templates";
 import { getActiveExercises } from "@/lib/queries/exercises";
 import { getCurrentUserId } from "@/lib/current-user";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { WorkoutEditTrigger } from "@/components/workouts/workout-edit-trigger";
-import { WorkoutSummary } from "@/components/workouts/workout-summary";
 
 export default async function WorkoutTemplateDetailPage({
   params,
 }: PageProps<"/workouts/[id]">) {
   const { id } = await params;
   const userId = await getCurrentUserId();
-  const [template, availableExercises, lastSessionDate] = await Promise.all([
+  const [template, availableExercises] = await Promise.all([
     getWorkoutTemplateDetail(id),
     getActiveExercises(userId),
-    getLastSessionDate(id),
   ]);
   if (!template || template.isArchived) notFound();
 
@@ -76,10 +74,6 @@ export default async function WorkoutTemplateDetailPage({
           </div>
         ) : (
           <>
-            <WorkoutSummary
-              exercises={template.exercises.map((workoutExercise) => workoutExercise.exercise)}
-              lastSessionDate={lastSessionDate}
-            />
             <p className="mb-2 text-sm text-neutral-500">
               Touchez un exercice pour démarrer la séance.
             </p>

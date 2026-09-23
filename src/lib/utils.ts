@@ -15,3 +15,16 @@ export function formatWeight(weight: number) {
 export function formatReps(reps: number) {
   return Number.isInteger(reps) ? String(reps) : reps.toFixed(2);
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function formatDaysAgo(date: Date) {
+  const days = Math.floor((Date.now() - date.getTime()) / DAY_MS);
+  if (days <= 0) return "Aujourd'hui";
+  if (days === 1) return "Hier";
+  return `Il y a ${days} j`;
+}
+
+export function isWithinDays(date: Date, days: number) {
+  return Date.now() - date.getTime() < days * DAY_MS;
+}

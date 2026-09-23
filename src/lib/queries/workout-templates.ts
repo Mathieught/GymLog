@@ -37,19 +37,8 @@ export const getWorkoutTemplateDetail = unstable_cache(
   { tags: ["workout-templates"] }
 );
 
-// Pas de cache : change à chaque séance lancée, et aucune mutation de séance n'invalide le tag
-// "workout-templates".
-export async function getLastSessionDate(templateId: string) {
-  const session = await prisma.workoutSession.findFirst({
-    where: { workoutTemplateId: templateId },
-    orderBy: { startedAt: "desc" },
-    select: { startedAt: true },
-  });
-  return session?.startedAt ?? null;
-}
-
-// Date de la dernière séance de chaque programme, pour la liste : pas de cache, même raison que
-// getLastSessionDate.
+// Date de la dernière séance de chaque programme, pour la liste. Pas de cache : change à chaque
+// séance lancée, et aucune mutation de séance n'invalide le tag "workout-templates".
 export async function getLastSessionDates(userId: string) {
   const rows = await prisma.workoutSession.groupBy({
     by: ["workoutTemplateId"],

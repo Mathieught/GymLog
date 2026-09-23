@@ -3,7 +3,7 @@ import { getActiveWorkoutTemplates, getLastSessionDates } from "@/lib/queries/wo
 import { getActiveExercises } from "@/lib/queries/exercises";
 import { Container } from "@/components/ui/container";
 import { WorkoutList } from "@/components/workouts/workout-list";
-import { formatDaysAgo, isWithinDays } from "@/components/workouts/workout-summary";
+import { formatDaysAgo, isWithinDays } from "@/lib/utils";
 import { formatScheduleDays } from "@/lib/constants";
 
 export default async function WorkoutsPage() {
