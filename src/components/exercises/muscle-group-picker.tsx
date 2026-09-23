@@ -67,7 +67,8 @@ export function MuscleGroupPicker({
                 // convention plutôt que le remplissage noir/blanc réservé aux boutons d'action.
                 selected
                   ? "border-accent bg-accent text-accent-contrast/40"
-                  : "border-neutral-200 text-neutral-900 hover:border-accent-deep/50 hover:bg-accent-soft/40"
+                  : // Corps des icônes (currentColor) en teinte "ombre" : sombre, pour que seule la zone ciblée ressorte.
+                    "border-neutral-200 text-[#4a4839] hover:border-accent-deep/50 hover:bg-accent-soft/40"
               )}
             >
               <Icon className="h-11 w-11" />
