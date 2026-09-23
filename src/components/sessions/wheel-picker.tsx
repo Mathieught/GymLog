@@ -22,16 +22,20 @@ const ITEM_HEIGHT = WHEEL_ITEM_HEIGHT;
 // et devient la valeur retenue une fois le geste terminé. L'alignement final est calculé en JS
 // (scrollTop forcé, sans animation) plutôt que via scroll-snap CSS, dont l'alignement pixel n'est
 // pas toujours garanti une fois le geste terminé sur tous les appareils/zooms.
+// Le bandeau de sélection n'est pas dessiné ici mais par le parent (voir SetValueSheet), pour
+// qu'un seul bandeau relie plusieurs molettes en une ligne lisible ("10 × 30.50").
 export function WheelPicker({
   values,
   value,
   onChange,
   format,
+  align = "center",
 }: {
   values: number[];
   value: number;
   onChange: (value: number) => void;
   format: (value: number) => string;
+  align?: "left" | "center" | "right";
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const settleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,11 +96,6 @@ export function WheelPicker({
   return (
     <div className="relative w-full" style={{ height: WHEEL_HEIGHT }}>
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-lg border border-neutral-300 bg-neutral-100"
-        style={{ height: ITEM_HEIGHT }}
-      />
-      <div
         ref={containerRef}
         onScroll={handleScroll}
         className="relative z-20 h-full overflow-y-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -116,7 +115,8 @@ export function WheelPicker({
             }}
             style={{ height: ITEM_HEIGHT }}
             className={cn(
-              "flex cursor-pointer items-center justify-center font-mono text-base tabular-nums transition-colors",
+              "flex cursor-pointer items-center font-mono text-base tabular-nums transition-colors",
+              align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center",
               index === centerIndex ? "font-semibold text-neutral-900" : "text-neutral-400"
             )}
           >

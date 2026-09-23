@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatWeight } from "@/lib/utils";
 import { NoteSheet } from "@/components/sessions/note-sheet";
 import type { SessionRowRecapEntry } from "@/lib/session-rows";
 
@@ -66,7 +66,7 @@ export function SetRecap({ entries }: { entries: SessionRowRecapEntry[] }) {
                   hasValue ? "text-neutral-600" : "font-medium text-neutral-400"
                 )}
               >
-                {hasValue ? `${entry.set!.actualReps}×${entry.set!.actualWeight}` : "—"}
+                {hasValue ? `${entry.set!.actualReps}×${formatWeight(entry.set!.actualWeight!)}` : "—"}
               </span>
             </div>
           );

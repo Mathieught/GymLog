@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Check } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { formatWeight } from "@/lib/utils";
 import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
 import { PageHeader } from "@/components/nav/page-header";
@@ -99,7 +100,7 @@ export default async function SessionDetailPage({
                       >
                         <span className="text-neutral-500">Série {set.setNumber}</span>
                         <span className="font-mono font-medium">
-                          {set.actualReps ?? "—"} × {set.actualWeight ?? "—"} kg
+                          {set.actualReps ?? "—"} × {set.actualWeight != null ? formatWeight(set.actualWeight) : "—"} kg
                         </span>
                         {set.completed && <Check className="h-4 w-4 text-accent-deep" />}
                       </li>
