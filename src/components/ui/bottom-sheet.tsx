@@ -15,6 +15,7 @@ export function BottomSheet({
   closeIcon: CloseIcon = X,
   closeLabel = "Fermer",
   headerActions,
+  footer,
   onClose,
   children,
 }: {
@@ -22,6 +23,8 @@ export function BottomSheet({
   closeIcon?: LucideIcon;
   closeLabel?: string;
   headerActions?: ReactNode;
+  // Barre fixe sous le corps scrollable (ex : gros bouton de validation + Annuler).
+  footer?: ReactNode;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -60,6 +63,7 @@ export function BottomSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">{children}</div>
+        {footer && <div className="border-t border-neutral-100 px-4 pb-3 pt-3">{footer}</div>}
       </div>
     </div>,
     document.body

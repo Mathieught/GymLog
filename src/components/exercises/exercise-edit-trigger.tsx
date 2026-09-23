@@ -32,6 +32,7 @@ export function ExerciseEditTrigger({
       {open && (
         <ExerciseFormSheet
           title={`Modifier ${exerciseName}`}
+          submitLabel="Enregistrer"
           action={updateExercise.bind(null, exerciseId)}
           defaultValues={defaultValues}
           onClose={() => setOpen(false)}

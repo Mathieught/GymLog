@@ -1,22 +1,23 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Check } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ExerciseForm } from "@/components/exercises/exercise-form";
 import type { ActionState } from "@/lib/action-state";
 
 // Popup de création/édition d'exercice, ouverte depuis la liste des exercices ou depuis le détail
-// d'un exercice, au lieu de naviguer vers /exercises/new ou /exercises/[id]/edit. Fermer/valider
-// sont deux icônes dans l'en-tête de la popup (voir BottomSheet) plutôt qu'un gros bouton texte.
+// d'un exercice, au lieu de naviguer vers /exercises/new ou /exercises/[id]/edit. Validation par
+// un gros bouton fixe en bas (+ Annuler) : l'ancienne petite coche dans l'en-tête passait inaperçue.
 export function ExerciseFormSheet<S extends ActionState>({
   title,
+  submitLabel = "Créer l'exercice",
   action,
   defaultValues,
   onClose,
   onSuccess,
 }: {
   title: string;
+  submitLabel?: string;
   action: (prevState: S, formData: FormData) => Promise<S>;
   defaultValues?: {
     name: string;
@@ -34,16 +35,24 @@ export function ExerciseFormSheet<S extends ActionState>({
     <BottomSheet
       title={title}
       onClose={onClose}
-      headerActions={
-        <button
-          type="submit"
-          form={formId}
-          disabled={pending}
-          aria-label="Valider"
-          className="rounded-full bg-accent p-1.5 text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          <Check className="h-4 w-4" />
-        </button>
+      footer={
+        <div className="flex flex-col gap-1">
+          <button
+            type="submit"
+            form={formId}
+            disabled={pending}
+            className="h-14 w-full rounded-2xl bg-accent text-base font-semibold text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {pending ? "Enregistrement..." : submitLabel}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-11 text-sm font-medium text-neutral-600 hover:text-neutral-900"
+          >
+            Annuler
+          </button>
+        </div>
       }
     >
       <ExerciseForm

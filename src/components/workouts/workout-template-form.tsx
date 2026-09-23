@@ -16,15 +16,12 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Search, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { GripVertical, Plus, Search, Trash2 } from "lucide-react";
 import { Input, Textarea, Label, FieldError } from "@/components/ui/field";
-import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
-import { SetCountPicker } from "@/components/exercises/set-count-picker";
 import { ExercisePickerSheet } from "@/components/workouts/exercise-picker-sheet";
 import { ExerciseFormSheet } from "@/components/exercises/exercise-form-sheet";
 import { initialActionState, type ActionState } from "@/lib/action-state";
-import { createExerciseInline, type CreateExerciseInlineState } from "@/lib/actions/exercises";
+import { createExerciseInline } from "@/lib/actions/exercises";
 
 type ExerciseOption = {
   id: string;
@@ -93,21 +90,8 @@ export function WorkoutTemplateForm({
   const [options, setOptions] = useState<ExerciseOption[]>(exerciseOptions);
   const [namesById, setNamesById] = useState<Record<string, string>>(exerciseNamesById);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [createExerciseOpen, setCreateExerciseOpen] = useState(false);
-  // Nom pré-rempli de la popup de création ouverte depuis une recherche sans résultat du picker.
+  // Nom pré-rempli de la popup de création, ouverte depuis la recherche (ExerciseSearch) ou le picker.
   const [createSheetName, setCreateSheetName] = useState<string | null>(null);
-  // Remonte en haut du formulaire une fois un exercice créé et ajouté (voir handleExerciseCreated) :
-  // le panneau de création peut avoir été ouvert loin en bas d'une longue liste d'exercices.
-  const topRef = useRef<HTMLDivElement>(null);
-  // Remonte jusqu'à ce bloc (qui contient le bouton "Ajouter un exercice existant" juste avant le
-  // panneau de création) à l'ouverture de ce dernier : le bouton reste ainsi visible au-dessus du
-  // formulaire plutôt que de défiler jusqu'à en sortir complètement du cadre.
-  const addExercisePanelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (createExerciseOpen) {
-      addExercisePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [createExerciseOpen]);
   const idPrefix = useId();
   // dnd-kit attribue un id d'accessibilité auto-incrémenté (non basé sur useId) à chaque
   // useSortable : il diffère toujours entre le rendu serveur et la première passe client. On
@@ -128,8 +112,6 @@ export function WorkoutTemplateForm({
     setOptions((current) => [...current, exercise].sort((a, b) => a.name.localeCompare(b.name)));
     setNamesById((current) => ({ ...current, [exercise.id]: exercise.name }));
     setRows((current) => [...current, { key: crypto.randomUUID(), exerciseId: exercise.id }]);
-    setCreateExerciseOpen(false);
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function removeRow(key: string) {
@@ -187,29 +169,13 @@ export function WorkoutTemplateForm({
       )}
       <FieldError messages={state.fieldErrors?.exercises} />
 
-      <div ref={addExercisePanelRef}>
-        {addableExercises.length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              // Un seul des deux panneaux d'ajout ouvert à la fois : sans ça, refermer la popup de
-              // sélection laissait le panneau de création encore déplié derrière, pour rien.
-              setCreateExerciseOpen(false);
-              setPickerOpen(true);
-            }}
-            className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 text-sm font-medium text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
-          >
-            <Search className="h-4 w-4" />
-            Ajouter un exercice existant
-          </button>
-        )}
-
-        <CreateExerciseInline
-          open={createExerciseOpen}
-          onOpenChange={setCreateExerciseOpen}
-          onCreated={handleExerciseCreated}
-        />
-      </div>
+      <ExerciseSearch
+        exercises={addableExercises}
+        allExercises={options}
+        onSelect={addExercise}
+        onCreate={setCreateSheetName}
+        onBrowse={addableExercises.length > 0 ? () => setPickerOpen(true) : undefined}
+      />
 
       {/* Avant le picker dans l'arbre : les deux se démontent ensemble après création, et le
           nettoyage de body.overflow doit se faire dans cet ordre pour ne pas rester à "hidden".
@@ -242,7 +208,7 @@ export function WorkoutTemplateForm({
 
   if (isCreate) {
     return (
-      <div ref={topRef} className="space-y-6">
+      <div className="space-y-6">
         <form id={formId} action={formAction} className="space-y-5">
           <div>
             <Label htmlFor="name">Nom de la séance</Label>
@@ -264,7 +230,7 @@ export function WorkoutTemplateForm({
   }
 
   return (
-    <div ref={topRef} className="space-y-6">
+    <div className="space-y-6">
       <form id={formId} action={formAction} className="space-y-4">
         <div>
           <Label htmlFor="name">Nom de la séance</Label>
@@ -308,87 +274,123 @@ export function WorkoutTemplateForm({
   );
 }
 
-function CreateExerciseInline({
-  open,
-  onOpenChange,
-  onCreated,
+// Point d'entrée unique pour ajouter un exercice (proposition "Recherche unifiée") : on tape, on
+// choisit un résultat, ou on crée l'exercice avec le texte saisi comme nom. Remplace les anciens
+// boutons "Ajouter un exercice existant" / "Créer un nouvel exercice", peu visibles.
+function ExerciseSearch({
+  exercises,
+  allExercises,
+  onSelect,
+  onCreate,
+  onBrowse,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated: (exercise: ExerciseOption) => void;
+  // Exercices encore ajoutables (pas déjà dans la séance).
+  exercises: ExerciseOption[];
+  // Toute la bibliothèque : sert seulement à ne pas proposer de recréer un nom existant.
+  allExercises: ExerciseOption[];
+  onSelect: (exercise: ExerciseOption) => void;
+  onCreate: (name: string) => void;
+  // Ouvre le picker complet (filtre par muscle) pour parcourir sans rien taper.
+  onBrowse?: () => void;
 }) {
-  const [muscle, setMuscle] = useState<string[]>([]);
-  const [targetSets, setTargetSets] = useState(3);
-  const [state, formAction, pending] = useActionState<CreateExerciseInlineState, FormData>(
-    createExerciseInline,
-    {}
-  );
-  const handledNonce = useRef<number | undefined>(undefined);
-  const idPrefix = useId();
+  const [query, setQuery] = useState("");
+  const inputId = useId();
+  const name = query.trim();
+  const normalized = name.toLowerCase();
+  const results = normalized
+    ? exercises.filter((exercise) => exercise.name.toLowerCase().includes(normalized)).slice(0, 5)
+    : [];
+  const canCreate =
+    name !== "" && !allExercises.some((exercise) => exercise.name.toLowerCase() === normalized);
 
-  useEffect(() => {
-    if (state.exercise && state.nonce !== handledNonce.current) {
-      handledNonce.current = state.nonce;
-      onCreated(state.exercise);
-    }
-  }, [state, onCreated]);
+  function select(exercise: ExerciseOption) {
+    onSelect(exercise);
+    setQuery("");
+  }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => onOpenChange(true)}
-        className="mt-3 flex w-full items-center justify-center rounded-xl border border-dashed border-neutral-300 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:border-accent-deep/50 hover:text-neutral-900"
-      >
-        + Créer un nouvel exercice
-      </button>
-    );
+  function create() {
+    onCreate(name);
+    setQuery("");
   }
 
   return (
-    <form
-      action={formAction}
-      className="mt-3 space-y-3 rounded-xl border border-neutral-200 bg-white p-3"
-    >
-      <div>
-        <Label htmlFor={`${idPrefix}-name`}>Nom de l&apos;exercice</Label>
-        <Input
-          id={`${idPrefix}-name`}
-          name="name"
-          placeholder="Presse à cuisses"
-          required
+    <div className="mt-4">
+      <Label htmlFor={inputId}>Ajouter un exercice</Label>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-accent-deep" />
+        <input
+          id={inputId}
+          type="text"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            if (results[0]) select(results[0]);
+            else if (canCreate) create();
+          }}
+          placeholder="Rechercher ou créer un exercice"
+          autoComplete="off"
+          className="h-14 w-full rounded-2xl border border-neutral-300 bg-neutral-50 pl-12 pr-24 text-base outline-none transition-colors focus:border-accent"
         />
-        <FieldError messages={state.fieldErrors?.name} />
+        {onBrowse && !name && (
+          <button
+            type="button"
+            onClick={onBrowse}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-medium text-accent-deep hover:bg-accent-soft"
+          >
+            Parcourir
+          </button>
+        )}
       </div>
 
-      <div>
-        <Label htmlFor={`${idPrefix}-muscle`}>Muscles ciblés</Label>
-        <MuscleGroupPicker id={`${idPrefix}-muscle`} name="muscle" value={muscle} onChange={setMuscle} />
-        <FieldError messages={state.fieldErrors?.muscle} />
-      </div>
-
-      <div>
-        <Label htmlFor={`${idPrefix}-sets`}>Nombre de série</Label>
-        <SetCountPicker
-          id={`${idPrefix}-sets`}
-          name="targetSets"
-          value={targetSets}
-          onChange={setTargetSets}
-        />
-        <FieldError messages={state.fieldErrors?.targetSets} />
-      </div>
-
-      {state.error && <p className="text-sm text-danger">{state.error}</p>}
-
-      <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={pending}>
-          {pending ? "Création..." : "Créer et ajouter à la séance"}
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => onOpenChange(false)}>
-          Annuler
-        </Button>
-      </div>
-    </form>
+      {name && (
+        <ul className="mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100">
+          {results.map((exercise) => (
+            <li key={exercise.id} className="border-b border-neutral-200 last:border-b-0">
+              <button
+                type="button"
+                onClick={() => select(exercise)}
+                className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-neutral-200"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{exercise.name}</span>
+                  <span className="block truncate text-xs text-neutral-500">
+                    {[exercise.muscle.join(", "), `${exercise.targetSets} séries`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-200">
+                  <Plus className="h-4 w-4" />
+                </span>
+              </button>
+            </li>
+          ))}
+          {canCreate ? (
+            <li>
+              <button
+                type="button"
+                onClick={create}
+                className="flex w-full items-center gap-3 bg-accent-soft px-3.5 py-3 text-left text-accent-deep transition-opacity hover:opacity-90"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast">
+                  <Plus className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">Créer « {name} »</span>
+                  <span className="block text-xs text-neutral-600">Nouvel exercice, ajouté à la séance</span>
+                </span>
+              </button>
+            </li>
+          ) : (
+            results.length === 0 && (
+              <li className="px-3.5 py-3 text-sm text-neutral-500">Déjà dans la séance.</li>
+            )
+          )}
+        </ul>
+      )}
+    </div>
   );
 }
 
