@@ -28,6 +28,7 @@ function applyTheme(theme: Theme) {
   for (const [name, value] of Object.entries(themeVariables(theme))) root.style.setProperty(name, value);
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", PAGE_BACKGROUND[theme.mode]);
   document.querySelector('link[rel="icon"]')?.setAttribute("href", appIconUrl(theme, 64));
+  document.querySelector('link[rel="manifest"]')?.setAttribute("href", `/manifest.webmanifest?t=${serializeTheme(theme)}`);
   document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute("href", appIconUrl(theme, 180));
   document.cookie = `${THEME_COOKIE}=${serializeTheme(theme)}; path=/; max-age=31536000; samesite=lax`;
 }
