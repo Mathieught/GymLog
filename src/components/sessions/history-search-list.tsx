@@ -4,11 +4,19 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type HistoryGroup = {
   key: string;
   label: string;
-  sessions: { id: string; name: string; details: string }[];
+  sessions: {
+    id: string;
+    name: string;
+    day: string;
+    weekday: string;
+    recent: boolean;
+    exerciseCount: number;
+  }[];
 };
 
 // Recherche par nom de séance au-dessus des semaines déjà regroupées côté serveur (voir
@@ -52,9 +60,28 @@ export function HistorySearchList({ groups }: { groups: HistoryGroup[] }) {
               {group.sessions.map((session) => (
                 <li key={session.id}>
                   <Link href={`/sessions/${session.id}`}>
-                    <Card className="transition-colors hover:border-neutral-400">
-                      <p className="font-medium">{session.name}</p>
-                      <p className="mt-1 text-sm text-neutral-500">{session.details}</p>
+                    {/* Colonne date à gauche (numéro + jour) séparée par un filet : le numéro passe en
+                        accent sur les 7 derniers jours, comme "Dernière séance" sur la page Séances. */}
+                    <Card className="flex items-center gap-3.5 py-3 pl-3 pr-4 transition-colors hover:border-neutral-400">
+                      <div className="grid w-[52px] shrink-0 justify-items-center gap-[3px] border-r border-neutral-200 pr-3">
+                        <span
+                          className={cn(
+                            "font-mono text-[22px] font-semibold leading-none tabular-nums",
+                            session.recent ? "text-accent" : "text-neutral-900"
+                          )}
+                        >
+                          {session.day}
+                        </span>
+                        <span className="font-mono text-[9.5px] font-semibold uppercase leading-none tracking-[0.08em] text-neutral-500">
+                          {session.weekday}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{session.name}</p>
+                        <p className="text-sm text-neutral-500">
+                          {session.exerciseCount} exercice{session.exerciseCount > 1 ? "s" : ""}
+                        </p>
+                      </div>
                     </Card>
                   </Link>
                 </li>

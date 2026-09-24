@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
-import { HeaderOptions } from "@/components/nav/header-options";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({
@@ -50,7 +49,7 @@ export function PageHeader({
           // visuelle en changeant de page.
           <div className="min-w-0 flex-1 truncate text-xl font-semibold text-neutral-900">{title}</div>
         )}
-        <div className="flex shrink-0 items-center gap-2">{right ?? (title !== undefined ? null : <HeaderOptions />)}</div>
+        <div className="flex shrink-0 items-center gap-2">{right}</div>
       </div>
       {/* Même largeur maximale que la ligne titre juste au-dessus (via `className`, pour une page
           qui la personnalise) : le padding horizontal reste au consommateur de `below` (voir

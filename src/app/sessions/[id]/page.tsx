@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Check } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatReps, formatWeight } from "@/lib/utils";
+import { cn, formatReps, formatWeight } from "@/lib/utils";
+import { setEvolution } from "@/lib/set-evolution";
 import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
 import { PageHeader } from "@/components/nav/page-header";
+import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { SessionTracker } from "@/components/sessions/session-tracker";
 import type { SessionSeed } from "@/lib/offline/session-engine";
@@ -21,6 +23,16 @@ type SetForGrouping = {
   completed: boolean;
   note: string | null;
 };
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+// "1 h 08" au-delà d'une heure, "45 min" en dessous.
+function formatDuration(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 1) return "< 1 min";
+  if (minutes < 60) return `${minutes} min`;
+  return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")}`;
+}
 
 export default async function SessionDetailPage({
   params,
@@ -74,42 +86,160 @@ export default async function SessionDetailPage({
   }
 
   if (isReadOnly && completedAt) {
+    // Séance précédente du même modèle, pour comparer chaque série à celle de même numéro.
+    const previousSession = session.workoutTemplateId
+      ? await prisma.workoutSession.findFirst({
+          where: {
+            userId: session.userId,
+            workoutTemplateId: session.workoutTemplateId,
+            completedAt: { not: null },
+            startedAt: { lt: session.startedAt },
+          },
+          orderBy: { startedAt: "desc" },
+          select: {
+            name: true,
+            startedAt: true,
+            sets: {
+              where: { completed: true, actualWeight: { not: null }, actualReps: { not: null } },
+              select: { exerciseId: true, setNumber: true, actualWeight: true, actualReps: true },
+            },
+          },
+        })
+      : null;
+    const previousSets = new Map(
+      (previousSession?.sets ?? []).map((set) => [
+        `${set.exerciseId}:${set.setNumber}`,
+        { reps: set.actualReps!, weight: set.actualWeight! },
+      ])
+    );
+
+    const allSets = groups.flatMap((group) => group.sets);
+    const doneCount = allSets.filter((set) => set.completed).length;
+    // Exercices réellement pratiqués (au moins une série), comme le compte de la liste Historique.
+    const practiced = groups.filter((group) => group.sets.length > 0);
+    // Un exercice qui cible plusieurs muscles compte pour chacun d'eux.
+    const muscleCounts = [...new Set(practiced.flatMap((group) => group.exercise.muscle))]
+      .map((muscle) => ({
+        muscle,
+        count: practiced.filter((group) => group.exercise.muscle.includes(muscle)).length,
+      }))
+      .sort((a, b) => b.count - a.count);
+
     return (
       <>
         <PageHeader backHref="/history" />
-        <Container>
-          <h1 className="text-xl font-semibold">{session.name}</h1>
-          <p className="text-sm text-neutral-500">
-            {format(completedAt, "EEEE d MMMM", { locale: fr })}
-          </p>
-
-          <div className="mt-6 space-y-4">
-            {groups.map((group) => (
-              <div key={group.exerciseId}>
-                <p className="font-medium">{group.exercise.name}</p>
-                <p className="text-xs text-neutral-500">{group.exercise.muscle.join(", ")}</p>
-
-                {group.sets.length === 0 ? (
-                  <p className="mt-2 text-sm text-neutral-500">Aucune série enregistrée.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1.5">
-                    {group.sets.map((set) => (
-                      <li
-                        key={set.id}
-                        className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
-                      >
-                        <span className="text-neutral-500">Série {set.setNumber}</span>
-                        <span className="font-mono font-medium">
-                          {set.actualReps != null ? formatReps(set.actualReps) : "—"} × {set.actualWeight != null ? formatWeight(set.actualWeight) : "—"} kg
-                        </span>
-                        {set.completed && <Check className="h-4 w-4 text-accent-deep" />}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
+        <Container className="space-y-4">
+          <div>
+            <h1 className="text-xl font-semibold">{session.name}</h1>
+            <p className="text-sm text-neutral-500">
+              {capitalize(format(session.startedAt, "EEEE d MMMM", { locale: fr }))}
+            </p>
           </div>
+
+          <div className="space-y-3.5 rounded-2xl bg-accent p-4 text-accent-contrast">
+            <dl className="grid grid-cols-3">
+              {[
+                { label: "Durée", value: formatDuration(session.lastActivityAt.getTime() - session.startedAt.getTime()) },
+                { label: "Exercices", value: practiced.length },
+                { label: "Séries", value: `${doneCount}/${allSets.length}` },
+              ].map((stat, i) => (
+                <div
+                  key={stat.label}
+                  className={cn("flex flex-col-reverse gap-1", i > 0 && "border-l border-accent-contrast/20 pl-3")}
+                >
+                  <dt className="text-xs text-accent-contrast/60">{stat.label}</dt>
+                  <dd className="font-mono text-2xl font-semibold leading-none tabular-nums">{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+            {muscleCounts.length > 0 && (
+              <ul className="flex flex-wrap gap-1.5 border-t border-accent-contrast/20 pt-3">
+                {muscleCounts.map(({ muscle, count }) => (
+                  <li key={muscle} className="rounded-full bg-accent-contrast/10 px-2.5 py-0.5 text-xs">
+                    {muscle}
+                    <span className="ml-1.5 font-mono text-[11px] opacity-65">
+                      {count} exo{count > 1 ? "s" : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {session.note && (
+            <p className="flex items-start gap-2 rounded-xl bg-neutral-100 px-3 py-2.5 text-sm text-neutral-600">
+              <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" />
+              {session.note}
+            </p>
+          )}
+
+          {previousSession && (
+            <p className="font-mono text-xs text-neutral-500">
+              Comparé à {previousSession.name} du {format(previousSession.startedAt, "d MMM", { locale: fr })}
+            </p>
+          )}
+
+          {practiced.length === 0 && <p className="text-sm text-neutral-500">Aucune série enregistrée.</p>}
+
+          {practiced.map((group) => (
+            <Card key={group.exerciseId} className="px-3.5 py-3">
+              <div className="flex items-baseline gap-2">
+                <p className="font-medium">{group.exercise.name}</p>
+                <span className="ml-auto font-mono text-[11px] text-neutral-500">
+                  {group.sets.filter((set) => set.completed).length}/{group.sets.length}
+                </span>
+              </div>
+              <ul className="mt-1.5">
+                {group.sets.map((set) => {
+                  const hasValues = set.actualReps != null && set.actualWeight != null;
+                  return (
+                    <li
+                      key={set.id}
+                      className={cn(
+                        "grid grid-cols-[22px_1fr_auto] items-center gap-2.5 border-t border-neutral-200 px-2 py-1.5 font-mono tabular-nums",
+                        !set.completed && "text-neutral-400"
+                      )}
+                    >
+                      <span className="text-xs text-neutral-500">{set.setNumber}</span>
+                      <span>
+                        {set.actualReps != null ? formatReps(set.actualReps) : "—"}
+                        <span className="mx-0.5 text-neutral-500"> × </span>
+                        {set.actualWeight != null ? formatWeight(set.actualWeight) : "—"}
+                        <span className="ml-0.5 text-xs text-neutral-500">kg</span>
+                      </span>
+                      {!set.completed ? (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide">
+                          {hasValues ? "Non faite" : "Non saisie"}
+                        </span>
+                      ) : (
+                        previousSession &&
+                        hasValues && (
+                          <span className="flex gap-1">
+                            {setEvolution(
+                              { reps: set.actualReps!, weight: set.actualWeight! },
+                              previousSets.get(`${group.exerciseId}:${set.setNumber}`)
+                            ).map((badge) => (
+                              <span
+                                key={badge.label}
+                                className={cn(
+                                  "whitespace-nowrap rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
+                                  badge.tone === "up" && "bg-accent-soft text-accent",
+                                  badge.tone === "down" && "bg-danger/15 text-danger",
+                                  badge.tone === "neutral" && "bg-neutral-100 text-neutral-500"
+                                )}
+                              >
+                                {badge.label}
+                              </span>
+                            ))}
+                          </span>
+                        )
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          ))}
         </Container>
       </>
     );

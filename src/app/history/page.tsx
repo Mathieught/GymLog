@@ -1,18 +1,12 @@
 import type { ComponentProps } from "react";
-import { endOfWeek, format, isSameWeek, isToday, isYesterday, startOfWeek, subWeeks } from "date-fns";
+import { endOfWeek, format, isSameWeek, startOfWeek, subWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
 import { HistorySearchList } from "@/components/sessions/history-search-list";
 import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
-
-function formatSessionDate(date: Date): string {
-  if (isToday(date)) return "Aujourd'hui";
-  if (isYesterday(date)) return "Hier";
-  const label = format(date, "EEEE d MMMM", { locale: fr });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
+import { isWithinDays } from "@/lib/utils";
 
 // Semaine française (lundi -> dimanche), calée sur "maintenant" plutôt que sur la séance la plus
 // récente : une semaine sans aucune séance reste absente du regroupement (pas de ligne vide), mais
@@ -35,7 +29,7 @@ export default async function HistoryPage() {
     where: { userId, completedAt: { not: null } },
     orderBy: { startedAt: "desc" },
     include: {
-      sets: { select: { exerciseId: true, completed: true } },
+      sets: { select: { exerciseId: true } },
     },
   });
 
@@ -47,13 +41,15 @@ export default async function HistoryPage() {
     const weekStart = startOfWeek(session.startedAt, { weekStartsOn: 1 });
     const key = weekStart.toISOString();
     const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
-    const completedSets = session.sets.filter((set) => set.completed).length;
+    // Libellés de date calculés ici plutôt que dans HistorySearchList (client) : même raison que
+    // la page Séances, un Date.now() différent entre serveur et client ferait diverger l'hydratation.
     const item = {
       id: session.id,
       name: session.name,
-      details: `${formatSessionDate(session.startedAt)} · ${exerciseCount} exercice${
-        exerciseCount > 1 ? "s" : ""
-      } · ${completedSets} série${completedSets > 1 ? "s" : ""}`,
+      day: format(session.startedAt, "d"),
+      weekday: format(session.startedAt, "EEE", { locale: fr }).replace(".", ""),
+      recent: isWithinDays(session.startedAt, 7),
+      exerciseCount,
     };
     const currentGroup = groups.at(-1);
     if (currentGroup?.key === key) {
