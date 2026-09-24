@@ -6,11 +6,12 @@ import { Plus, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ExerciseFormSheet } from "@/components/exercises/exercise-form-sheet";
 import { createExercise } from "@/lib/actions/exercises";
+import { formatSetCount } from "@/lib/utils";
 
 type ExerciseListItem = {
   id: string;
   name: string;
-  targetSets: number;
+  targetSets: number | null;
 };
 
 type ExerciseGroup = {
@@ -74,7 +75,7 @@ export function ExerciseSearchList({ groups }: { groups: ExerciseGroup[] }) {
                     <Card className="transition-colors hover:border-neutral-400">
                       <p className="font-medium">{exercise.name}</p>
                       <p className="text-sm text-neutral-500">
-                        {exercise.targetSets} série{exercise.targetSets > 1 ? "s" : ""}
+                        {formatSetCount(exercise.targetSets)}
                       </p>
                     </Card>
                   </Link>
@@ -89,9 +90,10 @@ export function ExerciseSearchList({ groups }: { groups: ExerciseGroup[] }) {
           liste, toujours filtrée par la recherche en cours. */}
       {createName !== null && (
         <ExerciseFormSheet
+          setsOptional
           title="Nouvel exercice"
           action={createExercise}
-          defaultValues={{ name: createName, muscle: [], targetSets: 3, description: null }}
+          defaultValues={{ name: createName, muscle: [], targetSets: null, description: null }}
           onClose={() => setCreateName(null)}
           onSuccess={() => setCreateName(null)}
         />

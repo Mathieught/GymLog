@@ -27,7 +27,8 @@ export default async function WorkoutTemplateSessionPreviewPage({
   const groups: SessionRowGroup[] = template.exercises.map((workoutExercise, exerciseOrder) => ({
     exerciseId: workoutExercise.exerciseId,
     exerciseOrder,
-    exercise: workoutExercise.exercise,
+    // Nombre de séries figé dans la séance (voir WorkoutExercise.targetSets), pas celui de l'exercice.
+    exercise: { ...workoutExercise.exercise, targetSets: workoutExercise.targetSets },
     sets: [],
   }));
 

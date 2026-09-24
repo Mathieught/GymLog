@@ -16,13 +16,14 @@ export function ExerciseForm<S extends ActionState>({
   defaultValues,
   onSuccess,
   onPendingChange,
+  setsOptional,
 }: {
   formId?: string;
   action: (prevState: S, formData: FormData) => Promise<S>;
   defaultValues?: {
     name: string;
     muscle: string[];
-    targetSets: number;
+    targetSets: number | null;
     description: string | null;
   };
   // Appelé après un enregistrement réussi (voir ActionState.nonce) pour refermer la popup : les
@@ -33,6 +34,9 @@ export function ExerciseForm<S extends ActionState>({
   // Reflète `pending` (useActionState) au parent : le bouton de validation vit dans l'en-tête de
   // la popup, hors de ce composant, et doit pourtant se désactiver pendant l'enregistrement.
   onPendingChange?: (pending: boolean) => void;
+  // Nombre de séries facultatif (onglet Exercices) : rien de présélectionné à la création. Reste
+  // obligatoire (3 par défaut) à la création à la volée depuis une séance.
+  setsOptional?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<S, FormData>(action, initialActionState as Awaited<S>);
   const handledNonce = useRef<number | undefined>(undefined);
@@ -46,7 +50,9 @@ export function ExerciseForm<S extends ActionState>({
     onPendingChange?.(pending);
   }, [pending, onPendingChange]);
   const [muscle, setMuscle] = useState<string[]>(defaultValues?.muscle ?? []);
-  const [targetSets, setTargetSets] = useState(defaultValues?.targetSets ?? 3);
+  const [targetSets, setTargetSets] = useState<number | null>(
+    defaultValues ? defaultValues.targetSets : setsOptional ? null : 3
+  );
 
   // Ids préfixés : cette popup s'ouvre aussi par-dessus le formulaire de séance, qui a déjà ses
   // propres champs "name"/"description" (un label pointerait sinon vers le champ de derrière).
@@ -85,10 +91,16 @@ export function ExerciseForm<S extends ActionState>({
         n={3}
         title="Séries"
         htmlFor={`${ids}-targetSets`}
-        aside={`${targetSets} série${targetSets > 1 ? "s" : ""}`}
+        aside={targetSets === null ? "Facultatif" : `${targetSets} série${targetSets > 1 ? "s" : ""}`}
         last={!noteOpen}
       >
-        <SetCountPicker id={`${ids}-targetSets`} name="targetSets" value={targetSets} onChange={setTargetSets} />
+        <SetCountPicker
+          id={`${ids}-targetSets`}
+          name="targetSets"
+          value={targetSets}
+          onChange={setTargetSets}
+          optional={setsOptional}
+        />
         <FieldError messages={state.fieldErrors?.targetSets} />
       </Step>
 

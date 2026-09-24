@@ -14,25 +14,28 @@ export function SetCountPicker({
   name,
   value,
   onChange,
+  optional,
 }: {
   id?: string;
   name: string;
-  value: number;
-  onChange: (sets: number) => void;
+  value: number | null;
+  onChange: (sets: number | null) => void;
+  // Re-toucher la valeur sélectionnée la désélectionne (champ facultatif, voir ExerciseForm).
+  optional?: boolean;
 }) {
   const maxQuick = QUICK_SET_COUNTS[QUICK_SET_COUNTS.length - 1];
-  const [stepperMode, setStepperMode] = useState(value > maxQuick);
+  const [stepperMode, setStepperMode] = useState(value !== null && value > maxQuick);
 
   return (
     <div>
-      <input type="hidden" id={id} name={name} value={value} />
+      <input type="hidden" id={id} name={name} value={value ?? ""} />
 
       {stepperMode ? (
         <>
           <div className="flex items-center justify-between rounded-2xl border border-neutral-200 p-2">
             <button
               type="button"
-              onClick={() => onChange(Math.max(1, value - 1))}
+              onClick={() => onChange(Math.max(1, (value ?? 1) - 1))}
               aria-label="Une série de moins"
               className="flex h-14 w-14 items-center justify-center rounded-xl bg-neutral-200 transition-colors hover:bg-neutral-300"
             >
@@ -44,7 +47,7 @@ export function SetCountPicker({
             </div>
             <button
               type="button"
-              onClick={() => onChange(Math.min(MAX_SETS, value + 1))}
+              onClick={() => onChange(Math.min(MAX_SETS, (value ?? 0) + 1))}
               aria-label="Une série de plus"
               className="flex h-14 w-14 items-center justify-center rounded-xl bg-neutral-200 transition-colors hover:bg-neutral-300"
             >
@@ -55,7 +58,7 @@ export function SetCountPicker({
             type="button"
             onClick={() => {
               setStepperMode(false);
-              onChange(Math.min(value, maxQuick));
+              onChange(Math.min(value ?? maxQuick, maxQuick));
             }}
             className="mt-2 text-sm font-medium text-accent-deep hover:underline"
           >
@@ -70,7 +73,7 @@ export function SetCountPicker({
               <button
                 key={count}
                 type="button"
-                onClick={() => onChange(count)}
+                onClick={() => onChange(selected && optional ? null : count)}
                 aria-pressed={selected}
                 className={cn(
                   "h-12 flex-1 rounded-xl text-lg font-semibold transition-colors",
@@ -87,7 +90,7 @@ export function SetCountPicker({
             type="button"
             onClick={() => {
               setStepperMode(true);
-              onChange(Math.max(value, maxQuick + 1));
+              onChange(Math.max(value ?? 0, maxQuick + 1));
             }}
             aria-label="Plus de séries"
             className="flex h-12 flex-1 items-center justify-center rounded-xl text-neutral-600 transition-colors hover:bg-neutral-200"

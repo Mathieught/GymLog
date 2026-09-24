@@ -73,7 +73,9 @@ model Exercise {
   user         User     @relation(fields: [userId], references: [id])
   name         String
   muscle       String[]
-  targetSets   Int
+  // Facultatif : nombre de séries recopié dans une séance au moment où l'exercice y est ajouté
+  // (voir WorkoutExercise.targetSets). null = aucune série proposée d'office.
+  targetSets   Int?
   description  String?
   isArchived   Boolean  @default(false)
   createdAt    DateTime @default(now())
@@ -110,6 +112,9 @@ model WorkoutExercise {
   exerciseId        String
   exercise          Exercise        @relation(fields: [exerciseId], references: [id])
   order             Int
+  // Copie de Exercise.targetSets figée à l'ajout dans la séance : modifier l'exercice ensuite ne
+  // change que les prochains ajouts, jamais les séances qui le contiennent déjà.
+  targetSets        Int             @default(0)
 
   @@index([workoutTemplateId])
   @@index([exerciseId])

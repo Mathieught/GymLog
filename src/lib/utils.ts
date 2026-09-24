@@ -28,3 +28,8 @@ export function formatDaysAgo(date: Date) {
 export function isWithinDays(date: Date, days: number) {
   return Date.now() - date.getTime() < days * DAY_MS;
 }
+
+// Nombre de séries d'un exercice, facultatif (null = aucune série proposée d'office).
+export function formatSetCount(sets: number | null) {
+  return sets === null ? "Séries libres" : `${sets} série${sets > 1 ? "s" : ""}`;
+}

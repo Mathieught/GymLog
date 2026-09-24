@@ -24,6 +24,27 @@ function parseTemplateForm(formData: FormData) {
   });
 }
 
+// Nombre de séries de chaque exercice de la séance : celui déjà figé dans la séance s'il y était
+// (modifier l'exercice ensuite ne touche pas les séances existantes), sinon copie de l'objectif
+// actuel de l'exercice au moment de l'ajout (aucune série si non renseigné).
+async function resolveTargetSets(exerciseIds: string[], templateId?: string) {
+  const [existing, exercises] = await Promise.all([
+    templateId
+      ? prisma.workoutExercise.findMany({
+          where: { workoutTemplateId: templateId },
+          select: { exerciseId: true, targetSets: true },
+        })
+      : [],
+    prisma.exercise.findMany({
+      where: { id: { in: exerciseIds } },
+      select: { id: true, targetSets: true },
+    }),
+  ]);
+  const frozen = new Map(existing.map((e) => [e.exerciseId, e.targetSets]));
+  const current = new Map(exercises.map((e) => [e.id, e.targetSets ?? 0]));
+  return (exerciseId: string) => frozen.get(exerciseId) ?? current.get(exerciseId) ?? 0;
+}
+
 export async function createWorkoutTemplate(
   _prevState: ActionState,
   formData: FormData
@@ -34,6 +55,7 @@ export async function createWorkoutTemplate(
   }
 
   const userId = await getCurrentUserId();
+  const targetSetsFor = await resolveTargetSets(parsed.data.exercises.map((e) => e.exerciseId));
   await prisma.workoutTemplate.create({
     data: {
       userId,
@@ -42,6 +64,7 @@ export async function createWorkoutTemplate(
       exercises: {
         create: parsed.data.exercises.map((exercise, index) => ({
           exerciseId: exercise.exerciseId,
+          targetSets: targetSetsFor(exercise.exerciseId),
           order: index,
         })),
       },
@@ -66,6 +89,10 @@ export async function updateWorkoutTemplate(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  const targetSetsFor = await resolveTargetSets(
+    parsed.data.exercises.map((e) => e.exerciseId),
+    templateId
+  );
   await prisma.$transaction([
     prisma.workoutExercise.deleteMany({ where: { workoutTemplateId: templateId } }),
     prisma.workoutSchedule.deleteMany({ where: { workoutTemplateId: templateId } }),
@@ -77,6 +104,7 @@ export async function updateWorkoutTemplate(
         exercises: {
           create: parsed.data.exercises.map((exercise, index) => ({
             exerciseId: exercise.exerciseId,
+            targetSets: targetSetsFor(exercise.exerciseId),
             order: index,
           })),
         },

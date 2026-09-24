@@ -4,7 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
-import { exerciseSchema } from "@/lib/validations/exercise";
+import { exerciseSchema, inlineExerciseSchema } from "@/lib/validations/exercise";
 import type { ActionState } from "@/lib/action-state";
 
 export async function createExercise(
@@ -65,7 +65,7 @@ export type CreateExerciseInlineState = {
     id: string;
     name: string;
     muscle: string[];
-    targetSets: number;
+    targetSets: number | null;
   };
   nonce?: number;
 };
@@ -76,7 +76,7 @@ export async function createExerciseInline(
   _prevState: CreateExerciseInlineState,
   formData: FormData
 ): Promise<CreateExerciseInlineState> {
-  const parsed = exerciseSchema.safeParse(Object.fromEntries(formData));
+  const parsed = inlineExerciseSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }

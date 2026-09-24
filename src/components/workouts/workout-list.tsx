@@ -25,7 +25,7 @@ type ExerciseOption = {
   id: string;
   name: string;
   muscle: string[];
-  targetSets: number;
+  targetSets: number | null;
 };
 
 export function WorkoutList({

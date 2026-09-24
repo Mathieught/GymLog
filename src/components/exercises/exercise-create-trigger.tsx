@@ -18,6 +18,7 @@ export function ExerciseCreateTrigger() {
 
       {open && (
         <ExerciseFormSheet
+          setsOptional
           title="Nouvel exercice"
           action={createExercise}
           onClose={() => setOpen(false)}

@@ -17,7 +17,7 @@ export function ExerciseEditTrigger({
   defaultValues: {
     name: string;
     muscle: string[];
-    targetSets: number;
+    targetSets: number | null;
     description: string | null;
   };
 }) {
@@ -31,6 +31,7 @@ export function ExerciseEditTrigger({
 
       {open && (
         <ExerciseFormSheet
+          setsOptional
           title={`Modifier ${exerciseName}`}
           submitLabel="Enregistrer"
           action={updateExercise.bind(null, exerciseId)}

@@ -10,7 +10,7 @@ type ExerciseOption = {
   id: string;
   name: string;
   muscle: string[];
-  targetSets: number;
+  targetSets: number | null;
 };
 
 // Popup de création/édition de séance, ouverte depuis la liste des séances ou depuis le détail

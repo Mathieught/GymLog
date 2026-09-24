@@ -15,6 +15,7 @@ export function ExerciseFormSheet<S extends ActionState>({
   defaultValues,
   onClose,
   onSuccess,
+  setsOptional,
 }: {
   title: string;
   submitLabel?: string;
@@ -22,11 +23,12 @@ export function ExerciseFormSheet<S extends ActionState>({
   defaultValues?: {
     name: string;
     muscle: string[];
-    targetSets: number;
+    targetSets: number | null;
     description: string | null;
   };
   onClose: () => void;
   onSuccess: (state: S) => void;
+  setsOptional?: boolean;
 }) {
   const formId = useId();
   const [pending, setPending] = useState(false);
@@ -61,6 +63,7 @@ export function ExerciseFormSheet<S extends ActionState>({
         defaultValues={defaultValues}
         onSuccess={onSuccess}
         onPendingChange={setPending}
+        setsOptional={setsOptional}
       />
     </BottomSheet>
   );

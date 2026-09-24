@@ -10,7 +10,7 @@ type ExerciseOption = {
   id: string;
   name: string;
   muscle: string[];
-  targetSets: number;
+  targetSets: number | null;
 };
 
 // Popup mobile-friendly pour choisir un exercice à ajouter à la séance : même famille que

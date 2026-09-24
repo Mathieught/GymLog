@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { WorkoutFormSheet } from "@/components/workouts/workout-form-sheet";
 import { updateWorkoutTemplate } from "@/lib/actions/workout-templates";
 
-type ExerciseOption = { id: string; name: string; muscle: string[]; targetSets: number };
+type ExerciseOption = { id: string; name: string; muscle: string[]; targetSets: number | null };
 
 // Ouvre l'édition d'une séance existante dans une popup (voir WorkoutFormSheet) plutôt que de
 // naviguer vers /workouts/[id]/edit. Utilisé pour le bouton "Modifier" de l'en-tête et pour
