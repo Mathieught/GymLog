@@ -60,3 +60,69 @@ textarea,
 select {
   font-size: 16px !important;
 }
+
+/* Écran de lancement (voir SplashScreen) : l'haltère se trace (~1 s), "GymLog" apparaît, puis
+   l'écran s'efface vers 1,6 s et devient invisible et non cliquable (visibility: hidden). */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--color-neutral-50);
+  animation: splash-out 0.35s ease-in 1.6s forwards;
+}
+.splash line {
+  stroke: var(--color-accent);
+  stroke-width: 28;
+  stroke-linecap: round;
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+  animation: splash-draw 0.7s ease-in-out forwards;
+}
+.splash line:nth-child(2),
+.splash line:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.splash line:nth-child(4),
+.splash line:nth-child(5) {
+  animation-delay: 0.3s;
+}
+.splash-word {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-neutral-900);
+  opacity: 0;
+  animation: splash-word 0.5s ease-out 0.7s forwards;
+}
+@keyframes splash-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes splash-word {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes splash-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+/* "Réduire les animations" : pas d'écran de lancement du tout. */
+@media (prefers-reduced-motion: reduce) {
+  .splash {
+    display: none;
+  }
+}

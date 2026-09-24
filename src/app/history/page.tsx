@@ -1,28 +1,36 @@
 import type { ComponentProps } from "react";
 import { endOfWeek, format, isSameWeek, startOfWeek, subWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
+import { tz } from "@date-fns/tz";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
 import { HistorySearchList } from "@/components/sessions/history-search-list";
 import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
 import { isWithinDays } from "@/lib/utils";
+import { parseTimeZone, TIME_ZONE_COOKIE } from "@/lib/time-zone";
+
+type ZoneContext = ReturnType<typeof tz>;
 
 // Semaine française (lundi -> dimanche), calée sur "maintenant" plutôt que sur la séance la plus
 // récente : une semaine sans aucune séance reste absente du regroupement (pas de ligne vide), mais
 // "Cette semaine"/"Semaine dernière" restent justes même si la dernière séance remonte à plus loin.
-function weekLabel(weekStart: Date, now: Date): string {
-  if (isSameWeek(weekStart, now, { weekStartsOn: 1 })) return "Cette semaine";
-  if (isSameWeek(weekStart, subWeeks(now, 1), { weekStartsOn: 1 })) return "Semaine dernière";
-  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-  const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
-  const startLabel = format(weekStart, sameMonth ? "d" : "d MMMM", { locale: fr });
-  const endLabel = format(weekEnd, "d MMMM", { locale: fr });
+// Tous les calculs se font dans le fuseau de l'utilisateur (`zone`), pas celui du serveur.
+function weekLabel(weekStart: Date, now: Date, zone: ZoneContext): string {
+  const options = { weekStartsOn: 1, in: zone } as const;
+  if (isSameWeek(weekStart, now, options)) return "Cette semaine";
+  if (isSameWeek(weekStart, subWeeks(now, 1, { in: zone }), options)) return "Semaine dernière";
+  const weekEnd = endOfWeek(weekStart, options);
+  const sameMonth = format(weekStart, "M", { in: zone }) === format(weekEnd, "M", { in: zone });
+  const startLabel = format(weekStart, sameMonth ? "d" : "d MMMM", { locale: fr, in: zone });
+  const endLabel = format(weekEnd, "d MMMM", { locale: fr, in: zone });
   return `Semaine du ${startLabel} au ${endLabel}`;
 }
 
 export default async function HistoryPage() {
   const userId = await getCurrentUserId();
+  const zone = tz(parseTimeZone((await cookies()).get(TIME_ZONE_COOKIE)?.value));
   // Vue consultation uniquement : une séance n'apparaît ici qu'une fois terminée (elle devient
   // alors en lecture seule, voir resolveSessionCompletion) — une séance en cours ne s'y trouve pas.
   const sessions = await prisma.workoutSession.findMany({
@@ -38,7 +46,7 @@ export default async function HistoryPage() {
   const now = new Date();
   const groups: ComponentProps<typeof HistorySearchList>["groups"] = [];
   for (const session of sessions) {
-    const weekStart = startOfWeek(session.startedAt, { weekStartsOn: 1 });
+    const weekStart = startOfWeek(session.startedAt, { weekStartsOn: 1, in: zone });
     const key = weekStart.toISOString();
     const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
     // Libellés de date calculés ici plutôt que dans HistorySearchList (client) : même raison que
@@ -46,8 +54,8 @@ export default async function HistoryPage() {
     const item = {
       id: session.id,
       name: session.name,
-      day: format(session.startedAt, "d"),
-      weekday: format(session.startedAt, "EEE", { locale: fr }).replace(".", ""),
+      day: format(session.startedAt, "d", { in: zone }),
+      weekday: format(session.startedAt, "EEE", { locale: fr, in: zone }).replace(".", ""),
       recent: isWithinDays(session.startedAt, 7),
       exerciseCount,
     };
@@ -55,7 +63,7 @@ export default async function HistoryPage() {
     if (currentGroup?.key === key) {
       currentGroup.sessions.push(item);
     } else {
-      groups.push({ key, label: weekLabel(weekStart, now), sessions: [item] });
+      groups.push({ key, label: weekLabel(weekStart, now, zone), sessions: [item] });
     }
   }
 

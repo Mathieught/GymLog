@@ -8,6 +8,8 @@ import { AppModeProvider } from "@/components/app-mode";
 import { BottomNav } from "@/components/nav/bottom-nav";
 import { NavVisibilityProvider } from "@/components/nav/nav-visibility";
 import { OfflineSyncManager } from "@/components/offline-sync-manager";
+import { TimeZoneSync } from "@/components/time-zone-sync";
+import { SplashScreen } from "@/components/splash-screen";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,8 +47,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full bg-neutral-50 font-sans text-neutral-900">
+        <SplashScreen />
         <SerwistProvider swUrl="/serwist/sw.js">
           <OfflineSyncManager isAuthenticated={!!session?.user} />
+          <TimeZoneSync />
           <AppModeProvider initialMode={appMode}>
             <NavVisibilityProvider>
               <main className="pb-24">{children}</main>

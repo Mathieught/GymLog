@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { tz } from "@date-fns/tz";
+import { cookies } from "next/headers";
 import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { cn, formatReps, formatWeight } from "@/lib/utils";
 import { setEvolution } from "@/lib/set-evolution";
+import { parseTimeZone, TIME_ZONE_COOKIE } from "@/lib/time-zone";
 import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
 import { PageHeader } from "@/components/nav/page-header";
@@ -25,11 +28,6 @@ type SetForGrouping = {
 };
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-
-// Rendu côté serveur (UTC sur Vercel) : l'heure est donc forcée sur le fuseau de Paris.
-// ponytail: fuseau fixe, à passer sur celui de l'utilisateur si l'app sort de France.
-const timeFormat = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
-const formatTime = (date: Date) => timeFormat.format(date);
 
 // "1 h 08" au-delà d'une heure, "45 min" en dessous.
 function formatDuration(ms: number): string {
@@ -118,6 +116,9 @@ export default async function SessionDetailPage({
       ])
     );
 
+    // Dates et heures dans le fuseau de l'utilisateur (rendu serveur en UTC sur Vercel).
+    const zone = tz(parseTimeZone((await cookies()).get(TIME_ZONE_COOKIE)?.value));
+
     const allSets = groups.flatMap((group) => group.sets);
     const doneCount = allSets.filter((set) => set.completed).length;
     // Exercices réellement pratiqués (au moins une série), comme le compte de la liste Historique.
@@ -138,12 +139,12 @@ export default async function SessionDetailPage({
             <div className="grid grid-cols-[1fr_auto] items-center gap-4">
               <div>
                 <p className="text-[22px] font-semibold leading-tight tracking-tight">
-                  {capitalize(format(session.startedAt, "EEEE", { locale: fr }))}
+                  {capitalize(format(session.startedAt, "EEEE", { locale: fr, in: zone }))}
                   <br />
-                  {format(session.startedAt, "d MMMM", { locale: fr })}
+                  {format(session.startedAt, "d MMMM", { locale: fr, in: zone })}
                 </p>
                 <p className="mt-1.5 font-mono text-xs text-accent-contrast/60">
-                  {formatTime(session.startedAt)} → {formatTime(session.lastActivityAt)}
+                  {format(session.startedAt, "HH:mm", { in: zone })} → {format(session.lastActivityAt, "HH:mm", { in: zone })}
                 </p>
               </div>
               <dl className="grid gap-1.5 border-l border-accent-contrast/20 pl-4">
@@ -189,7 +190,7 @@ export default async function SessionDetailPage({
 
           {previousSession && (
             <p className="font-mono text-xs text-neutral-500">
-              Comparé à {previousSession.name} du {format(previousSession.startedAt, "d MMM", { locale: fr })}
+              Comparé à {previousSession.name} du {format(previousSession.startedAt, "d MMM", { locale: fr, in: zone })}
             </p>
           )}
 
