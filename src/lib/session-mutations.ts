@@ -21,7 +21,7 @@ async function assertSessionMutable(userId: string, sessionId: string) {
 
 export async function ensureSession(
   userId: string,
-  params: { sessionId: string; workoutTemplateId: string; name: string }
+  params: { sessionId: string; workoutTemplateId: string; name: string; startedAt?: string }
 ) {
   const template = await prisma.workoutTemplate.findUniqueOrThrow({
     where: { id: params.workoutTemplateId, userId },
@@ -29,7 +29,13 @@ export async function ensureSession(
 
   await prisma.workoutSession.upsert({
     where: { id: params.sessionId },
-    create: { id: params.sessionId, userId, workoutTemplateId: template.id, name: params.name },
+    create: {
+      id: params.sessionId,
+      userId,
+      workoutTemplateId: template.id,
+      name: params.name,
+      startedAt: params.startedAt ? new Date(params.startedAt) : undefined,
+    },
     update: {},
   });
 }
@@ -119,12 +125,14 @@ export async function updateSet(
 export async function updateSetNote(userId: string, params: { setId: string; note: string | null }) {
   const set = await prisma.workoutSet.findFirst({
     where: { id: params.setId, workoutSession: { userId } },
-    select: { id: true },
+    select: { workoutSessionId: true, workoutSession: { select: { completedAt: true } } },
   });
   if (!set) {
     throw new InvalidMutationError("Série introuvable ou non autorisée");
   }
   await prisma.workoutSet.update({ where: { id: params.setId }, data: { note: params.note } });
+  // Annoter une série d'une séance en cours compte comme une modification (fermeture auto).
+  if (!set.workoutSession.completedAt) await touchSessionActivity(set.workoutSessionId);
 }
 
 export async function removeSet(
@@ -148,6 +156,15 @@ export async function removeSet(
       where: { id: params.sessionId },
       data: { lastActivityAt: new Date() },
     });
+  });
+}
+
+// Séance quittée sans aucune série validée : supprimée comme si elle n'avait jamais existé (ses
+// séries vides partent avec, onDelete: Cascade). Garde-fous côté base : jamais une séance terminée
+// ni une séance qui a au moins une série validée, même si le client se trompe.
+export async function discardSession(userId: string, sessionId: string) {
+  await prisma.workoutSession.deleteMany({
+    where: { id: sessionId, userId, completedAt: null, sets: { none: { completed: true } } },
   });
 }
 

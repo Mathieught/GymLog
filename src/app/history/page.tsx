@@ -5,6 +5,7 @@ import { tz } from "@date-fns/tz";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
+import { closeStaleSessions } from "@/lib/queries/session-status";
 import { HistorySearchList } from "@/components/sessions/history-search-list";
 import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
@@ -31,6 +32,7 @@ function weekLabel(weekStart: Date, now: Date, zone: ZoneContext): string {
 export default async function HistoryPage() {
   const userId = await getCurrentUserId();
   const zone = tz(parseTimeZone((await cookies()).get(TIME_ZONE_COOKIE)?.value));
+  await closeStaleSessions(userId);
   // Vue consultation uniquement : une séance n'apparaît ici qu'une fois terminée (elle devient
   // alors en lecture seule, voir resolveSessionCompletion) — une séance en cours ne s'y trouve pas.
   const sessions = await prisma.workoutSession.findMany({

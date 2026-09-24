@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Play, Timer } from "lucide-react";
 import { PageHeader } from "@/components/nav/page-header";
@@ -26,6 +26,7 @@ export function SessionTracker({
   seed,
   activeExerciseId,
   showStartHint = false,
+  startOnMount = false,
 }: {
   backHref: string;
   // Nom de la page parente quand ce n'est pas un onglet (voir PageHeader) — le programme, pour une
@@ -36,10 +37,12 @@ export function SessionTracker({
   activeExerciseId: string;
   // Bandeau "Valide ta première série pour démarrer" : réservé aux nouveaux utilisateurs.
   showStartHint?: boolean;
+  // Arrivée par "Commencer la séance" : séance créée et chrono lancé sans attendre la 1re série.
+  startOnMount?: boolean;
 }) {
   const router = useRouter();
   const engine = useSessionEngine(seed);
-  const { sessionId, completedAt, groups, history } = engine;
+  const { sessionId, completedAt, groups, history, start, discardIfEmpty } = engine;
   const [pendingComplete, setPendingComplete] = useState(false);
   // Index de l'exercice affiché par le carousel : possédé ici (pas par SessionCarousel) pour que
   // le rail de progression du header (voir SessionProgressRail, dans PageHeader `below`) puisse
@@ -55,7 +58,7 @@ export function SessionTracker({
 
   // Confirmation brève quand la toute première série crée la séance — déclenchée par le geste de
   // l'utilisateur, pas par la reprise d'une séance locale au montage (qui change aussi sessionId).
-  const [justStarted, setJustStarted] = useState(false);
+  const [justStarted, setJustStarted] = useState(startOnMount);
   useEffect(() => {
     if (!justStarted) return;
     const timeout = setTimeout(() => setJustStarted(false), 2500);
@@ -66,10 +69,22 @@ export function SessionTracker({
     if (!sessionId) setJustStarted(true);
   }
 
+  // Arrivée par "Commencer la séance" : séance créée d'emblée (confirmation affichée d'office, voir
+  // justStarted). Une seule fois via un ref : au double montage du Strict Mode, le moteur remet son
+  // stateRef sur l'état rendu (encore sans séance) et un 2e start() créerait une 2e séance, dont
+  // l'une serait ensuite annulée par discardEmptySessions — parfois celle affichée.
+  const startRequested = useRef(false);
+  useEffect(() => {
+    if (!startOnMount || startRequested.current) return;
+    startRequested.current = true;
+    start();
+  }, [startOnMount, start]);
+
   const basePath = sessionId ? `/sessions/${sessionId}` : `/workouts/${seed.workoutTemplateId}/session`;
 
   function handleComplete() {
-    engine.completeSession();
+    // Terminer sans aucune série validée = annuler : rien à ranger dans l'historique.
+    if (!discardIfEmpty()) engine.completeSession();
     router.push("/history");
   }
 

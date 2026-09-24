@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button";
 export function ConfirmDialog({
   message,
   confirmLabel = "Supprimer",
+  cancelLabel = "Annuler",
   onConfirm,
   onCancel,
 }: {
   message: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -38,7 +40,7 @@ export function ConfirmDialog({
         <p className="text-sm text-neutral-700">{message}</p>
         <div className="flex gap-2">
           <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>
-            Annuler
+            {cancelLabel}
           </Button>
           <Button type="button" variant="danger" className="flex-1" onClick={onConfirm}>
             {confirmLabel}

@@ -6,8 +6,10 @@ import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 import type { OutboxOp } from "@/lib/offline/types";
 import {
   getLocalSession,
+  getLocalSessions,
   getActiveLocalSessionForTemplate,
   putLocalSession,
+  deleteLocalSession,
   putLocalHistory,
   enqueueOp,
   getOutbox,
@@ -23,9 +25,9 @@ export type SessionSeed = {
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
   completedAt: string | null;
-  // null tant qu'aucune séance n'existe encore (aperçu) — voir addSet/logSet, qui la fixent au
-  // moment même où ils créent la séance locale, pour que le chrono (voir SessionTimer) démarre
-  // pile à la première série plutôt qu'à un chargement de page ultérieur.
+  // null tant qu'aucune séance n'existe encore (aperçu) — fixée par start() ("Commencer la
+  // séance", chrono lancé sans rien créer) ou, à défaut, par addSet/logSet au moment même où ils
+  // créent la séance locale, pour que le chrono (voir SessionTimer) parte du bon instant.
   startedAt: string | null;
 };
 
@@ -49,6 +51,28 @@ type MutationResult = { next: EngineState; ops: OutboxOp[]; sessionId: string | 
 // interaction, jamais en attente d'un aller-retour réseau. Chaque mutation met à jour l'état
 // immédiatement, écrit dans IndexedDB, et pousse une opération dans la file de synchronisation
 // (voir src/lib/offline/sync.ts) — rejouée dès que le réseau est là.
+const hasValidatedSet = (sets: { completed: boolean }[]) => sets.some((s) => s.completed);
+
+// Séance sans aucune série validée : elle n'a jamais vraiment existé — oubliée en local et supprimée
+// sur le serveur (une série seulement ajoutée, ou validée puis annulée/supprimée, ne compte pas).
+async function discardSession(sessionId: string) {
+  await deleteLocalSession(sessionId);
+  await enqueueOp({ type: "discardSession", sessionId });
+  syncNow();
+}
+
+// Annule les séances ouvertes sans série validée, sauf celle qu'on est encore en train de regarder
+// (sa page de suivi ou la page de son programme) : "Commencer la séance" puis retour à l'accueil,
+// ou vers n'importe quel autre onglet, = la séance n'a jamais existé.
+export async function discardEmptySessions(pathname: string) {
+  for (const session of await getLocalSessions()) {
+    const stillInside =
+      pathname === `/sessions/${session.id}` || pathname.startsWith(`/workouts/${session.workoutTemplateId}`);
+    if (session.completedAt === null && !stillInside && !hasValidatedSet(session.sets)) {      await discardSession(session.id);
+    }
+  }
+}
+
 export function useSessionEngine(seed: SessionSeed) {
   const [state, setState] = useState<EngineState>(() => ({
     sessionId: seed.sessionId,
@@ -113,7 +137,12 @@ export function useSessionEngine(seed: SessionSeed) {
           removedSetCounts: {},
         });
       } else {
-        await putLocalSession(seedToLocalSession(seed, seed.sessionId));
+        // updatedAt = dernière modification (fermeture auto, voir isOpen dans db.ts) : simplement
+        // rouvrir la séance ne doit pas la repousser, on garde celle déjà connue.
+        await putLocalSession({
+          ...seedToLocalSession(seed, seed.sessionId),
+          updatedAt: local?.updatedAt ?? Date.now(),
+        });
       }
       await Promise.all(
         Object.entries(seed.history).map(([exerciseId, performances]) =>
@@ -193,7 +222,7 @@ export function useSessionEngine(seed: SessionSeed) {
           next: { ...current, sessionId, groups, startedAt },
           ops: [
             ...(isNewSession
-              ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
+              ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName, startedAt }]
               : []),
             { type: "addSet" as const, setId, sessionId, exerciseId, exerciseOrder, setNumber },
           ],
@@ -223,7 +252,7 @@ export function useSessionEngine(seed: SessionSeed) {
           next: { ...current, sessionId, groups, startedAt },
           ops: [
             ...(isNewSession
-              ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName }]
+              ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName, startedAt }]
               : []),
             { type: "logSet" as const, setId, sessionId, exerciseId, exerciseOrder, setNumber, actualWeight, actualReps },
           ],
@@ -343,6 +372,38 @@ export function useSessionEngine(seed: SessionSeed) {
     [applyMutation]
   );
 
+  // "Commencer la séance" : la séance est créée tout de suite (chrono lancé), sans attendre la
+  // première série. Tant qu'aucune série n'est validée, elle reste annulable : voir
+  // discardEmptySessions, appelé quand on quitte la séance et son programme.
+  const start = useCallback(() => {
+    void applyMutation((current) => {
+      if (current.sessionId) return null;
+      const sessionId = crypto.randomUUID();
+      const startedAt = new Date().toISOString();
+      return {
+        next: { ...current, sessionId, startedAt },
+        ops: [
+          { type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName, startedAt },
+        ],
+        sessionId,
+      };
+    });
+  }, [applyMutation, seed.workoutTemplateId, seed.templateName]);
+
+  // "Terminer" sans aucune série validée : la séance est annulée plutôt que rangée, vide, dans
+  // l'historique. Renvoie true si c'est le cas.
+  const discardIfEmpty = useCallback(() => {
+    const current = stateRef.current;
+    if (!current.sessionId || current.completedAt || hasValidatedSet(current.groups.flatMap((g) => g.sets))) {
+      return false;
+    }
+    const next = { ...current, sessionId: null, startedAt: null };
+    setState(next);
+    stateRef.current = next;
+    void discardSession(current.sessionId);
+    return true;
+  }, []);
+
   const completeSession = useCallback(() => {
     void applyMutation((current) => {
       if (!current.sessionId) return null;
@@ -369,6 +430,8 @@ export function useSessionEngine(seed: SessionSeed) {
     resetSet,
     removeSet,
     dismissSuggestion,
+    start,
+    discardIfEmpty,
     completeSession,
   };
 }

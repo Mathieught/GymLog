@@ -24,12 +24,13 @@ export const WEEKDAYS = [
   { value: 0, label: "Dimanche" },
 ] as const;
 
-// Une séance se ferme automatiquement 2h après sa dernière modification (lastActivityAt, pas
-// startedAt — une longue séance activement suivie ne doit pas se faire couper en plein milieu) si
-// elle a été abandonnée en cours de route. Sinon, elle se termine explicitement (popup proposée dès
+// Une séance se ferme automatiquement 3h après sa dernière modification (lastActivityAt : série
+// ajoutée, validée, modifiée, supprimée ou annotée — pas startedAt, une longue séance activement
+// suivie ne doit pas se faire couper en plein milieu, ni une simple consultation) si elle a été
+// abandonnée en cours de route. Sinon, elle se termine explicitement (popup proposée dès
 // que toutes les séries sont validées, ou bouton "Terminer" manuel) et bascule aussitôt en lecture
 // seule.
-export const SESSION_AUTO_CLOSE_MS = 2 * 60 * 60 * 1000;
+export const SESSION_AUTO_CLOSE_MS = 3 * 60 * 60 * 1000;
 
 export function formatScheduleDays(scheduleDays: number[]): string | null {
   if (scheduleDays.length === 0) return null;

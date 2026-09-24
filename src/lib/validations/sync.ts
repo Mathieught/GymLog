@@ -9,7 +9,13 @@ const actualWeight = z.number().min(0).max(1000);
 const actualReps = z.number().min(0).max(200);
 
 const outboxOpSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("ensureSession"), sessionId: id, workoutTemplateId: id, name: z.string().min(1).max(200) }),
+  z.object({
+    type: z.literal("ensureSession"),
+    sessionId: id,
+    workoutTemplateId: id,
+    name: z.string().min(1).max(200),
+    startedAt: z.iso.datetime().optional(),
+  }),
   z.object({
     type: z.literal("addSet"),
     setId: id,
@@ -40,6 +46,7 @@ const outboxOpSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("removeSet"), setId: id, sessionId: id, exerciseId: id }),
   z.object({ type: z.literal("updateSetNote"), setId: id, note: z.string().max(500).nullable() }),
   z.object({ type: z.literal("completeSession"), sessionId: id }),
+  z.object({ type: z.literal("discardSession"), sessionId: id }),
 ]);
 
 export const syncRequestSchema = z.object({

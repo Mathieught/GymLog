@@ -10,6 +10,7 @@ import { BottomNav } from "@/components/nav/bottom-nav";
 import { NavVisibilityProvider } from "@/components/nav/nav-visibility";
 import { OfflineSyncManager } from "@/components/offline-sync-manager";
 import { TimeZoneSync } from "@/components/time-zone-sync";
+import { EmptySessionCleanup } from "@/components/sessions/empty-session-cleanup";
 import { SplashScreen } from "@/components/splash-screen";
 import "./globals.css";
 
@@ -66,6 +67,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <SerwistProvider swUrl="/serwist/sw.js">
           <OfflineSyncManager isAuthenticated={!!session?.user} />
           <TimeZoneSync />
+          <EmptySessionCleanup />
           <AppModeProvider initialMode={appMode}>
             <NavVisibilityProvider>
               <main className="pb-24">{children}</main>

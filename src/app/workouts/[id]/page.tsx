@@ -4,8 +4,6 @@ import { formatDaysAgo } from "@/lib/utils";
 import { formatScheduleDays } from "@/lib/constants";
 import { getActiveExercises } from "@/lib/queries/exercises";
 import { getCurrentUserId } from "@/lib/current-user";
-import { PageHeader } from "@/components/nav/page-header";
-import { Container } from "@/components/ui/container";
 import { WorkoutEditTrigger } from "@/components/workouts/workout-edit-trigger";
 import { WorkoutProgramBody } from "@/components/workouts/workout-program-body";
 
@@ -48,52 +46,45 @@ export default async function WorkoutTemplateDetailPage({
     .join(" · ");
 
   return (
-    <>
-      <PageHeader
-        backHref="/workouts"
-        right={
+    <WorkoutProgramBody
+      headerRight={
+        <WorkoutEditTrigger
+          templateId={template.id}
+          templateName={template.name}
+          defaultValues={editDefaultValues}
+          exerciseOptions={availableExercises}
+          exerciseNamesById={exerciseNamesById}
+          label="Modifier"
+          variant="secondary"
+          size="sm"
+        />
+      }
+      templateId={template.id}
+      name={template.name}
+      meta={meta}
+      description={template.description}
+      exercises={template.exercises.map((workoutExercise) => ({
+        id: workoutExercise.id,
+        exerciseId: workoutExercise.exerciseId,
+        name: workoutExercise.exercise.name,
+        muscles: workoutExercise.exercise.muscle,
+        targetSets: workoutExercise.targetSets,
+      }))}
+      emptyState={
+        <div className="rounded-2xl border border-dashed border-neutral-300 p-4 text-center">
+          <p className="text-sm text-neutral-500">Aucun exercice ajouté pour l&apos;instant.</p>
           <WorkoutEditTrigger
             templateId={template.id}
             templateName={template.name}
             defaultValues={editDefaultValues}
             exerciseOptions={availableExercises}
             exerciseNamesById={exerciseNamesById}
-            label="Modifier"
-            variant="secondary"
+            label="+ Ajouter des exercices"
             size="sm"
+            className="mt-3"
           />
-        }
-      />
-      <Container className="pt-2">
-        <WorkoutProgramBody
-          templateId={template.id}
-          name={template.name}
-          meta={meta}
-          description={template.description}
-          exercises={template.exercises.map((workoutExercise) => ({
-            id: workoutExercise.id,
-            exerciseId: workoutExercise.exerciseId,
-            name: workoutExercise.exercise.name,
-            muscles: workoutExercise.exercise.muscle,
-            targetSets: workoutExercise.targetSets,
-          }))}
-          emptyState={
-            <div className="rounded-2xl border border-dashed border-neutral-300 p-4 text-center">
-              <p className="text-sm text-neutral-500">Aucun exercice ajouté pour l&apos;instant.</p>
-              <WorkoutEditTrigger
-                templateId={template.id}
-                templateName={template.name}
-                defaultValues={editDefaultValues}
-                exerciseOptions={availableExercises}
-                exerciseNamesById={exerciseNamesById}
-                label="+ Ajouter des exercices"
-                size="sm"
-                className="mt-3"
-              />
-            </div>
-          }
-        />
-      </Container>
-    </>
+        </div>
+      }
+    />
   );
 }

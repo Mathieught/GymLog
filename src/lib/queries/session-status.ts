@@ -26,3 +26,25 @@ export async function resolveSessionCompletion(session: {
 
   return { completedAt, isReadOnly: completedAt !== null };
 }
+
+// Même règle que resolveSessionCompletion, mais pour toutes les séances de l'utilisateur d'un coup :
+// appelée avant de lister l'historique, sinon une séance abandonnée n'y apparaîtrait qu'après avoir
+// ouvert sa propre page (seul endroit qui la clôturait jusqu'ici). Une séance abandonnée sans
+// aucune série validée n'a jamais vraiment existé : supprimée plutôt que rangée, vide, dans l'historique.
+export async function closeStaleSessions(userId: string) {
+  const seconds = SESSION_AUTO_CLOSE_MS / 1000;
+  await prisma.workoutSession.deleteMany({
+    where: {
+      userId,
+      completedAt: null,
+      lastActivityAt: { lt: new Date(Date.now() - SESSION_AUTO_CLOSE_MS) },
+      sets: { none: { completed: true } },
+    },
+  });
+  await prisma.$executeRaw`
+    UPDATE "WorkoutSession"
+    SET "completedAt" = "lastActivityAt" + make_interval(secs => ${seconds})
+    WHERE "userId" = ${userId}
+      AND "completedAt" IS NULL
+      AND "lastActivityAt" < now() - make_interval(secs => ${seconds})`;
+}

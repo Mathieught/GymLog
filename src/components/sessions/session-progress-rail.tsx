@@ -52,7 +52,7 @@ export function SessionProgressRail({
                 muscles={group.exercise.muscle}
                 className={cn(
                   "h-[22px] w-[22px]",
-                  isActive && "h-6 w-6 text-neutral-500 [&_.fill-accent]:opacity-100"
+                  isActive && "h-6 w-6 [&_.fill-accent]:opacity-100"
                 )}
               />
               <span

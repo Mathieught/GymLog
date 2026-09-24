@@ -47,7 +47,9 @@ export type TemplateSnapshot = {
 // src/lib/session-mutations.ts). Les ids (set, séance) sont générés côté client, donc chaque
 // opération est idempotente à rejouer (upsert / delete "silencieux").
 export type OutboxOp =
-  | { type: "ensureSession"; sessionId: string; workoutTemplateId: string; name: string }
+  // startedAt : instant du clic sur "Commencer la séance", pour que le chrono ne reparte pas de zéro
+  // quand la première série validée crée vraiment la séance.
+  | { type: "ensureSession"; sessionId: string; workoutTemplateId: string; name: string; startedAt?: string }
   | {
       type: "addSet";
       setId: string;
@@ -75,6 +77,8 @@ export type OutboxOp =
     }
   | { type: "removeSet"; setId: string; sessionId: string; exerciseId: string }
   | { type: "updateSetNote"; setId: string; note: string | null }
-  | { type: "completeSession"; sessionId: string };
+  | { type: "completeSession"; sessionId: string }
+  // Séance quittée sans aucune série validée : elle n'a jamais existé (voir discardSession).
+  | { type: "discardSession"; sessionId: string };
 
 export type OutboxEntry = { id: string; createdAt: number; op: OutboxOp };

@@ -20,8 +20,11 @@ export function PageHeader({
   right,
   below,
   className,
+  onBack,
 }: {
   backHref?: string;
+  // Intercepte le retour (event.preventDefault() pour l'empêcher), ex. confirmer avant de quitter.
+  onBack?: (event: React.MouseEvent) => void;
   backLabel?: string;
   // Titre affiché dans la barre elle-même (au lieu d'un <h1> séparé sous le header) : reste
   // visible au scroll puisque la barre est sticky. Avec un retour nommé, il passe sur sa propre
@@ -51,6 +54,7 @@ export function PageHeader({
         {backHref && label ? (
           <Link
             href={backHref}
+            onClick={onBack}
             className="-ml-2 flex h-8 min-w-0 items-center gap-0.5 rounded-full pr-2.5 pl-1 text-[15px] text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900"
           >
             <ChevronLeft className="h-5 w-5 shrink-0" />
@@ -59,6 +63,7 @@ export function PageHeader({
         ) : backHref ? (
           <Link
             href={backHref}
+            onClick={onBack}
             aria-label="Retour"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900"
           >

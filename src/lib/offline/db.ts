@@ -1,4 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+import { SESSION_AUTO_CLOSE_MS } from "@/lib/constants";
 import type { LocalHistoryEntry, LocalSession, OutboxOp, TemplateSnapshot } from "@/lib/offline/types";
 
 interface GymLogDB extends DBSchema {
@@ -44,7 +45,7 @@ export async function getLocalSession(id: string) {
 export async function getActiveLocalSessionForTemplate(workoutTemplateId: string) {
   const db = await getDb();
   const all = await db.getAll("sessions");
-  const candidates = all.filter((s) => s.workoutTemplateId === workoutTemplateId && s.completedAt === null);
+  const candidates = all.filter((s) => s.workoutTemplateId === workoutTemplateId && isOpen(s));
   candidates.sort((a, b) => b.updatedAt - a.updatedAt);
   return candidates[0];
 }
@@ -54,11 +55,30 @@ export async function getActiveLocalSessionForTemplate(workoutTemplateId: string
 export async function getActiveLocalSessionTemplateIds(): Promise<Set<string>> {
   const db = await getDb();
   const all = await db.getAll("sessions");
-  return new Set(all.filter((s) => s.completedAt === null).map((s) => s.workoutTemplateId));
+  // Sans série validée, une séance n'est qu'en sursis (annulée en quittant son programme, voir
+  // discardEmptySessions) : pas de tag "En cours" sur la liste pour elle.
+  return new Set(all.filter((s) => isOpen(s) && s.sets.some((set) => set.completed)).map((s) => s.workoutTemplateId));
+}
+
+// Séance locale ouverte : pas terminée et touchée il y a moins de SESSION_AUTO_CLOSE_MS — même
+// fermeture par inactivité que côté serveur (resolveSessionCompletion), qu'IndexedDB n'appliquait
+// jamais : une séance abandonnée restait "en cours" indéfiniment.
+// ponytail: updatedAt sert de dernière modification ; une séance jamais vue sur cet appareil (créée
+// ailleurs) part de l'heure d'ouverture faute de lastActivityAt local — le serveur, lui, a le vrai.
+function isOpen(session: LocalSession) {
+  return session.completedAt === null && Date.now() - session.updatedAt < SESSION_AUTO_CLOSE_MS;
+}
+
+export async function getLocalSessions() {
+  return (await getDb()).getAll("sessions");
 }
 
 export async function putLocalSession(session: LocalSession) {
   await (await getDb()).put("sessions", session);
+}
+
+export async function deleteLocalSession(id: string) {
+  await (await getDb()).delete("sessions", id);
 }
 
 export async function getLocalHistory(exerciseIds: string[]) {

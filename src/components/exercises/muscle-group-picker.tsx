@@ -29,11 +29,11 @@ export const MUSCLE_ICONS: Record<(typeof MUSCLE_GROUPS)[number], MuscleIcon | L
 };
 
 // Icône discrète du groupe musculaire principal d'un exercice (liste d'un programme, rail de
-// séance) : silhouette à peine visible, zone ciblée en accent adouci — repère, pas décoration.
+// séance) : silhouette "crème adouci" (même teinte que le sélecteur), zone ciblée en accent adouci.
 export function ExerciseMuscleIcon({ muscles, className }: { muscles: string[]; className?: string }) {
   const Icon = MUSCLE_ICONS[muscles[0] as keyof typeof MUSCLE_ICONS];
   if (!Icon) return null;
-  return <Icon className={cn("text-neutral-300 [&_.fill-accent]:opacity-75", className)} />;
+  return <Icon className={cn("text-neutral-700 [&_.fill-accent]:opacity-75", className)} />;
 }
 
 export function MuscleGroupPicker({
@@ -75,8 +75,8 @@ export function MuscleGroupPicker({
                 // convention plutôt que le remplissage noir/blanc réservé aux boutons d'action.
                 selected
                   ? "border-accent bg-accent text-accent-contrast/40"
-                  : // Corps des icônes (currentColor) en teinte "taupe" : en retrait, pour que la zone ciblée ressorte.
-                    "border-neutral-200 text-neutral-500 hover:border-accent-deep/50 hover:bg-accent-soft/40"
+                  : // Corps des icônes (currentColor) en "crème adouci" : présent sans éblouir, la zone ciblée ressort.
+                    "border-neutral-200 text-neutral-700 hover:border-accent-deep/50 hover:bg-accent-soft/40"
               )}
             >
               <Icon className="h-11 w-11" />

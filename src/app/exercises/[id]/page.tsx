@@ -132,7 +132,7 @@ export default async function ExerciseDetailPage({
       <Container className="space-y-6">
         <Card className="space-y-3.5">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-21 w-21 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-neutral-400">
+            <div className="flex h-21 w-21 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-neutral-700">
               {Icon && <Icon className="h-16 w-16" />}
             </div>
             <div className="min-w-0 space-y-2">

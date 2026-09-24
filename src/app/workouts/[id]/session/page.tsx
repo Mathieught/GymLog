@@ -14,7 +14,7 @@ export default async function WorkoutTemplateSessionPreviewPage({
   searchParams,
 }: PageProps<"/workouts/[id]/session">) {
   const { id } = await params;
-  const { exercise: requestedExerciseId } = await searchParams;
+  const { exercise: requestedExerciseId, start } = await searchParams;
 
   const template = await prisma.workoutTemplate.findUnique({
     where: { id },
@@ -64,6 +64,7 @@ export default async function WorkoutTemplateSessionPreviewPage({
       seed={seed}
       activeExerciseId={activeExerciseId}
       showStartHint={!previousSession}
+      startOnMount={start === "1"}
     />
   );
 }
