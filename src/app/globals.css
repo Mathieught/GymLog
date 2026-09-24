@@ -4,41 +4,90 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Thème sombre permanent (pas de bascule) : toute l'app est construite sur l'échelle neutral +
-     white/black de Tailwind, donc on obtient un thème sombre cohérent sur chaque écran en
-     redéfinissant une seule fois ces jetons ici, plutôt qu'en retouchant chaque composant. Rampe
-     volontairement inversée (50 = le plus sombre, 900 = le plus clair) pour que chaque usage
-     existant (bg-neutral-50 en fond de page, text-neutral-900 en texte principal, bg-neutral-900
-     text-white pour un remplissage "fort", etc.) reste correct sans aucun changement de classe.
-     Teinte chaude (pas de gris neutre pur) pour rester dans la même famille que l'accent. */
-  --color-white: #1b1b17;
+  /* Toute l'app est construite sur l'échelle neutral + white/black de Tailwind : chaque jeton pointe
+     vers une variable CSS, redéfinie par mode (sombre/clair) juste en dessous. Aucun composant n'a
+     besoin de changer de classe pour suivre le thème. */
+  --color-white: var(--white);
   --color-black: #000000;
 
-  --color-neutral-50: #131310;
-  --color-neutral-100: #1f1f19;
-  --color-neutral-200: #2c2b23;
-  --color-neutral-300: #3c3a2f;
-  --color-neutral-400: #6b6a5c;
-  --color-neutral-500: #8f8d7c;
-  --color-neutral-600: #b3b1a0;
-  --color-neutral-700: #cfcdbc;
-  --color-neutral-800: #e2e0d2;
-  --color-neutral-900: #f5f3e9;
-  --color-neutral-950: #fefdf8;
+  --color-neutral-50: var(--n-50);
+  --color-neutral-100: var(--n-100);
+  --color-neutral-200: var(--n-200);
+  --color-neutral-300: var(--n-300);
+  --color-neutral-400: var(--n-400);
+  --color-neutral-500: var(--n-500);
+  --color-neutral-600: var(--n-600);
+  --color-neutral-700: var(--n-700);
+  --color-neutral-800: var(--n-800);
+  --color-neutral-900: var(--n-900);
+  --color-neutral-950: var(--n-950);
 
-  /* Seul accent de l'app (voir Button "accent" et son usage ciblé : progression, état actif,
-     chrono) — jamais une couleur de base, toujours ce même vert sur toute l'app. Valeurs
-     recalibrées pour un fond sombre : accent-deep sert de texte/icône (donc clair, quasi
-     identique à l'accent lui-même), accent-soft de fond de badge (donc sombre, teinté olive). */
-  --color-accent: #c9f22b;
-  --color-accent-deep: #c9f22b;
-  --color-accent-soft: #2a3308;
-  --color-accent-contrast: #10150a;
+  /* Couleur d'accent du thème choisi (voir src/lib/theme.ts, posée sur <html> par le layout) :
+     accent = aplats, accent-deep = texte/icône sur le fond, accent-soft = fond de badge,
+     accent-contrast = texte sur un aplat d'accent. */
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-contrast: var(--accent-contrast);
 
-  /* Couleur de suppression/alerte de la proposition d'origine (orange corail, pas un rouge
-     Tailwind par défaut) — un seul jeton pour que chaque usage (Button "danger", icônes de
-     suppression, messages d'erreur de formulaire) reste visuellement identique. */
-  --color-danger: #e2694e;
+  /* Couleurs de sens, indépendantes du thème : suppression/alerte (corail) et progression (vert).
+     Fixes pour qu'un thème rouge ou vert ne rende jamais ambiguë une hausse ou une suppression. */
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+}
+
+/* Mode sombre (défaut). Rampe volontairement inversée (50 = le plus sombre, 900 = le plus clair)
+   pour que chaque usage (bg-neutral-50 en fond de page, text-neutral-900 en texte principal,
+   bg-neutral-900 text-white pour un remplissage "fort"…) reste correct dans les deux modes.
+   Teinte chaude, dans la même famille que l'accent. Accent par défaut : le vert d'origine. */
+:root {
+  --white: #1b1b17;
+  --n-50: #131310;
+  --n-100: #1f1f19;
+  --n-200: #2c2b23;
+  --n-300: #3c3a2f;
+  --n-400: #6b6a5c;
+  --n-500: #8f8d7c;
+  --n-600: #b3b1a0;
+  --n-700: #cfcdbc;
+  --n-800: #e2e0d2;
+  --n-900: #f5f3e9;
+  --n-950: #fefdf8;
+
+  --accent: #c9f22b;
+  --accent-deep: #c9f22b;
+  --accent-soft: #2a3308;
+  --accent-contrast: #10150a;
+
+  --danger: #e2694e;
+  --success: #8fd14f;
+  --success-soft: #20300f;
+
+  /* Scrollbar et contrôles natifs peints dans le bon mode. */
+  color-scheme: dark;
+}
+
+/* Mode clair : même rampe, dans le sens naturel (50 = le plus clair). */
+:root[data-mode="light"] {
+  --white: #ffffff;
+  --n-50: #f6f5f0;
+  --n-100: #efede6;
+  --n-200: #e4e1d6;
+  --n-300: #d2cfc2;
+  --n-400: #a3a094;
+  --n-500: #6f6d62;
+  --n-600: #55534a;
+  --n-700: #403e37;
+  --n-800: #2c2b26;
+  --n-900: #1a1a17;
+  --n-950: #0f0f0d;
+
+  --danger: #c2410c;
+  --success: #2f7d1f;
+  --success-soft: #e2f2d8;
+
+  color-scheme: light;
 }
 
 html {
@@ -47,9 +96,6 @@ html {
      décale tout le contenu centré (mx-auto) et la navbar en bas (fixed, centrée) de quelques
      pixels par rapport aux onglets sans scrollbar — d'où le "saut" en changeant d'onglet. */
   scrollbar-gutter: stable;
-  /* Sans ça, le navigateur continue de peindre scrollbar/contrôles natifs en clair (thème système
-     par défaut) même si toute l'app est sombre — visible surtout sur la scrollbar desktop. */
-  color-scheme: dark;
 }
 
 /* Safari iOS zoome automatiquement la page quand on touche un champ dont la taille de police est

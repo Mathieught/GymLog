@@ -43,8 +43,16 @@ const OPTIONS: { value: AppMode; label: string }[] = [
 export function AppModeToggle() {
   const { mode, setMode } = useAppMode();
 
+  // Même commande que Clair/Sombre (ThemePicker) : une pastille d'accent glisse derrière l'option active.
   return (
-    <div className="flex items-center gap-0.5 rounded-full bg-neutral-200/70 p-0.5">
+    <div className="relative grid shrink-0 grid-cols-2 rounded-full bg-neutral-200 p-[3px]">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-y-[3px] left-[3px] w-[calc(50%-3px)] rounded-full bg-accent shadow-sm transition-transform duration-300 motion-reduce:transition-none",
+          mode === "advanced" && "translate-x-full"
+        )}
+      />
       {OPTIONS.map((option) => (
         <button
           key={option.value}
@@ -52,10 +60,8 @@ export function AppModeToggle() {
           onClick={() => setMode(option.value)}
           aria-pressed={mode === option.value}
           className={cn(
-            "rounded-full px-3 py-1 text-sm font-medium transition-colors",
-            mode === option.value
-              ? "bg-white text-neutral-900 shadow-sm"
-              : "text-neutral-500 hover:bg-white/60"
+            "relative rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+            mode === option.value ? "text-accent-contrast" : "text-neutral-500"
           )}
         >
           {option.label}

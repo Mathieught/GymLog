@@ -238,7 +238,7 @@ export default async function SessionDetailPage({
                                 key={badge.label}
                                 className={cn(
                                   "whitespace-nowrap rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
-                                  badge.tone === "up" && "bg-accent-soft text-accent",
+                                  badge.tone === "up" && "bg-success-soft text-success",
                                   badge.tone === "down" && "bg-danger/15 text-danger",
                                   badge.tone === "neutral" && "bg-neutral-100 text-neutral-500"
                                 )}
