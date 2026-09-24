@@ -26,6 +26,11 @@ type SetForGrouping = {
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
+// Rendu côté serveur (UTC sur Vercel) : l'heure est donc forcée sur le fuseau de Paris.
+// ponytail: fuseau fixe, à passer sur celui de l'utilisateur si l'app sort de France.
+const timeFormat = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
+const formatTime = (date: Date) => timeFormat.format(date);
+
 // "1 h 08" au-delà d'une heure, "45 min" en dessous.
 function formatDuration(ms: number): string {
   const minutes = Math.round(ms / 60_000);
@@ -127,42 +132,51 @@ export default async function SessionDetailPage({
 
     return (
       <>
-        <PageHeader backHref="/history" />
+        <PageHeader backHref="/history" title={<h1>{session.name}</h1>} />
         <Container className="space-y-4">
-          <div>
-            <h1 className="text-xl font-semibold">{session.name}</h1>
-            <p className="text-sm text-neutral-500">
-              {capitalize(format(session.startedAt, "EEEE d MMMM", { locale: fr }))}
-            </p>
-          </div>
-
-          <div className="space-y-3.5 rounded-2xl bg-accent p-4 text-accent-contrast">
-            <dl className="grid grid-cols-3">
-              {[
-                { label: "Durée", value: formatDuration(session.lastActivityAt.getTime() - session.startedAt.getTime()) },
-                { label: "Exercices", value: practiced.length },
-                { label: "Séries", value: `${doneCount}/${allSets.length}` },
-              ].map((stat, i) => (
-                <div
-                  key={stat.label}
-                  className={cn("flex flex-col-reverse gap-1", i > 0 && "border-l border-accent-contrast/20 pl-3")}
-                >
-                  <dt className="text-xs text-accent-contrast/60">{stat.label}</dt>
-                  <dd className="font-mono text-2xl font-semibold leading-none tabular-nums">{stat.value}</dd>
-                </div>
-              ))}
-            </dl>
-            {muscleCounts.length > 0 && (
-              <ul className="flex flex-wrap gap-1.5 border-t border-accent-contrast/20 pt-3">
-                {muscleCounts.map(({ muscle, count }) => (
-                  <li key={muscle} className="rounded-full bg-accent-contrast/10 px-2.5 py-0.5 text-xs">
-                    {muscle}
-                    <span className="ml-1.5 font-mono text-[11px] opacity-65">
-                      {count} exo{count > 1 ? "s" : ""}
-                    </span>
-                  </li>
+          <div className="space-y-3 rounded-2xl bg-accent px-4 py-3.5 text-accent-contrast">
+            <div className="grid grid-cols-[1fr_auto] items-center gap-4">
+              <div>
+                <p className="text-[22px] font-semibold leading-tight tracking-tight">
+                  {capitalize(format(session.startedAt, "EEEE", { locale: fr }))}
+                  <br />
+                  {format(session.startedAt, "d MMMM", { locale: fr })}
+                </p>
+                <p className="mt-1.5 font-mono text-xs text-accent-contrast/60">
+                  {formatTime(session.startedAt)} → {formatTime(session.lastActivityAt)}
+                </p>
+              </div>
+              <dl className="grid gap-1.5 border-l border-accent-contrast/20 pl-4">
+                {[
+                  { label: "Durée", value: formatDuration(session.lastActivityAt.getTime() - session.startedAt.getTime()) },
+                  { label: "Exercices", value: practiced.length },
+                  { label: "Séries", value: `${doneCount}/${allSets.length}` },
+                ].map((stat) => (
+                  <div key={stat.label} className="flex items-baseline justify-between gap-3.5 text-xs">
+                    <dt className="text-accent-contrast/60">{stat.label}</dt>
+                    <dd className="font-mono text-[13px] font-semibold tabular-nums">{stat.value}</dd>
+                  </div>
                 ))}
-              </ul>
+              </dl>
+            </div>
+            {muscleCounts.length > 0 && (
+              // Chaque "Triceps 2" est insécable ; le "·" est posé dans la marge gauche de chaque
+              // élément et la liste est décalée de cette marge dans un conteneur qui coupe ce qui
+              // dépasse : le séparateur du premier élément de chaque ligne est masqué, donc aucune
+              // ligne ne commence par "·" quand la liste passe sur plusieurs lignes.
+              <div className="overflow-hidden border-t border-accent-contrast/20 pt-3">
+                <ul className="-ml-[15px] flex flex-wrap gap-y-0.5 text-[12.5px] leading-relaxed">
+                  {muscleCounts.map(({ muscle, count }) => (
+                    <li
+                      key={muscle}
+                      className="relative whitespace-nowrap pl-[15px] before:absolute before:left-[5px] before:opacity-45 before:content-['·']"
+                    >
+                      {muscle}
+                      <span className="ml-[3px] font-mono text-[11px] opacity-65">{count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
 
