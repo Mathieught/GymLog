@@ -5,8 +5,7 @@ import { tz } from "@date-fns/tz";
 import { cookies } from "next/headers";
 import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { cn, formatReps, formatWeight } from "@/lib/utils";
-import { setEvolution } from "@/lib/set-evolution";
+import { HistorySetList } from "@/components/sessions/history-set-list";
 import { parseTimeZone, TIME_ZONE_COOKIE } from "@/lib/time-zone";
 import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
@@ -71,7 +70,8 @@ export default async function SessionDetailPage({
     (workoutExercise, exerciseOrder) => ({
       exerciseId: workoutExercise.exerciseId,
       exerciseOrder,
-      exercise: workoutExercise.exercise,
+      // Nombre de séries figé dans la séance (voir WorkoutExercise.targetSets), pas celui de l'exercice.
+      exercise: { ...workoutExercise.exercise, targetSets: workoutExercise.targetSets },
       sets: setsByExercise.get(workoutExercise.exerciseId) ?? [],
     })
   );
@@ -109,12 +109,15 @@ export default async function SessionDetailPage({
           },
         })
       : null;
-    const previousSets = new Map(
-      (previousSession?.sets ?? []).map((set) => [
-        `${set.exerciseId}:${set.setNumber}`,
-        { reps: set.actualReps!, weight: set.actualWeight! },
-      ])
-    );
+    // Séries de référence d'un exercice, par numéro de série (null sans séance précédente).
+    const previousSetsFor = (exerciseId: string) =>
+      previousSession
+        ? new Map(
+            previousSession.sets
+              .filter((set) => set.exerciseId === exerciseId)
+              .map((set) => [set.setNumber, { reps: set.actualReps!, weight: set.actualWeight! }])
+          )
+        : null;
 
     // Dates et heures dans le fuseau de l'utilisateur (rendu serveur en UTC sur Vercel).
     const zone = tz(parseTimeZone((await cookies()).get(TIME_ZONE_COOKIE)?.value));
@@ -204,55 +207,7 @@ export default async function SessionDetailPage({
                   {group.sets.filter((set) => set.completed).length}/{group.sets.length}
                 </span>
               </div>
-              <ul className="mt-1.5">
-                {group.sets.map((set) => {
-                  const hasValues = set.actualReps != null && set.actualWeight != null;
-                  return (
-                    <li
-                      key={set.id}
-                      className={cn(
-                        "grid grid-cols-[22px_1fr_auto] items-center gap-2.5 border-t border-neutral-200 px-2 py-1.5 font-mono tabular-nums",
-                        !set.completed && "text-neutral-400"
-                      )}
-                    >
-                      <span className="text-xs text-neutral-500">{set.setNumber}</span>
-                      <span>
-                        {set.actualReps != null ? formatReps(set.actualReps) : "—"}
-                        <span className="mx-0.5 text-neutral-500"> × </span>
-                        {set.actualWeight != null ? formatWeight(set.actualWeight) : "—"}
-                        <span className="ml-0.5 text-xs text-neutral-500">kg</span>
-                      </span>
-                      {!set.completed ? (
-                        <span className="text-[10px] font-semibold uppercase tracking-wide">
-                          {hasValues ? "Non faite" : "Non saisie"}
-                        </span>
-                      ) : (
-                        previousSession &&
-                        hasValues && (
-                          <span className="flex gap-1">
-                            {setEvolution(
-                              { reps: set.actualReps!, weight: set.actualWeight! },
-                              previousSets.get(`${group.exerciseId}:${set.setNumber}`)
-                            ).map((badge) => (
-                              <span
-                                key={badge.label}
-                                className={cn(
-                                  "whitespace-nowrap rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
-                                  badge.tone === "up" && "bg-success-soft text-success",
-                                  badge.tone === "down" && "bg-danger/15 text-danger",
-                                  badge.tone === "neutral" && "bg-neutral-100 text-neutral-500"
-                                )}
-                              >
-                                {badge.label}
-                              </span>
-                            ))}
-                          </span>
-                        )
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+              <HistorySetList sets={group.sets} previous={previousSetsFor(group.exerciseId)} />
             </Card>
           ))}
         </Container>

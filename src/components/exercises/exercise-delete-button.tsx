@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { archiveExercise } from "@/lib/actions/exercises";
@@ -19,8 +20,16 @@ export function ExerciseDeleteButton({
 
   return (
     <>
-      <Button type="button" variant="danger" size="sm" onClick={() => setPendingDelete(true)}>
-        Supprimer l&apos;exercice
+      {/* Icône seule, à côté de "Modifier" dans l'en-tête de la page détail. */}
+      <Button
+        type="button"
+        variant="danger"
+        size="sm"
+        onClick={() => setPendingDelete(true)}
+        aria-label="Supprimer l'exercice"
+        className="w-9 px-0"
+      >
+        <Trash2 className="h-4 w-4" />
       </Button>
 
       {pendingDelete && (
