@@ -321,6 +321,28 @@ export function useSessionEngine(seed: SessionSeed) {
     [applyMutation]
   );
 
+  // Retire une série seulement suggérée (jamais enregistrée) — celle-là précisément, pas la
+  // dernière : son numéro source rejoint skippedSuggestions (voir buildSessionRows) et les
+  // suggestions suivantes remontent avec leurs propres valeurs. Rien à synchroniser, donc possible
+  // dès l'aperçu sans démarrer la séance.
+  const dismissSuggestion = useCallback(
+    (exerciseId: string, sourceSetNumber: number) => {
+      void applyMutation((current) => ({
+        next: {
+          ...current,
+          groups: current.groups.map((g) =>
+            g.exerciseId === exerciseId
+              ? { ...g, skippedSuggestions: [...(g.skippedSuggestions ?? []), sourceSetNumber] }
+              : g
+          ),
+        },
+        ops: [],
+        sessionId: current.sessionId,
+      }));
+    },
+    [applyMutation]
+  );
+
   const completeSession = useCallback(() => {
     void applyMutation((current) => {
       if (!current.sessionId) return null;
@@ -346,6 +368,7 @@ export function useSessionEngine(seed: SessionSeed) {
     updateNote,
     resetSet,
     removeSet,
+    dismissSuggestion,
     completeSession,
   };
 }

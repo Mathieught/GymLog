@@ -28,6 +28,14 @@ export const MUSCLE_ICONS: Record<(typeof MUSCLE_GROUPS)[number], MuscleIcon | L
   Autres: MoreHorizontal,
 };
 
+// Icône discrète du groupe musculaire principal d'un exercice (liste d'un programme, rail de
+// séance) : silhouette à peine visible, zone ciblée en accent adouci — repère, pas décoration.
+export function ExerciseMuscleIcon({ muscles, className }: { muscles: string[]; className?: string }) {
+  const Icon = MUSCLE_ICONS[muscles[0] as keyof typeof MUSCLE_ICONS];
+  if (!Icon) return null;
+  return <Icon className={cn("text-neutral-300 [&_.fill-accent]:opacity-75", className)} />;
+}
+
 export function MuscleGroupPicker({
   id,
   name,

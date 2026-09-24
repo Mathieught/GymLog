@@ -2,14 +2,15 @@
 
 import { cn } from "@/lib/utils";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
+import { ExerciseMuscleIcon } from "@/components/exercises/muscle-group-picker";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 
-// Remplace l'ancien fil d'icônes purement informatif (SessionExerciseStepper, qui disparaissait
-// 1,5s après un changement d'exercice) : une barre de segments reste affichée en permanence sous
-// l'en-tête, et chaque segment est tappable pour sauter directement à l'exercice correspondant,
-// sans passer par le swipe. L'état "fait" utilise `buildSessionRows(..., 0)` (comme le prompt de
-// fin de séance) pour tenir compte des séries encore seulement suggérées par l'historique/
-// l'objectif, pas seulement des séries réellement enregistrées.
+// Rail de progression affiché en permanence sous l'en-tête : une colonne par exercice, l'icône de
+// son groupe musculaire au-dessus d'une barre d'état — on voit d'un coup d'œil ce que contient la
+// séance et où on en est. Chaque colonne est tappable pour sauter directement à l'exercice, sans
+// passer par le swipe. L'état "fait" utilise `buildSessionRows(..., 0)` (comme le prompt de fin de
+// séance) pour tenir compte des séries encore seulement suggérées par l'historique/l'objectif, pas
+// seulement des séries réellement enregistrées.
 export function SessionProgressRail({
   groups,
   history,
@@ -21,6 +22,8 @@ export function SessionProgressRail({
   activeIndex: number;
   onSelect: (index: number) => void;
 }) {
+  const active = groups[activeIndex];
+
   return (
     // Même colonne padded (px-4) que la ligne titre au-dessus et que le contenu en dessous : le
     // rail bord-à-bord dépassait de cette colonne sur les côtés (visible comme "désaligné"/qui
@@ -41,19 +44,33 @@ export function SessionProgressRail({
               aria-current={isActive ? "step" : undefined}
               aria-label={`Aller à l'exercice ${index + 1} : ${group.exercise.name}`}
               className={cn(
-                "h-1.5 flex-1 rounded-full transition-colors",
-                isActive ? "bg-neutral-900" : isDone ? "bg-accent" : "bg-neutral-300"
+                "flex min-w-0 flex-1 flex-col items-center gap-1.5 pt-1 transition-opacity",
+                isActive ? "opacity-100" : isDone ? "opacity-80" : "opacity-45"
               )}
-            />
+            >
+              <ExerciseMuscleIcon
+                muscles={group.exercise.muscle}
+                className={cn(
+                  "h-[22px] w-[22px]",
+                  isActive && "h-6 w-6 text-neutral-500 [&_.fill-accent]:opacity-100"
+                )}
+              />
+              <span
+                className={cn(
+                  "h-1 w-full rounded-full transition-colors",
+                  isActive ? "bg-neutral-900" : isDone ? "bg-accent" : "bg-neutral-300"
+                )}
+              />
+            </button>
           );
         })}
       </div>
-      <div className="flex items-center justify-between font-mono text-xs text-neutral-500">
-        <span>
+      <p className="flex justify-between gap-3 font-mono text-xs text-neutral-500">
+        <span className="shrink-0">
           Exercice <span className="font-semibold text-neutral-900">{activeIndex + 1}</span>/{groups.length}
         </span>
-        <span className="text-accent-deep">toucher pour naviguer</span>
-      </div>
+        <span className="truncate">{active?.exercise.muscle.join(", ")}</span>
+      </p>
     </div>
   );
 }

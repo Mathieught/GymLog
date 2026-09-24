@@ -1,22 +1,23 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { getWorkoutTemplateDetail } from "@/lib/queries/workout-templates";
+import { getLastSessionDates, getWorkoutTemplateDetail } from "@/lib/queries/workout-templates";
+import { formatDaysAgo } from "@/lib/utils";
+import { formatScheduleDays } from "@/lib/constants";
 import { getActiveExercises } from "@/lib/queries/exercises";
 import { getCurrentUserId } from "@/lib/current-user";
-import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { WorkoutEditTrigger } from "@/components/workouts/workout-edit-trigger";
+import { WorkoutProgramBody } from "@/components/workouts/workout-program-body";
 
 export default async function WorkoutTemplateDetailPage({
   params,
 }: PageProps<"/workouts/[id]">) {
   const { id } = await params;
   const userId = await getCurrentUserId();
-  const [template, availableExercises] = await Promise.all([
+  const [template, availableExercises, lastSessionDates] = await Promise.all([
     getWorkoutTemplateDetail(id),
     getActiveExercises(userId),
+    getLastSessionDates(userId),
   ]);
   if (!template || template.isArchived) notFound();
 
@@ -35,11 +36,21 @@ export default async function WorkoutTemplateDetailPage({
     scheduleDays: template.schedules.map((schedule) => schedule.dayOfWeek),
   };
 
+  const lastSession = lastSessionDates.get(template.id);
+  const scheduleLabel = formatScheduleDays(template.schedules.map((s) => s.dayOfWeek));
+  const exerciseCount = template.exercises.length;
+  const meta = [
+    `${exerciseCount} exercice${exerciseCount > 1 ? "s" : ""}`,
+    scheduleLabel,
+    lastSession ? formatDaysAgo(lastSession) : "Jamais faite",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <>
       <PageHeader
         backHref="/workouts"
-        title={`Séance : ${template.name}`}
         right={
           <WorkoutEditTrigger
             templateId={template.id}
@@ -53,51 +64,35 @@ export default async function WorkoutTemplateDetailPage({
           />
         }
       />
-      <Container>
-        {template.description && (
-          <p className="mb-4 text-sm text-neutral-600">{template.description}</p>
-        )}
-
-        {template.exercises.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-neutral-300 p-4 text-center">
-            <p className="text-sm text-neutral-500">Aucun exercice ajouté pour l&apos;instant.</p>
-            <WorkoutEditTrigger
-              templateId={template.id}
-              templateName={template.name}
-              defaultValues={editDefaultValues}
-              exerciseOptions={availableExercises}
-              exerciseNamesById={exerciseNamesById}
-              label="+ Ajouter des exercices"
-              size="sm"
-              className="mt-3"
-            />
-          </div>
-        ) : (
-          <>
-            <p className="mb-2 text-sm text-neutral-500">
-              Touchez un exercice pour démarrer la séance.
-            </p>
-            <ul className="space-y-2">
-              {template.exercises.map((workoutExercise) => (
-                <li key={workoutExercise.id}>
-                  <Link
-                    href={`/workouts/${template.id}/session?exercise=${workoutExercise.exerciseId}`}
-                  >
-                    <Card className="flex items-center justify-between transition-colors hover:border-neutral-400">
-                      <div>
-                        <p className="font-medium">{workoutExercise.exercise.name}</p>
-                        <p className="text-sm text-neutral-500">
-                          {workoutExercise.exercise.muscle.join(", ")}
-                        </p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-neutral-400" />
-                    </Card>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+      <Container className="pt-2">
+        <WorkoutProgramBody
+          templateId={template.id}
+          name={template.name}
+          meta={meta}
+          description={template.description}
+          exercises={template.exercises.map((workoutExercise) => ({
+            id: workoutExercise.id,
+            exerciseId: workoutExercise.exerciseId,
+            name: workoutExercise.exercise.name,
+            muscles: workoutExercise.exercise.muscle,
+            targetSets: workoutExercise.targetSets,
+          }))}
+          emptyState={
+            <div className="rounded-2xl border border-dashed border-neutral-300 p-4 text-center">
+              <p className="text-sm text-neutral-500">Aucun exercice ajouté pour l&apos;instant.</p>
+              <WorkoutEditTrigger
+                templateId={template.id}
+                templateName={template.name}
+                defaultValues={editDefaultValues}
+                exerciseOptions={availableExercises}
+                exerciseNamesById={exerciseNamesById}
+                label="+ Ajouter des exercices"
+                size="sm"
+                className="mt-3"
+              />
+            </div>
+          }
+        />
       </Container>
     </>
   );

@@ -35,6 +35,19 @@
   --color-danger: var(--danger);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
+
+  /* Halo autour de la série à renseigner en premier (voir ExercisePanel). */
+  --animate-ring-pulse: ring-pulse 1.8s ease-out infinite;
+}
+
+@keyframes ring-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
 }
 
 /* Mode sombre (défaut). Rampe volontairement inversée (50 = le plus sombre, 900 = le plus clair)

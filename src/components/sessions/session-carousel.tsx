@@ -25,13 +25,13 @@ export function SessionCarousel({
   history,
   removedSetCounts,
   activeIndex,
-  templateName,
   onActiveIndexChange,
   onAddSet,
   onLogSet,
   onUpdateSet,
   onResetSet,
   onRemoveSet,
+  onDismissSuggestion,
   onUpdateNote,
   onCompleteSession,
 }: {
@@ -51,16 +51,13 @@ export function SessionCarousel({
   // progression dans le header (voir SessionProgressRail) puisse aussi le piloter, pas seulement
   // le swipe/les boutons Précédent-Suivant de ce composant.
   activeIndex: number;
-  // Nom de la séance (déjà affiché dans l'en-tête) : sert à ne pas répéter le muscle ciblé de
-  // l'exercice quand il correspond au nom de la séance (ex. séance "Dos" contenant un exercice
-  // ciblant "Dos") — voir ExercisePanel.
-  templateName: string;
   onActiveIndexChange: (index: number) => void;
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
   onResetSet: (setId: string) => void;
   onRemoveSet: (setId: string) => void;
+  onDismissSuggestion: (exerciseId: string, sourceSetNumber: number) => void;
   onUpdateNote: (setId: string, note: string | null) => void;
   onCompleteSession: () => void;
 }) {
@@ -124,6 +121,13 @@ export function SessionCarousel({
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    // Les popups ouvertes depuis une série (SetValueSheet, NoteSheet) sont rendues via un portail :
+    // hors du carousel dans le DOM, mais React y fait quand même remonter leurs événements. Sans ce
+    // filtre, glisser le doigt dans la popup changeait d'exercice derrière elle.
+    if (!event.currentTarget.contains(event.target as Node)) {
+      pointerStart.current = null;
+      return;
+    }
     // Un appui qui démarre sur la petite icône d'action d'une série (reset/suppression, voir
     // data-no-swipe dans SetRow) ne doit jamais pouvoir être requalifié en swipe : au toucher, un
     // micro-mouvement du doigt pendant l'appui est quasi inévitable, ce qui basculait
@@ -208,12 +212,13 @@ export function SessionCarousel({
                 removedCount={removedSetCounts[group.exerciseId] ?? 0}
                 allowRemove={allowRemove}
                 readOnly={readOnly}
-                templateName={templateName}
+                started={sessionId !== null}
                 onAddSet={onAddSet}
                 onLogSet={onLogSet}
                 onUpdateSet={onUpdateSet}
                 onResetSet={onResetSet}
                 onRemoveSet={onRemoveSet}
+                onDismissSuggestion={onDismissSuggestion}
                 onUpdateNote={onUpdateNote}
               />
             </div>
@@ -254,12 +259,13 @@ function ExercisePanel({
   removedCount,
   allowRemove,
   readOnly,
-  templateName,
+  started,
   onAddSet,
   onLogSet,
   onUpdateSet,
   onResetSet,
   onRemoveSet,
+  onDismissSuggestion,
   onUpdateNote,
 }: {
   group: SessionRowGroup;
@@ -267,36 +273,29 @@ function ExercisePanel({
   removedCount: number;
   allowRemove: boolean;
   readOnly: boolean;
-  templateName: string;
+  // Séance déjà créée (au moins une série renseignée) : sinon on est encore sur l'aperçu, et la
+  // prochaine série à renseigner est présentée comme celle qui lance la séance.
+  started: boolean;
   onAddSet: (exerciseId: string, exerciseOrder: number) => void;
   onLogSet: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onUpdateSet: (setId: string, actualWeight: number, actualReps: number) => void;
   onResetSet: (setId: string) => void;
   onRemoveSet: (setId: string) => void;
+  onDismissSuggestion: (exerciseId: string, sourceSetNumber: number) => void;
   onUpdateNote: (setId: string, note: string | null) => void;
 }) {
   const rows = buildSessionRows(group, history, removedCount);
-  // Le nom de la séance est déjà affiché juste au-dessus (en-tête) : ne pas répéter un muscle qui
-  // le reprend mot pour mot (ex. séance "Dos" listant un exercice ciblant "Dos"). Les autres
-  // muscles ciblés par l'exercice restent affichés normalement.
-  const normalizedTemplateName = templateName.trim().toLowerCase();
-  const displayedMuscles = group.exercise.muscle.filter(
-    (muscle) => muscle.trim().toLowerCase() !== normalizedTemplateName
-  );
-
+  const nextSetNumber = readOnly
+    ? undefined
+    : rows.find((row) => row.unlocked && !row.current?.completed)?.setNumber;
+  // Nom de l'exercice et muscles : affichés dans l'en-tête et le rail (voir SessionTracker,
+  // SessionProgressRail), plus répétés ici.
   return (
     <div className="pr-1">
-      <div>
-        <p className="font-bold">{group.exercise.name}</p>
-        {displayedMuscles.length > 0 && (
-          <p className="text-sm text-neutral-500">{displayedMuscles.join(", ")}</p>
-        )}
-      </div>
-
       {rows.length === 0 ? (
-        <p className="mt-3.5 text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
+        <p className="text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
       ) : (
-        <ul className="mt-3.5 space-y-2">
+        <ul className="space-y-2">
           {rows.map((row) =>
             row.current ? (
               <li key={row.current.id}>
@@ -313,14 +312,23 @@ function ExercisePanel({
                 />
               </li>
             ) : (
-              <li key={`previous-${row.setNumber}`}>
+              <li key={`previous-${row.previous!.setNumber}`}>
+                {!started && row.setNumber === nextSetNumber && (
+                  <p className="mb-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-accent-deep">
+                    ↓ Commence ici
+                  </p>
+                )}
                 <PreviousSetRow
+                  setNumber={row.setNumber}
                   previousSet={row.previous!}
                   exerciseId={group.exerciseId}
                   exerciseOrder={group.exerciseOrder}
                   recap={row.recap}
                   locked={readOnly || !row.unlocked}
+                  canRemove={allowRemove}
+                  highlight={row.setNumber === nextSetNumber ? (started ? "next" : "start") : undefined}
                   onLog={onLogSet}
+                  onDismiss={onDismissSuggestion}
                 />
               </li>
             )

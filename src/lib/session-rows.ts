@@ -14,6 +14,10 @@ export type SessionRowGroup = {
   exerciseOrder: number;
   exercise: { name: string; muscle: string[]; targetSets: number };
   sets: SessionRowSet[];
+  // Numéros (dans l'historique) des séries suggérées supprimées avant d'être renseignées (voir
+  // dismissSuggestion dans session-engine.ts) : les suggestions suivantes remontent d'un cran en
+  // gardant leurs propres valeurs.
+  skippedSuggestions?: number[];
 };
 
 // Une entrée de récap par séance passée (jusqu'à 3), datée, pour LE MÊME numéro de série que la
@@ -57,12 +61,17 @@ export function buildSessionRows(
   const previousPerformance = history[0];
   const previousSets = previousPerformance?.sets ?? [];
   const maxSuggested = Math.max(previousSets.length, group.exercise.targetSets);
-  const extraSuggested = Math.max(0, maxSuggested - group.sets.length - removedCount);
+  // Numéro de série "source" (historique/objectif) de chaque ligne, une fois retirées les
+  // suggestions supprimées : la ligne N reprend les valeurs et le récap de sources[N - 1].
+  const skipped = group.skippedSuggestions ?? [];
+  const sources = Array.from({ length: maxSuggested }, (_, i) => i + 1).filter((n) => !skipped.includes(n));
+  const extraSuggested = Math.max(0, sources.length - group.sets.length - removedCount);
   const rowCount = group.sets.length + extraSuggested;
 
   return Array.from({ length: rowCount }, (_, i) => i + 1).reduce<SessionRow[]>((acc, setNumber) => {
     const current = group.sets.find((s) => s.setNumber === setNumber);
-    const historicalPrevious = previousSets.find((s) => s.setNumber === setNumber);
+    const sourceNumber = sources[setNumber - 1];
+    const historicalPrevious = previousSets.find((s) => s.setNumber === sourceNumber);
     const previousRow = acc[acc.length - 1];
     const unlocked =
       previousRow === undefined || previousRow.current?.completed === true || current?.completed === true;
@@ -74,11 +83,11 @@ export function buildSessionRows(
       // ExercisePanel), qu'il y ait ou non un historique réel derrière.
       previous: current
         ? historicalPrevious
-        : (historicalPrevious ?? { setNumber, actualWeight: null, actualReps: null, note: null }),
+        : (historicalPrevious ?? { setNumber: sourceNumber ?? setNumber, actualWeight: null, actualReps: null, note: null }),
       unlocked,
       recap: history.map((performance) => ({
         sessionDate: performance.sessionDate,
-        set: performance.sets.find((s) => s.setNumber === setNumber),
+        set: performance.sets.find((s) => s.setNumber === sourceNumber),
       })),
     });
     return acc;

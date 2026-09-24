@@ -38,10 +38,14 @@ export default async function WorkoutTemplateSessionPreviewPage({
       : (groups[0]?.exerciseId ?? "");
 
   const userId = await getCurrentUserId();
-  const history = await getExerciseHistoryForExercises(
-    userId,
-    groups.map((g) => g.exerciseId)
-  );
+  const [history, previousSession] = await Promise.all([
+    getExerciseHistoryForExercises(
+      userId,
+      groups.map((g) => g.exerciseId)
+    ),
+    // Aucune séance jamais créée = nouvel utilisateur : lui seul voit le bandeau d'amorce.
+    prisma.workoutSession.findFirst({ where: { userId }, select: { id: true } }),
+  ]);
 
   const seed: SessionSeed = {
     sessionId: null,
@@ -56,8 +60,10 @@ export default async function WorkoutTemplateSessionPreviewPage({
   return (
     <SessionTracker
       backHref={`/workouts/${template.id}`}
+      backLabel={template.name}
       seed={seed}
       activeExerciseId={activeExerciseId}
+      showStartHint={!previousSession}
     />
   );
 }
