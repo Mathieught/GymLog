@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
+  appIconUrl,
   contrast,
   PAGE_BACKGROUND,
   serializeTheme,
@@ -26,6 +27,8 @@ function applyTheme(theme: Theme) {
   root.dataset.mode = theme.mode;
   for (const [name, value] of Object.entries(themeVariables(theme))) root.style.setProperty(name, value);
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", PAGE_BACKGROUND[theme.mode]);
+  document.querySelector('link[rel="icon"]')?.setAttribute("href", appIconUrl(theme, 64));
+  document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute("href", appIconUrl(theme, 180));
   document.cookie = `${THEME_COOKIE}=${serializeTheme(theme)}; path=/; max-age=31536000; samesite=lax`;
 }
 

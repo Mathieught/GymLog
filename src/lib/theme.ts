@@ -103,3 +103,6 @@ export function themeVariables({ mode, id }: Theme): Record<string, string> {
     "--accent-soft": mode === "dark" ? mix(accent, background, 0.82) : mix(accent, "#ffffff", 0.8),
   };
 }
+
+// Icônes (onglet + écran d'accueil iOS) aux couleurs du thème, servies par /app-icon.
+export const appIconUrl = (theme: Theme, size: number) => `/app-icon?t=${serializeTheme(theme)}&s=${size}`;

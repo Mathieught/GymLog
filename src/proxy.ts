@@ -14,6 +14,6 @@ export const config = {
   // secours qu'il affiche hors ligne : ni l'un ni l'autre ne doit dépendre d'une session valide,
   // sous peine de casser l'enregistrement du service worker ou le fallback hors ligne lui-même.
   matcher: [
-    "/((?!api/auth|login|_next/static|_next/image|favicon.ico|serwist|manifest.webmanifest|~offline|icon\\.svg|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png).*)",
+    "/((?!api/auth|login|_next/static|_next/image|favicon.ico|serwist|manifest.webmanifest|~offline|icon\\.svg|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|app-icon).*)",
   ],
 };

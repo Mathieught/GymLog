@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { auth } from "@/lib/auth";
 import { APP_MODE_COOKIE, parseAppMode } from "@/lib/app-mode";
-import { PAGE_BACKGROUND, parseTheme, THEME_COOKIE, themeVariables } from "@/lib/theme";
+import { appIconUrl, PAGE_BACKGROUND, parseTheme, THEME_COOKIE, themeVariables } from "@/lib/theme";
 import { AppModeProvider } from "@/components/app-mode";
 import { BottomNav } from "@/components/nav/bottom-nav";
 import { NavVisibilityProvider } from "@/components/nav/nav-visibility";
@@ -25,12 +25,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "GymLog",
-  description: "Suivi de musculation",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "GymLog" },
-  icons: { apple: "/apple-touch-icon.png" },
-};
+// Icônes aux couleurs du thème choisi (mises à jour à chaud par ThemePicker).
+export async function generateMetadata(): Promise<Metadata> {
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  return {
+    title: "GymLog",
+    description: "Suivi de musculation",
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "GymLog" },
+    icons: { icon: appIconUrl(theme, 64), apple: appIconUrl(theme, 180) },
+  };
+}
 
 // Teinte la barre d'état/barre d'adresse (Android, PWA installée) pour qu'elle se fonde dans le
 // fond de l'app, sombre ou clair selon le thème choisi (mis à jour à chaud par ThemePicker).
