@@ -1,7 +1,7 @@
-import type { SessionRowGroup } from "@/lib/session-rows";
+import { variantOfSlot, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
-import type { LocalSession, TemplateSnapshot } from "@/lib/offline/types";
-import { getLocalHistory } from "@/lib/offline/db";
+import type { LibraryExercise, LocalSession, TemplateSnapshot } from "@/lib/offline/types";
+import { getLocalHistory, getMeta } from "@/lib/offline/db";
 import type { SessionSeed } from "@/lib/offline/session-engine";
 
 export function seedToLocalSession(seed: SessionSeed, sessionId: string): LocalSession {
@@ -17,24 +17,41 @@ export function seedToLocalSession(seed: SessionSeed, sessionId: string): LocalS
       exercise: g.exercise,
     })),
     sets: seed.groups.flatMap((g) =>
-      g.sets.map((s) => ({ ...s, workoutSessionId: sessionId, exerciseId: g.exerciseId, exerciseOrder: g.exerciseOrder }))
+      g.sets.map((s) => ({
+        ...s,
+        workoutSessionId: sessionId,
+        exerciseOrder: g.exerciseOrder,
+        substituteForId: s.exerciseId === g.exerciseId ? null : g.exerciseId,
+      }))
     ),
+    // Pour chaque groupe, y compris un retour à l'exercice prévu : sinon la dernière série, faite sur
+    // la variante, la ferait réapparaître à la reprise (voir variantOfSlot).
+    variants: Object.fromEntries(seed.groups.map((g) => [g.exerciseId, g.variantId ?? g.exerciseId])),
     updatedAt: Date.now(),
   };
 }
+
+// Séries rangées à la place d'un exercice du programme : les siennes et celles de ses variantes.
+const setsOfSlot = (local: LocalSession, slotExerciseId: string) =>
+  local.sets
+    .filter((s) => (s.substituteForId ?? s.exerciseId) === slotExerciseId)
+    .sort((a, b) => a.setNumber - b.setNumber);
+
 
 export function localSessionToGroups(local: LocalSession): SessionRowGroup[] {
   return local.exercises
     .slice()
     .sort((a, b) => a.exerciseOrder - b.exerciseOrder)
-    .map((e) => ({
-      exerciseId: e.exerciseId,
-      exerciseOrder: e.exerciseOrder,
-      exercise: e.exercise,
-      sets: local.sets
-        .filter((s) => s.exerciseId === e.exerciseId)
-        .sort((a, b) => a.setNumber - b.setNumber),
-    }));
+    .map((e) => {
+      const sets = setsOfSlot(local, e.exerciseId);
+      return {
+        exerciseId: e.exerciseId,
+        exerciseOrder: e.exerciseOrder,
+        exercise: e.exercise,
+        sets,
+        variantId: variantOfSlot(sets, e.exerciseId, local.variants?.[e.exerciseId]),
+      };
+    });
 }
 
 // `local.exercises` est un instantané figé au démarrage de la séance (voir LocalSession) : si le
@@ -50,10 +67,8 @@ export function reconcileLocalGroups(local: LocalSession, seedGroups: SessionRow
     // Exercice pas encore vu localement (ajouté au programme depuis) : rien à réconcilier, on
     // garde tel quel les séries du serveur (vides, puisque personne n'a encore pu y toucher).
     if (!localExerciseIds.has(g.exerciseId)) return g;
-    const localSets = local.sets
-      .filter((s) => s.exerciseId === g.exerciseId)
-      .sort((a, b) => a.setNumber - b.setNumber);
-    return { ...g, sets: localSets };
+    const localSets = setsOfSlot(local, g.exerciseId);
+    return { ...g, sets: localSets, variantId: variantOfSlot(localSets, g.exerciseId, local.variants?.[g.exerciseId]) };
   });
 }
 
@@ -61,11 +76,14 @@ export function reconcileLocalGroups(local: LocalSession, seedGroups: SessionRow
 // utilisé par la page de secours /~offline, quand aucun rendu serveur n'est disponible.
 export async function localSessionToSeed(local: LocalSession): Promise<SessionSeed> {
   const groups = localSessionToGroups(local);
-  const historyMap = await getLocalHistory(groups.map((g) => g.exerciseId));
+  // Variantes comprises : leurs séries et suggestions ont leur propre historique.
+  const exerciseIds = new Set([
+    ...groups.flatMap((g) => [g.exerciseId, g.variantId ?? g.exerciseId]),
+    ...local.sets.map((s) => s.exerciseId),
+  ]);
+  const historyMap = await getLocalHistory([...exerciseIds]);
   const history: Record<string, PreviousPerformance[]> = {};
-  for (const group of groups) {
-    history[group.exerciseId] = historyMap.get(group.exerciseId)?.performances ?? [];
-  }
+  for (const [id, entry] of historyMap) history[id] = entry.performances;
 
   return {
     sessionId: local.id,
@@ -73,6 +91,8 @@ export async function localSessionToSeed(local: LocalSession): Promise<SessionSe
     templateName: local.name,
     groups,
     history,
+    library: (await getMeta<LibraryExercise[]>("library")) ?? [],
+    substitutes: {},
     completedAt: local.completedAt,
     startedAt: local.startedAt,
   };
@@ -81,7 +101,7 @@ export async function localSessionToSeed(local: LocalSession): Promise<SessionSe
 // Aperçu (aucune séance démarrée) construit à partir d'un programme mis en cache par
 // src/lib/offline/snapshot.ts — permet de démarrer une séance hors ligne depuis /~offline même
 // pour un programme dont la page d'aperçu n'a jamais été ouverte individuellement.
-export function templateSnapshotToSeed(template: TemplateSnapshot): SessionSeed {
+export function templateSnapshotToSeed(template: TemplateSnapshot, library: LibraryExercise[]): SessionSeed {
   return {
     sessionId: null,
     workoutTemplateId: template.id,
@@ -96,6 +116,8 @@ export function templateSnapshotToSeed(template: TemplateSnapshot): SessionSeed 
         sets: [],
       })),
     history: {},
+    library,
+    substitutes: {},
     completedAt: null,
     startedAt: null,
   };

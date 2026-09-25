@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SessionRowGroup, SessionRowSet } from "@/lib/session-rows";
+import { activeExerciseId, type SessionRowGroup, type SessionRowSet } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
-import type { OutboxOp } from "@/lib/offline/types";
+import type { LibraryExercise, LocalSession, OutboxOp } from "@/lib/offline/types";
+import { fetchExerciseHistory } from "@/lib/actions/exercises";
 import {
   getLocalSession,
   getLocalSessions,
   getActiveLocalSessionForTemplate,
   putLocalSession,
   deleteLocalSession,
+  getLocalHistory,
   putLocalHistory,
   enqueueOp,
   getOutbox,
@@ -26,6 +28,10 @@ export type SessionSeed = {
   templateName: string;
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
+  // Bibliothèque d'exercices et variantes déjà faites à la place de chaque exercice du programme
+  // (la plus récente d'abord) : de quoi choisir une variante en séance (voir VariantPicker).
+  library: LibraryExercise[];
+  substitutes: Record<string, string[]>;
   completedAt: string | null;
   // null tant qu'aucune séance n'existe encore (aperçu) — fixée par start() ("Commencer la
   // séance", chrono lancé sans rien créer) ou, à défaut, par addSet/logSet au moment même où ils
@@ -38,6 +44,8 @@ type EngineState = {
   completedAt: string | null;
   groups: SessionRowGroup[];
   history: Record<string, PreviousPerformance[]>;
+  // Celle du seed, plus les variantes créées pendant la séance.
+  library: LibraryExercise[];
   startedAt: string | null;
   // Nombre de séries supprimées cette séance, par exercice (voir buildSessionRows) : chaque
   // suppression réduit d'autant le nombre de suggestions encore proposées au-delà des séries
@@ -55,11 +63,28 @@ type MutationResult = { next: EngineState; ops: OutboxOp[]; sessionId: string | 
 // (voir src/lib/offline/sync.ts) — rejouée dès que le réseau est là.
 const hasValidatedSet = (sets: { completed: boolean }[]) => sets.some((s) => s.completed);
 
+// Exercice réellement fait par la prochaine série d'un groupe (sa variante s'il en a une), et
+// l'exercice du programme qu'il remplace le cas échéant.
+function nextSetExercise(group: SessionRowGroup | undefined, slotExerciseId: string) {
+  const actual = group ? activeExerciseId(group) : slotExerciseId;
+  return { actual, substituteForId: actual === slotExerciseId ? null : slotExerciseId };
+}
+
 // Séance sans aucune série validée : elle n'a jamais vraiment existé — oubliée en local et supprimée
 // sur le serveur (une série seulement ajoutée, ou validée puis annulée/supprimée, ne compte pas).
 async function discardSession(sessionId: string) {
   await deleteLocalSession(sessionId);
   await enqueueOp({ type: "discardSession", sessionId });
+  syncNow();
+}
+
+// "Terminer" hors du suivi de séance (page du programme, voir WorkoutProgramBody) : même règle que
+// le bouton du suivi — sans aucune série validée, la séance est annulée plutôt que rangée, vide,
+// dans l'historique.
+export async function finishLocalSession(session: LocalSession) {
+  if (!hasValidatedSet(session.sets)) return discardSession(session.id);
+  await putLocalSession({ ...session, completedAt: new Date().toISOString(), updatedAt: Date.now() });
+  await enqueueOp({ type: "completeSession", sessionId: session.id });
   syncNow();
 }
 
@@ -81,6 +106,7 @@ export function useSessionEngine(seed: SessionSeed) {
     completedAt: seed.completedAt,
     groups: seed.groups,
     history: seed.history,
+    library: seed.library,
     startedAt: seed.startedAt,
     removedSetCounts: {},
   }));
@@ -112,6 +138,7 @@ export function useSessionEngine(seed: SessionSeed) {
           completedAt: local.completedAt,
           groups: reconcileLocalGroups(local, seed.groups),
           history: seed.history,
+          library: seed.library,
           startedAt: local.startedAt,
           removedSetCounts: {},
         });
@@ -135,6 +162,7 @@ export function useSessionEngine(seed: SessionSeed) {
           completedAt: local.completedAt,
           groups: reconcileLocalGroups(local, seed.groups),
           history: seed.history,
+          library: seed.library,
           startedAt: local.startedAt,
           removedSetCounts: {},
         });
@@ -207,8 +235,11 @@ export function useSessionEngine(seed: SessionSeed) {
         const sessionId = current.sessionId ?? crypto.randomUUID();
         const startedAt = current.startedAt ?? new Date().toISOString();
 
+        const { actual, substituteForId } = nextSetExercise(group, exerciseId);
+
         const newSet: SessionRowSet = {
           id: setId,
+          exerciseId: actual,
           setNumber,
           actualWeight: null,
           actualReps: null,
@@ -226,7 +257,7 @@ export function useSessionEngine(seed: SessionSeed) {
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName, startedAt }]
               : []),
-            { type: "addSet" as const, setId, sessionId, exerciseId, exerciseOrder, setNumber },
+            { type: "addSet" as const, setId, sessionId, exerciseId: actual, exerciseOrder, setNumber, substituteForId },
           ],
           sessionId,
         };
@@ -245,7 +276,9 @@ export function useSessionEngine(seed: SessionSeed) {
         const sessionId = current.sessionId ?? crypto.randomUUID();
         const startedAt = current.startedAt ?? new Date().toISOString();
 
-        const newSet: SessionRowSet = { id: setId, setNumber, actualWeight, actualReps, completed: true, note: null };
+        const { actual, substituteForId } = nextSetExercise(group, exerciseId);
+
+        const newSet: SessionRowSet = { id: setId, exerciseId: actual, setNumber, actualWeight, actualReps, completed: true, note: null };
         const groups = current.groups.map((g) =>
           g.exerciseId === exerciseId ? { ...g, sets: [...g.sets, newSet] } : g
         );
@@ -256,7 +289,17 @@ export function useSessionEngine(seed: SessionSeed) {
             ...(isNewSession
               ? [{ type: "ensureSession" as const, sessionId, workoutTemplateId: seed.workoutTemplateId, name: seed.templateName, startedAt }]
               : []),
-            { type: "logSet" as const, setId, sessionId, exerciseId, exerciseOrder, setNumber, actualWeight, actualReps },
+            {
+              type: "logSet" as const,
+              setId,
+              sessionId,
+              exerciseId: actual,
+              exerciseOrder,
+              setNumber,
+              actualWeight,
+              actualReps,
+              substituteForId,
+            },
           ],
           sessionId,
         };
@@ -332,6 +375,8 @@ export function useSessionEngine(seed: SessionSeed) {
           groups: current.groups.map((g) =>
             g.exerciseId === exerciseId ? { ...g, exercise: { ...g.exercise, description: note } } : g
           ),
+          // Note d'une variante : elle vit dans la bibliothèque, pas dans les groupes.
+          library: current.library.map((e) => (e.id === exerciseId ? { ...e, description: note } : e)),
         },
         ops: [{ type: "updateExerciseNote" as const, exerciseId, note }],
         sessionId: current.sessionId,
@@ -350,6 +395,81 @@ export function useSessionEngine(seed: SessionSeed) {
     },
     [applyMutation]
   );
+
+  // Variante (mode Avancé) : les séries pas encore validées de cet exercice du programme passent sur
+  // `target` (null = retour à l'exercice prévu) ; celles déjà faites restent où elles ont été faites.
+  // `created` : variante créée à l'instant, enregistrée par la même file de synchro que le reste —
+  // donc aussi hors ligne, avant les séries qui la référencent.
+  const switchExercise = useCallback(
+    (slotExerciseId: string, target: LibraryExercise | null, created = false) => {
+      void applyMutation((current) => {
+        const targetId = target?.id ?? slotExerciseId;
+        const groups = current.groups.map((g) =>
+          g.exerciseId === slotExerciseId
+            ? {
+                ...g,
+                variantId: target?.id ?? null,
+                sets: g.sets.map((s) => (s.completed ? s : { ...s, exerciseId: targetId })),
+              }
+            : g
+        );
+        const library = created && target ? [...current.library, target] : current.library;
+        if (created) void setMeta("library", library);
+        return {
+          next: { ...current, groups, library },
+          ops: [
+            ...(created && target
+              ? [
+                  {
+                    type: "createExercise" as const,
+                    exerciseId: target.id,
+                    name: target.name,
+                    muscle: target.muscle,
+                    targetSets: target.targetSets || null,
+                  },
+                ]
+              : []),
+            ...(current.sessionId
+              ? [{ type: "switchExercise" as const, sessionId: current.sessionId, slotExerciseId, exerciseId: targetId }]
+              : []),
+          ],
+          sessionId: current.sessionId,
+        };
+      });
+    },
+    [applyMutation]
+  );
+
+  // Historique des variantes pas encore connu (choisie à l'instant, ou reprise hors ligne) : cache
+  // local d'abord, sinon le serveur. Sans réseau ni cache, la variante part sans pré-remplissage.
+  useEffect(() => {
+    const missing = [
+      ...new Set(state.groups.flatMap((g) => [activeExerciseId(g), ...g.sets.map((s) => s.exerciseId)])),
+    ].filter((id) => !(id in state.history));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const local = await getLocalHistory(missing);
+      const found: Record<string, PreviousPerformance[]> = {};
+      for (const id of missing) {
+        const cached = local.get(id);
+        if (cached) {
+          found[id] = cached.performances;
+          continue;
+        }
+        try {
+          found[id] = await fetchExerciseHistory(id, state.sessionId ?? undefined);
+          await putLocalHistory({ exerciseId: id, performances: found[id], updatedAt: Date.now() });
+        } catch {
+          found[id] = [];
+        }
+      }
+      if (!cancelled) setState((current) => ({ ...current, history: { ...found, ...current.history } }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.groups, state.history, state.sessionId]);
 
   const removeSet = useCallback(
     (setId: string) => {
@@ -453,8 +573,10 @@ export function useSessionEngine(seed: SessionSeed) {
     completedAt: state.completedAt,
     groups: state.groups,
     history: state.history,
+    library: state.library,
     startedAt: state.startedAt,
     removedSetCounts: state.removedSetCounts,
+    switchExercise,
     addSet,
     logSet,
     updateSet,

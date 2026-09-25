@@ -3,22 +3,24 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { tz } from "@date-fns/tz";
 import { cookies } from "next/headers";
-import { Pencil } from "lucide-react";
+import { ArrowLeftRight, Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { HistorySetList } from "@/components/sessions/history-set-list";
 import { parseTimeZone, TIME_ZONE_COOKIE } from "@/lib/time-zone";
-import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
+import { getSessionExerciseData } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
 import { PageHeader } from "@/components/nav/page-header";
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { SessionTracker } from "@/components/sessions/session-tracker";
 import type { SessionSeed } from "@/lib/offline/session-engine";
-import type { SessionRowGroup } from "@/lib/session-rows";
+import { variantOfSlot, type SessionRowGroup } from "@/lib/session-rows";
 
 type SetForGrouping = {
   id: string;
   exerciseId: string;
+  substituteForId: string | null;
+  exercise: { name: string };
   setNumber: number;
   actualWeight: number | null;
   actualReps: number | null;
@@ -46,7 +48,10 @@ export default async function SessionDetailPage({
   const session = await prisma.workoutSession.findUnique({
     where: { id },
     include: {
-      sets: { orderBy: [{ exerciseOrder: "asc" }, { setNumber: "asc" }] },
+      sets: {
+        orderBy: [{ exerciseOrder: "asc" }, { setNumber: "asc" }],
+        include: { exercise: { select: { name: true } } },
+      },
       workoutTemplate: {
         include: { exercises: { include: { exercise: true }, orderBy: { order: "asc" } } },
       },
@@ -57,24 +62,28 @@ export default async function SessionDetailPage({
   const { completedAt, isReadOnly } = await resolveSessionCompletion(session);
 
   const setsByExercise = new Map<string, SetForGrouping[]>();
+  // Une série faite sur une variante reste rangée à la place de l'exercice prévu.
   for (const set of session.sets) {
-    const list = setsByExercise.get(set.exerciseId) ?? [];
+    const slotId = set.substituteForId ?? set.exerciseId;
+    const list = setsByExercise.get(slotId) ?? [];
     list.push(set);
-    setsByExercise.set(set.exerciseId, list);
+    setsByExercise.set(slotId, list);
   }
 
   // Les exercices viennent du modèle (source de vérité), pas des séries : un exercice reste
   // visible même tant qu'aucune série n'y a encore été enregistrée (ou après suppression de la
   // dernière).
-  const groups: SessionRowGroup[] = (session.workoutTemplate?.exercises ?? []).map(
-    (workoutExercise, exerciseOrder) => ({
+  const groups = (session.workoutTemplate?.exercises ?? []).map((workoutExercise, exerciseOrder) => {
+    const sets = setsByExercise.get(workoutExercise.exerciseId) ?? [];
+    return {
       exerciseId: workoutExercise.exerciseId,
       exerciseOrder,
       // Nombre de séries figé dans la séance (voir WorkoutExercise.targetSets), pas celui de l'exercice.
       exercise: { ...workoutExercise.exercise, targetSets: workoutExercise.targetSets },
-      sets: setsByExercise.get(workoutExercise.exerciseId) ?? [],
-    })
-  );
+      sets,
+      variantId: variantOfSlot(sets, workoutExercise.exerciseId),
+    } satisfies SessionRowGroup;
+  });
 
   if (groups.length === 0) {
     return (
@@ -199,17 +208,32 @@ export default async function SessionDetailPage({
 
           {practiced.length === 0 && <p className="text-sm text-neutral-500">Aucune série enregistrée.</p>}
 
-          {practiced.map((group) => (
-            <Card key={group.exerciseId} className="px-3.5 py-3">
-              <div className="flex items-baseline gap-2">
-                <p className="font-medium">{group.exercise.name}</p>
-                <span className="ml-auto font-mono text-[11px] text-neutral-500">
-                  {group.sets.filter((set) => set.completed).length}/{group.sets.length}
-                </span>
-              </div>
-              <HistorySetList sets={group.sets} previous={previousSetsFor(group.exerciseId)} />
-            </Card>
-          ))}
+          {practiced.map((group) => {
+            // Variante(s) faite(s) à la place de l'exercice prévu (machine prise…).
+            const substitutes = [...new Set(group.sets.filter((set) => set.substituteForId).map((set) => set.exercise.name))];
+            const onlySubstitutes = group.sets.every((set) => set.substituteForId);
+            return (
+              <Card key={group.exerciseId} className="px-3.5 py-3">
+                <div className="flex items-baseline gap-2">
+                  <p className="font-medium">{onlySubstitutes ? substitutes.join(", ") : group.exercise.name}</p>
+                  <span className="ml-auto font-mono text-[11px] text-neutral-500">
+                    {group.sets.filter((set) => set.completed).length}/{group.sets.length}
+                  </span>
+                </div>
+                {substitutes.length > 0 && (
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs text-neutral-500">
+                    <ArrowLeftRight className="h-3 w-3 shrink-0" aria-hidden="true" />
+                    {onlySubstitutes ? `à la place de ${group.exercise.name}` : `puis ${substitutes.join(", ")}`}
+                  </p>
+                )}
+                {/* La séance de référence a fait l'exercice prévu : aucune comparaison pour une
+                    variante, qui fausserait l'évolution affichée.
+                    ponytail: un exercice mélangé (prévu puis variante) compare encore toutes ses
+                    séries à l'exercice prévu ; comparer série par série si ça gêne. */}
+                <HistorySetList sets={group.sets} previous={onlySubstitutes ? null : previousSetsFor(group.exerciseId)} />
+              </Card>
+            );
+          })}
         </Container>
       </>
     );
@@ -220,11 +244,7 @@ export default async function SessionDetailPage({
       ? requestedExerciseId
       : groups[0].exerciseId;
 
-  const history = await getExerciseHistoryForExercises(
-    session.userId,
-    groups.map((g) => g.exerciseId),
-    session.id
-  );
+  const { history, substitutes, library } = await getSessionExerciseData(session.userId, groups, session.id);
 
   const seed: SessionSeed = {
     sessionId: session.id,
@@ -232,6 +252,8 @@ export default async function SessionDetailPage({
     templateName: session.name,
     groups,
     history,
+    library,
+    substitutes,
     completedAt: null,
     startedAt: session.startedAt.toISOString(),
   };

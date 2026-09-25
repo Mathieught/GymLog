@@ -5,7 +5,7 @@ import { getLocalSession, getLocalTemplates, getMeta, hasAnyLocalData } from "@/
 import { localSessionToSeed, templateSnapshotToSeed } from "@/lib/offline/local-seed";
 import { SessionTracker } from "@/components/sessions/session-tracker";
 import type { SessionSeed } from "@/lib/offline/session-engine";
-import type { TemplateSnapshot } from "@/lib/offline/types";
+import type { LibraryExercise, TemplateSnapshot } from "@/lib/offline/types";
 import { AUTHENTICATED_STORAGE_KEY } from "@/lib/offline/constants";
 import { Container } from "@/components/ui/container";
 import { Card } from "@/components/ui/card";
@@ -15,7 +15,7 @@ type FallbackState =
   | { kind: "loading" }
   | { kind: "session"; seed: SessionSeed }
   | { kind: "never-authenticated" }
-  | { kind: "picker"; templates: TemplateSnapshot[] };
+  | { kind: "picker"; templates: TemplateSnapshot[]; library: LibraryExercise[] };
 
 // Page de secours servie par le service worker (src/app/sw.ts) quand une navigation échoue sans
 // correspondance en cache — typiquement : l'app est relancée hors ligne sur une page jamais
@@ -46,7 +46,11 @@ export default function OfflineFallbackPage() {
         return;
       }
 
-      setState({ kind: "picker", templates: await getLocalTemplates() });
+      setState({
+        kind: "picker",
+        templates: await getLocalTemplates(),
+        library: (await getMeta<LibraryExercise[]>("library")) ?? [],
+      });
     })();
   }, []);
 
@@ -111,7 +115,7 @@ export default function OfflineFallbackPage() {
         <ul className="mt-6 space-y-2">
           {state.templates.map((template) => (
             <li key={template.id}>
-              <button type="button" className="w-full text-left" onClick={() => setState({ kind: "session", seed: templateSnapshotToSeed(template) })}>
+              <button type="button" className="w-full text-left" onClick={() => setState({ kind: "session", seed: templateSnapshotToSeed(template, state.library) })}>
                 <Card className="transition-colors hover:border-neutral-400">
                   <p className="font-medium">{template.name}</p>
                   <p className="text-sm text-neutral-500">{template.exercises.length} exercice(s)</p>

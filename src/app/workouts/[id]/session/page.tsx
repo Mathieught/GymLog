@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
-import { getExerciseHistoryForExercises } from "@/lib/queries/exercise-history";
+import { getSessionExerciseData } from "@/lib/queries/exercise-history";
 import { SessionTracker } from "@/components/sessions/session-tracker";
 import type { SessionSeed } from "@/lib/offline/session-engine";
 import type { SessionRowGroup } from "@/lib/session-rows";
@@ -38,11 +38,8 @@ export default async function WorkoutTemplateSessionPreviewPage({
       : (groups[0]?.exerciseId ?? "");
 
   const userId = await getCurrentUserId();
-  const [history, previousSession] = await Promise.all([
-    getExerciseHistoryForExercises(
-      userId,
-      groups.map((g) => g.exerciseId)
-    ),
+  const [{ history, substitutes, library }, previousSession] = await Promise.all([
+    getSessionExerciseData(userId, groups),
     // Aucune séance jamais créée = nouvel utilisateur : lui seul voit le bandeau d'amorce.
     prisma.workoutSession.findFirst({ where: { userId }, select: { id: true } }),
   ]);
@@ -53,6 +50,8 @@ export default async function WorkoutTemplateSessionPreviewPage({
     templateName: template.name,
     groups,
     history,
+    library,
+    substitutes,
     completedAt: null,
     startedAt: null,
   };

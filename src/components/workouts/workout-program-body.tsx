@@ -8,7 +8,9 @@ import { PageHeader } from "@/components/nav/page-header";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Container } from "@/components/ui/container";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { finishLocalSession } from "@/lib/offline/session-engine";
+import type { LocalSession } from "@/lib/offline/types";
 import { ExerciseMuscleIcon } from "@/components/exercises/muscle-group-picker";
 import { SessionTimer } from "@/components/sessions/session-timer";
 import { getActiveLocalSessionForTemplate, getLocalHistory } from "@/lib/offline/db";
@@ -52,6 +54,8 @@ export function WorkoutProgramBody({
   const [progress, setProgress] = useState<Record<string, Progress>>({});
   const [hasValidatedSet, setHasValidatedSet] = useState(false);
   const [pendingLeave, setPendingLeave] = useState(false);
+  const [pendingFinish, setPendingFinish] = useState(false);
+  const [session, setSession] = useState<LocalSession | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -60,18 +64,20 @@ export function WorkoutProgramBody({
       const local = await getActiveLocalSessionForTemplate(templateId);
       if (!local) return;
       const groups = localSessionToGroups(local);
-      const history = await getLocalHistory(groups.map((g) => g.exerciseId));
+      const historyMap = await getLocalHistory(groups.flatMap((g) => [g.exerciseId, ...(g.variantId ? [g.variantId] : [])]));
+      const history = Object.fromEntries([...historyMap].map(([id, entry]) => [id, entry.performances]));
       if (cancelled) return;
       // Même calcul que le rail de séance (buildSessionRows(..., 0)) : le total compte aussi les
       // séries encore seulement suggérées par l'historique/l'objectif.
       const next: Record<string, Progress> = {};
       for (const group of groups) {
-        const rows = buildSessionRows(group, history.get(group.exerciseId)?.performances ?? [], 0);
+        const rows = buildSessionRows(group, history, 0);
         next[group.exerciseId] = {
           done: rows.filter((row) => row.current?.completed).length,
           total: rows.length,
         };
       }
+      setSession(local);
       setStartedAt(local.startedAt);
       setProgress(next);
       setHasValidatedSet(local.sets.some((set) => set.completed));
@@ -121,7 +127,21 @@ export function WorkoutProgramBody({
 
   return (
     <>
-      <PageHeader backHref="/workouts" onBack={handleBack} right={headerRight} />
+      <PageHeader
+        backHref="/workouts"
+        onBack={handleBack}
+        right={
+          <>
+            {headerRight}
+            {/* Séance en cours : on peut la clore d'ici, sans rouvrir le suivi (même bouton que lui). */}
+            {session && (
+              <Button type="button" variant="secondary" size="sm" className="border-0" onClick={() => setPendingFinish(true)}>
+                Terminer
+              </Button>
+            )}
+          </>
+        }
+      />
       <Container className="pt-2">
         {/* Niveau nommé explicitement ("Programme") : la page de suivi, elle, affiche l'exercice en
           titre et l'état de la séance en surtitre — les deux pages ne se ressemblent plus. */}
@@ -253,6 +273,23 @@ export function WorkoutProgramBody({
           cancelLabel="Rester"
           onConfirm={() => router.push("/workouts")}
           onCancel={() => setPendingLeave(false)}
+        />
+      )}
+
+      {pendingFinish && session && (
+        <ConfirmDialog
+          message={
+            hasValidatedSet
+              ? "Terminer la séance ? Vous ne pourrez plus modifier les séries après."
+              : "Aucune série n'est validée : la séance sera annulée."
+          }
+          confirmLabel={hasValidatedSet ? "Terminer" : "Annuler la séance"}
+          onConfirm={async () => {
+            setPendingFinish(false);
+            await finishLocalSession(session);
+            router.push(hasValidatedSet ? "/history" : "/workouts");
+          }}
+          onCancel={() => setPendingFinish(false)}
         />
       )}
     </>

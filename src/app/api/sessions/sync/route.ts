@@ -26,6 +26,12 @@ async function applyOp(userId: string, op: OutboxOp) {
       // sous ce tag ; updateTag n'existe qu'en Server Action, d'où l'expiration immédiate.
       revalidateTag("exercises", { expire: 0 });
       return;
+    case "createExercise":
+      await mutations.createExercise(userId, op);
+      revalidateTag("exercises", { expire: 0 });
+      return;
+    case "switchExercise":
+      return mutations.switchExercise(userId, op);
     case "completeSession":
       return mutations.completeSession(userId, op.sessionId);
     case "discardSession":

@@ -80,8 +80,10 @@ export function MuscleGroupPicker({
                 // convention plutôt que le remplissage noir/blanc réservé aux boutons d'action.
                 selected
                   ? "border-accent bg-accent text-accent-contrast/30"
-                  : // Même vignette "ton sur ton" que partout ailleurs (voir muscle-tile dans globals.css).
-                    "border-neutral-200 bg-muscle-tile text-muscle hover:border-accent-deep/50"
+                  : // Fond neutre, pas la vignette teintée "muscle-tile" des autres écrans : dans une
+                    // grille à cocher, un fond d'accent partout laissait croire que tout était déjà
+                    // sélectionné. Seule la silhouette garde sa teinte.
+                    "border-neutral-200 bg-white text-muscle hover:border-accent-deep/50"
               )}
             >
               <Icon className="h-11 w-11" />

@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import { ExerciseMuscleIcon } from "@/components/exercises/muscle-group-picker";
@@ -44,7 +45,7 @@ export function SessionProgressRail({
     <div className="flex flex-col gap-2 px-4">
       <div className="flex gap-1">
         {groups.map((group, index) => {
-          const rows = buildSessionRows(group, history[group.exerciseId] ?? [], 0);
+          const rows = buildSessionRows(group, history, 0);
           const isDone = rows.length > 0 && rows.every((row) => row.current?.completed === true);
           const isActive = index === activeIndex;
 
@@ -58,13 +59,21 @@ export function SessionProgressRail({
               aria-label={`Aller à l'exercice ${index + 1} : ${group.exercise.name}`}
               className="flex min-w-0 flex-1 flex-col items-center gap-1.5 pt-1"
             >
-              <ExerciseMuscleIcon
-                muscles={group.exercise.muscle}
-                className={cn(
-                  "h-[22px] w-[22px]",
-                  isActive ? RAIL_TONES.active : isDone ? RAIL_TONES.done : RAIL_TONES.todo
+              <span className="relative">
+                <ExerciseMuscleIcon
+                  muscles={group.exercise.muscle}
+                  className={cn(
+                    "h-[22px] w-[22px]",
+                    isActive ? RAIL_TONES.active : isDone ? RAIL_TONES.done : RAIL_TONES.todo
+                  )}
+                />
+                {group.variantId && (
+                  // Variante en cours : on a dévié du programme sur cet exercice.
+                  <span className="absolute -top-1 -right-2 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-accent text-accent-contrast ring-2 ring-neutral-50">
+                    <ArrowLeftRight className="h-[9px] w-[9px]" strokeWidth={3} aria-hidden="true" />
+                  </span>
                 )}
-              />
+              </span>
               <span
                 className={cn(
                   "h-1 w-full rounded-full transition-colors",

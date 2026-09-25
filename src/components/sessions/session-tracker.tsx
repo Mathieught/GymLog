@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, FileText, Play, Timer } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, FileText, Play, Timer } from "lucide-react";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,15 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SessionCarousel } from "@/components/sessions/session-carousel";
 import { SessionProgressRail } from "@/components/sessions/session-progress-rail";
 import { SessionTimer } from "@/components/sessions/session-timer";
-import { NoteSheet } from "@/components/sessions/note-sheet";import { useHideNav } from "@/components/nav/nav-visibility";
+import { NoteSheet } from "@/components/sessions/note-sheet";
+import { VariantPicker } from "@/components/sessions/variant-picker";
+import { useHideNav } from "@/components/nav/nav-visibility";
+import { useAppMode } from "@/components/app-mode";
 import { useSessionEngine, type SessionSeed } from "@/lib/offline/session-engine";
 import { cn } from "@/lib/utils";
+
+type Toast = { title: string; subtitle: string };
+const START_TOAST: Toast = { title: "Séance démarrée", subtitle: "Chrono lancé" };
 
 // Point d'entrée unique du suivi de séance : possède le moteur local (voir
 // src/lib/offline/session-engine.ts), qui fait toute la lecture/écriture sans jamais attendre le
@@ -56,22 +62,26 @@ export function SessionTracker({
   // pile à ce moment-là, puisque /sessions/[id] reste normalement visible (séance déjà terminée).
   useHideNav(!completedAt);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [variantPickerOpen, setVariantPickerOpen] = useState(false);
+  // Changer d'exercice en pleine séance (machine prise…) : fonctionnalité du mode Avancé.
+  const advanced = useAppMode().mode === "advanced";
 
-  // Confirmation brève quand la toute première série crée la séance — déclenchée par le geste de
-  // l'utilisateur, pas par la reprise d'une séance locale au montage (qui change aussi sessionId).
-  const [justStarted, setJustStarted] = useState(startOnMount);
+  // Confirmation brève en bas d'écran : séance démarrée par la toute première série (geste de
+  // l'utilisateur, pas la reprise d'une séance locale au montage, qui change aussi sessionId), ou
+  // variante choisie.
+  const [toast, setToast] = useState<Toast | null>(startOnMount ? START_TOAST : null);
   useEffect(() => {
-    if (!justStarted) return;
-    const timeout = setTimeout(() => setJustStarted(false), 2500);
+    if (!toast) return;
+    const timeout = setTimeout(() => setToast(null), 2500);
     return () => clearTimeout(timeout);
-  }, [justStarted]);
+  }, [toast]);
 
   function announceStart() {
-    if (!sessionId) setJustStarted(true);
+    if (!sessionId) setToast(START_TOAST);
   }
 
   // Arrivée par "Commencer la séance" : séance créée d'emblée (confirmation affichée d'office, voir
-  // justStarted). Une seule fois via un ref : au double montage du Strict Mode, le moteur remet son
+  // toast). Une seule fois via un ref : au double montage du Strict Mode, le moteur remet son
   // stateRef sur l'état rendu (encore sans séance) et un 2e start() créerait une 2e séance, dont
   // l'une serait ensuite annulée par discardEmptySessions — parfois celle affichée.
   const startRequested = useRef(false);
@@ -106,7 +116,16 @@ export function SessionTracker({
   }
 
   const activeGroup = groups[activeIndex];
-  const exerciseNote = activeGroup.exercise.description;
+  // Variante en cours : c'est elle qu'on affiche (titre, note), l'exercice prévu reste en rappel.
+  const variant = activeGroup.variantId ? engine.library.find((e) => e.id === activeGroup.variantId) : undefined;
+  const shownExerciseId = variant?.id ?? activeGroup.exerciseId;
+  const shownName = variant?.name ?? activeGroup.exercise.name;
+  const exerciseNote = variant ? variant.description : activeGroup.exercise.description;
+  const exerciseNames = Object.fromEntries([
+    ...engine.library.map((e) => [e.id, e.name] as const),
+    ...groups.map((g) => [g.exerciseId, g.exercise.name] as const),
+  ]);
+  const canSwitch = advanced && !completedAt;
 
   return (
     <>
@@ -126,7 +145,29 @@ export function SessionTracker({
               {!backLabel && `${seed.templateName} · `}
               {completedAt ? "terminée" : sessionId ? "en cours" : "à démarrer"}
             </span>
-            <span className="truncate text-lg leading-snug">{groups[activeIndex].exercise.name}</span>
+            {canSwitch ? (
+              // Mode Avancé : le titre lui-même ouvre le choix d'une variante, « sur la même ligne »
+              // que l'exercice prévu, sans bouton de plus dans l'en-tête.
+              <button
+                type="button"
+                onClick={() => setVariantPickerOpen(true)}
+                aria-label={`${shownName} — changer d'exercice pour cette séance`}
+                className="-ml-1.5 flex min-w-0 items-center gap-1.5 self-start rounded-lg px-1.5 text-left hover:bg-neutral-100 active:bg-neutral-200"
+              >
+                <span className="truncate text-lg leading-snug">{shownName}</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-500">
+                  <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+                </span>
+              </button>
+            ) : (
+              <span className="truncate text-lg leading-snug">{shownName}</span>
+            )}
+            {variant && (
+              <span className="flex items-center gap-1.5 truncate text-[12.5px] font-normal text-neutral-500">
+                <ArrowLeftRight className="h-3 w-3 shrink-0" aria-hidden="true" />à la place de{" "}
+                {activeGroup.exercise.name}
+              </span>
+            )}
           </span>
         }
         right={
@@ -207,6 +248,7 @@ export function SessionTracker({
           readOnly={!!completedAt}
           groups={groups}
           history={history}
+          exerciseNames={exerciseNames}
           removedSetCounts={engine.removedSetCounts}
           activeIndex={activeIndex}
           onActiveIndexChange={setActiveIndex}
@@ -227,7 +269,7 @@ export function SessionTracker({
         />
       </Container>
 
-      {justStarted && (
+      {toast && (
         <div
           role="status"
           className="fixed inset-x-4 bottom-[max(env(safe-area-inset-bottom),24px)] z-40 mx-auto flex max-w-sm items-center gap-3 rounded-2xl bg-neutral-900 px-4 py-3.5 text-neutral-50 shadow-2xl"
@@ -235,9 +277,9 @@ export function SessionTracker({
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast">
             <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
           </span>
-          <div>
-            <p className="text-sm font-semibold">Séance démarrée</p>
-            <p className="text-xs text-neutral-500">Chrono lancé</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{toast.title}</p>
+            <p className="text-xs text-neutral-500">{toast.subtitle}</p>
           </div>
         </div>
       )}
@@ -248,9 +290,29 @@ export function SessionTracker({
           initialNote={exerciseNote ?? ""}
           onClose={() => setNoteSheetOpen(false)}
           // Séance terminée : lecture seule, comme les notes de série.
-          onSave={
-            completedAt ? undefined : (note) => engine.updateExerciseNote(activeGroup.exerciseId, note)
-          }
+          onSave={completedAt ? undefined : (note) => engine.updateExerciseNote(shownExerciseId, note)}
+        />
+      )}
+
+      {variantPickerOpen && (
+        <VariantPicker
+          group={activeGroup}
+          library={engine.library}
+          history={history}
+          substitutes={seed.substitutes[activeGroup.exerciseId] ?? []}
+          onClose={() => setVariantPickerOpen(false)}
+          onPick={(target, created) => {
+            setVariantPickerOpen(false);
+            engine.switchExercise(activeGroup.exerciseId, target, created);
+            setToast(
+              target
+                ? {
+                    title: created ? `« ${target.name} » créé` : `${target.name} pour cette séance`,
+                    subtitle: `Historique de ${activeGroup.exercise.name} intact`,
+                  }
+                : { title: `Retour à ${activeGroup.exercise.name}`, subtitle: "Comme prévu au programme" }
+            );
+          }}
         />
       )}
 

@@ -159,6 +159,10 @@ model WorkoutSet {
   exerciseId       String
   exercise         Exercise       @relation(fields: [exerciseId], references: [id])
   exerciseOrder    Int
+  // Variante (mode Avancé) : série faite sur `exerciseId` à la place de cet exercice du programme
+  // (machine prise…). L'historique de l'exercice prévu ne voit donc jamais ces séries ; la séance les
+  // range quand même à sa place (voir sessions/[id]/page.tsx). null = l'exercice prévu lui-même.
+  substituteForId  String?
   setNumber        Int
   actualWeight     Float?
   actualReps       Float?

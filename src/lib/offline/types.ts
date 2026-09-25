@@ -5,6 +5,8 @@ export type LocalSet = {
   workoutSessionId: string;
   exerciseId: string;
   exerciseOrder: number;
+  // Exercice du programme remplacé par une variante (voir WorkoutSet.substituteForId).
+  substituteForId?: string | null;
   setNumber: number;
   actualWeight: number | null;
   actualReps: number | null;
@@ -14,6 +16,9 @@ export type LocalSet = {
 
 // description : note de l'exercice, facultative pour les instantanés antérieurs à son ajout.
 export type LocalExercise = { name: string; muscle: string[]; targetSets: number; description?: string | null };
+
+// Bibliothèque d'exercices, pour choisir une variante en séance (voir VariantPicker).
+export type LibraryExercise = LocalExercise & { id: string };
 
 export type LocalSession = {
   id: string;
@@ -25,6 +30,9 @@ export type LocalSession = {
   // affichés (même logique que session.workoutTemplate.exercises côté serveur).
   exercises: { exerciseId: string; exerciseOrder: number; exercise: LocalExercise }[];
   sets: LocalSet[];
+  // Variante choisie par exercice du programme (id prévu → id variante) : garde le choix même avant
+  // la première série faite dessus (ensuite, les séries le portent déjà).
+  variants?: Record<string, string>;
   updatedAt: number;
 };
 
@@ -58,6 +66,7 @@ export type OutboxOp =
       exerciseId: string;
       exerciseOrder: number;
       setNumber: number;
+      substituteForId?: string | null;
     }
   | {
       type: "logSet";
@@ -68,6 +77,7 @@ export type OutboxOp =
       setNumber: number;
       actualWeight: number | null;
       actualReps: number | null;
+      substituteForId?: string | null;
     }
   | {
       type: "updateSet";
@@ -80,6 +90,11 @@ export type OutboxOp =
   | { type: "updateSetNote"; setId: string; note: string | null }
   // Note de l'exercice lui-même (pas de la séance) : modifiable depuis l'en-tête de la séance.
   | { type: "updateExerciseNote"; exerciseId: string; note: string | null }
+  // Variante créée en pleine séance, hors ligne compris : id généré côté client, comme les séries.
+  | { type: "createExercise"; exerciseId: string; name: string; muscle: string[]; targetSets: number | null }
+  // Bascule les séries pas encore validées d'un exercice du programme vers une variante (retour à
+  // l'exercice prévu quand exerciseId === slotExerciseId).
+  | { type: "switchExercise"; sessionId: string; slotExerciseId: string; exerciseId: string }
   | { type: "completeSession"; sessionId: string }
   // Séance quittée sans aucune série validée : elle n'a jamais existé (voir discardSession).
   | { type: "discardSession"; sessionId: string };

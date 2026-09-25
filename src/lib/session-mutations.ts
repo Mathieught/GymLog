@@ -49,7 +49,14 @@ async function touchSessionActivity(sessionId: string) {
 
 export async function addSet(
   userId: string,
-  params: { setId: string; sessionId: string; exerciseId: string; exerciseOrder: number; setNumber: number }
+  params: {
+    setId: string;
+    sessionId: string;
+    exerciseId: string;
+    exerciseOrder: number;
+    setNumber: number;
+    substituteForId?: string | null;
+  }
 ) {
   await assertSessionMutable(userId, params.sessionId);
 
@@ -61,6 +68,7 @@ export async function addSet(
       exerciseId: params.exerciseId,
       exerciseOrder: params.exerciseOrder,
       setNumber: params.setNumber,
+      substituteForId: params.substituteForId ?? null,
     },
     update: {},
   });
@@ -77,6 +85,7 @@ export async function logSet(
     setNumber: number;
     actualWeight: number | null;
     actualReps: number | null;
+    substituteForId?: string | null;
   }
 ) {
   await assertSessionMutable(userId, params.sessionId);
@@ -89,6 +98,7 @@ export async function logSet(
       exerciseId: params.exerciseId,
       exerciseOrder: params.exerciseOrder,
       setNumber: params.setNumber,
+      substituteForId: params.substituteForId ?? null,
       actualWeight: params.actualWeight,
       actualReps: params.actualReps,
       completed: true,
@@ -154,8 +164,10 @@ export async function removeSet(
 
   await prisma.$transaction(async (tx) => {
     await tx.workoutSet.deleteMany({ where: { id: params.setId } });
+    // params.exerciseId = l'exercice du programme : ses séries, variantes comprises, partagent une
+    // même numérotation.
     const remaining = await tx.workoutSet.findMany({
-      where: { workoutSessionId: params.sessionId, exerciseId: params.exerciseId },
+      where: { workoutSessionId: params.sessionId, ...slotWhere(params.exerciseId) },
       orderBy: { setNumber: "asc" },
     });
     await Promise.all(
@@ -167,6 +179,37 @@ export async function removeSet(
       where: { id: params.sessionId },
       data: { lastActivityAt: new Date() },
     });
+  });
+}
+
+// Séries rangées à la place d'un exercice du programme : les siennes et celles de ses variantes.
+function slotWhere(slotExerciseId: string) {
+  return { OR: [{ exerciseId: slotExerciseId, substituteForId: null }, { substituteForId: slotExerciseId }] };
+}
+
+// Variante choisie (ou abandonnée) en séance : seules les séries pas encore validées changent
+// d'exercice, celles déjà faites restent sur la machine où elles ont été faites.
+export async function switchExercise(
+  userId: string,
+  params: { sessionId: string; slotExerciseId: string; exerciseId: string }
+) {
+  await assertSessionMutable(userId, params.sessionId);
+  const isVariant = params.exerciseId !== params.slotExerciseId;
+  await prisma.workoutSet.updateMany({
+    where: { workoutSessionId: params.sessionId, completed: false, ...slotWhere(params.slotExerciseId) },
+    data: { exerciseId: params.exerciseId, substituteForId: isVariant ? params.slotExerciseId : null },
+  });
+}
+
+// Upsert : rejouer l'opération (synchro retentée) ne crée jamais de doublon.
+export async function createExercise(
+  userId: string,
+  params: { exerciseId: string; name: string; muscle: string[]; targetSets: number | null }
+) {
+  await prisma.exercise.upsert({
+    where: { id: params.exerciseId },
+    create: { id: params.exerciseId, userId, name: params.name, muscle: params.muscle, targetSets: params.targetSets },
+    update: {},
   });
 }
 

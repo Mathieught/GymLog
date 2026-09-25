@@ -1,7 +1,7 @@
 "use client";
 
-import { replaceLocalTemplates } from "@/lib/offline/db";
-import type { TemplateSnapshot } from "@/lib/offline/types";
+import { replaceLocalTemplates, setMeta } from "@/lib/offline/db";
+import type { LibraryExercise, TemplateSnapshot } from "@/lib/offline/types";
 
 let warming = false;
 
@@ -16,8 +16,9 @@ export function warmOfflineSnapshot() {
     try {
       const res = await fetch("/api/offline/snapshot");
       if (!res.ok) return;
-      const { templates } = (await res.json()) as { templates: TemplateSnapshot[] };
+      const { templates, library } = (await res.json()) as { templates: TemplateSnapshot[]; library: LibraryExercise[] };
       await replaceLocalTemplates(templates.map((t) => ({ ...t, updatedAt: Date.now() })));
+      await setMeta("library", library);
     } catch {
       // Pas grave : on retentera à la prochaine navigation/reconnexion.
     } finally {

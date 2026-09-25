@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { getActiveExercises, toLibraryExercise } from "@/lib/queries/exercises";
+import type { SessionRowGroup } from "@/lib/session-rows";
 
 export type PreviousSet = {
   setNumber: number;
@@ -56,4 +58,34 @@ export async function getExerciseHistoryForExercises(
     uniqueIds.map((exerciseId) => getExerciseHistory(userId, exerciseId, excludeSessionId))
   );
   return Object.fromEntries(uniqueIds.map((exerciseId, i) => [exerciseId, results[i]]));
+}
+
+// Variantes déjà faites à la place de chaque exercice, la plus récente d'abord : proposées en tête
+// du choix d'une variante (voir VariantPicker).
+// ponytail: lit toutes les séries de variante de ces exercices ; à borner si elles se comptent en milliers.
+async function getUsedSubstitutes(userId: string, slotExerciseIds: string[]) {
+  const sets = await prisma.workoutSet.findMany({
+    where: { substituteForId: { in: slotExerciseIds }, workoutSession: { userId } },
+    orderBy: { workoutSession: { startedAt: "desc" } },
+    select: { exerciseId: true, substituteForId: true },
+  });
+  const substitutes: Record<string, string[]> = {};
+  for (const set of sets) {
+    const list = (substitutes[set.substituteForId!] ??= []);
+    if (!list.includes(set.exerciseId)) list.push(set.exerciseId);
+  }
+  return substitutes;
+}
+
+// Tout ce que le suivi de séance charge en plus des séries : historique des exercices du programme,
+// de leurs variantes (déjà utilisées ou présentes dans la séance), et la bibliothèque d'exercices.
+export async function getSessionExerciseData(userId: string, groups: SessionRowGroup[], excludeSessionId?: string) {
+  const slotIds = groups.map((g) => g.exerciseId);
+  const [substitutes, library] = await Promise.all([getUsedSubstitutes(userId, slotIds), getActiveExercises(userId)]);
+  const history = await getExerciseHistoryForExercises(
+    userId,
+    [...slotIds, ...Object.values(substitutes).flat(), ...groups.flatMap((g) => g.sets.map((s) => s.exerciseId))],
+    excludeSessionId
+  );
+  return { history, substitutes, library: library.map(toLibraryExercise) };
 }

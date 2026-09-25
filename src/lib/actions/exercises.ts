@@ -7,6 +7,7 @@ import { getCurrentUserId } from "@/lib/current-user";
 import { exerciseSchema, inlineExerciseSchema } from "@/lib/validations/exercise";
 import type { ActionState } from "@/lib/action-state";
 import * as mutations from "@/lib/session-mutations";
+import { getExerciseHistory } from "@/lib/queries/exercise-history";
 
 export async function createExercise(
   _prevState: ActionState,
@@ -69,6 +70,12 @@ export async function updateExerciseNote(exerciseId: string, note: string | null
 
   updateTag("exercises");
   revalidatePath(`/exercises/${exerciseId}`);
+}
+
+// Historique d'une variante choisie en séance, quand il n'est pas déjà en cache local (voir
+// switchExercise dans session-engine.ts) : ses séries sont alors pré-remplies comme les autres.
+export async function fetchExerciseHistory(exerciseId: string, excludeSessionId?: string) {
+  return getExerciseHistory(await getCurrentUserId(), exerciseId, excludeSessionId);
 }
 
 export type CreateExerciseInlineState = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, Plus, Search } from "lucide-react";
 import { MUSCLE_GROUPS } from "@/lib/constants";
@@ -24,15 +24,28 @@ export function ExercisePickerSheet({
   onClose,
   onSelect,
   onCreate,
+  title = "Ajouter un exercice",
+  initialMuscle = null,
+  top,
+  topExerciseIds = [],
+  footer,
 }: {
   exercises: ExerciseOption[];
   onClose: () => void;
   onSelect: (exercise: ExerciseOption) => void;
   // Recherche sans résultat : propose de créer l'exercice avec le texte saisi comme nom.
   onCreate?: (name: string) => void;
+  title?: string;
+  initialMuscle?: string | null;
+  // Contenu épinglé en tête de liste tant qu'aucune recherche n'est tapée (ex. les variantes déjà
+  // utilisées, voir VariantPicker) ; `topExerciseIds` : exercices qu'il montre déjà, retirés des
+  // groupes en dessous pour ne pas les afficher deux fois.
+  top?: ReactNode;
+  topExerciseIds?: string[];
+  footer?: ReactNode;
 }) {
   const [query, setQuery] = useState("");
-  const [muscle, setMuscle] = useState<string | null>(null);
+  const [muscle, setMuscle] = useState<string | null>(initialMuscle);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -52,9 +65,12 @@ export function ExercisePickerSheet({
     return exercises.filter(
       (exercise) =>
         (!muscle || exercise.muscle.includes(muscle)) &&
-        (!normalizedQuery || exercise.name.toLowerCase().includes(normalizedQuery))
+        (normalizedQuery
+          ? exercise.name.toLowerCase().includes(normalizedQuery)
+          : !topExerciseIds.includes(exercise.id))
     );
-  }, [exercises, muscle, query]);
+  }, [exercises, muscle, query, topExerciseIds]);
+  const showTop = Boolean(top) && !query.trim();
 
   const groups = useMemo(
     () =>
@@ -87,9 +103,7 @@ export function ExercisePickerSheet({
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <span className="flex-1 truncate text-center text-sm font-medium text-neutral-500">
-            Ajouter un exercice
-          </span>
+          <span className="flex-1 truncate text-center text-sm font-medium text-neutral-500">{title}</span>
           <div className="h-9 w-9" />
         </div>
 
@@ -138,7 +152,8 @@ export function ExercisePickerSheet({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
+          {showTop && top}
           {groups.length === 0 && onCreate && query.trim() ? (
             <button
               type="button"
@@ -149,7 +164,7 @@ export function ExercisePickerSheet({
               <span className="truncate">Créer l&apos;exercice « {query.trim()} »</span>
             </button>
           ) : groups.length === 0 ? (
-            <p className="py-6 text-center text-sm text-neutral-500">Aucun exercice trouvé.</p>
+            !showTop && <p className="py-6 text-center text-sm text-neutral-500">Aucun exercice trouvé.</p>
           ) : (
             <div className="space-y-4">
               {groups.map((group) => (
@@ -174,6 +189,7 @@ export function ExercisePickerSheet({
             </div>
           )}
         </div>
+        {footer}
       </div>
     </div>,
     document.body

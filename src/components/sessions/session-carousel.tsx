@@ -23,6 +23,7 @@ export function SessionCarousel({
   readOnly,
   groups,
   history,
+  exerciseNames,
   removedSetCounts,
   activeIndex,
   onActiveIndexChange,
@@ -35,6 +36,8 @@ export function SessionCarousel({
   onUpdateNote,
   onCompleteSession,
 }: {
+  // Nom de chaque exercice (variantes comprises) : sépare les séries faites sur une autre machine.
+  exerciseNames: Record<string, string>;
   basePath: string;
   sessionId: string | null;
   allowRemove: boolean;
@@ -78,7 +81,7 @@ export function SessionCarousel({
     const allDone = groups.every((g) => {
       // 0 volontaire ici (pas removedSetCounts) : "Terminé" doit continuer à tenir compte des
       // séries encore seulement suggérées par l'historique/l'objectif, indépendamment de l'affichage.
-      const rows = buildSessionRows(g, history[g.exerciseId] ?? [], 0);
+      const rows = buildSessionRows(g, history, 0);
       return rows.length > 0 && rows.every((row) => row.current?.completed === true);
     });
     if (sessionId && !readOnly && allDone) {
@@ -214,7 +217,8 @@ export function SessionCarousel({
             <div key={group.exerciseId} className="w-full shrink-0">
               <ExercisePanel
                 group={group}
-                history={history[group.exerciseId] ?? []}
+                history={history}
+                exerciseNames={exerciseNames}
                 removedCount={removedSetCounts[group.exerciseId] ?? 0}
                 allowRemove={allowRemove}
                 readOnly={readOnly}
@@ -262,6 +266,7 @@ export function SessionCarousel({
 function ExercisePanel({
   group,
   history,
+  exerciseNames,
   removedCount,
   allowRemove,
   readOnly,
@@ -275,7 +280,8 @@ function ExercisePanel({
   onUpdateNote,
 }: {
   group: SessionRowGroup;
-  history: PreviousPerformance[];
+  history: Record<string, PreviousPerformance[]>;
+  exerciseNames: Record<string, string>;
   removedCount: number;
   allowRemove: boolean;
   readOnly: boolean;
@@ -302,9 +308,18 @@ function ExercisePanel({
         <p className="text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
       ) : (
         <ul className="space-y-2">
-          {rows.map((row) =>
-            row.current ? (
-              <li key={row.current.id}>
+          {rows.map((row, index) => {
+            // Changement de machine en cours d'exercice (séries déjà faites puis variante) : un
+            // filet nommé sépare les séries de chaque exercice. Le titre dit déjà le reste.
+            const switchedFrom = index > 0 && rows[index - 1].exerciseId !== row.exerciseId;
+            const separator = switchedFrom && (
+              <p className="flex items-center gap-2 pt-1.5 pb-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-accent-deep after:h-px after:flex-1 after:bg-neutral-300">
+                Sur {exerciseNames[row.exerciseId] ?? "une variante"}
+              </p>
+            );
+            return row.current ? (
+              <li key={`${row.current.id}-${row.exerciseId}`}>
+                {separator}
                 <SetRow
                   set={row.current}
                   canRemove={allowRemove}
@@ -318,7 +333,9 @@ function ExercisePanel({
                 />
               </li>
             ) : (
-              <li key={`previous-${row.previous!.setNumber}`}>
+              // L'exercice dans la clé : choisir une variante remonte la ligne avec ses propres valeurs.
+              <li key={`previous-${row.exerciseId}-${row.previous!.setNumber}`}>
+                {separator}
                 {!started && row.setNumber === nextSetNumber && (
                   <p className="mb-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-accent-deep">
                     ↓ Commence ici
@@ -337,8 +354,8 @@ function ExercisePanel({
                   onDismiss={onDismissSuggestion}
                 />
               </li>
-            )
-          )}
+            );
+          })}
         </ul>
       )}
 
