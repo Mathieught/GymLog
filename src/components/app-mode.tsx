@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { APP_MODE_COOKIE, type AppMode } from "@/lib/app-mode";
+import { APP_MODE_COOKIE, ICON_STYLE_COOKIE, type AppMode, type IconStyle } from "@/lib/app-mode";
 
 const AppModeContext = createContext<{
   mode: AppMode;
@@ -35,33 +35,68 @@ export function AdvancedOnly({ children }: { children: ReactNode }) {
   return useAppMode().mode === "advanced" ? children : null;
 }
 
-const OPTIONS: { value: AppMode; label: string }[] = [
-  { value: "basic", label: "Basique" },
-  { value: "advanced", label: "Avancé" },
-];
-
 export function AppModeToggle() {
   const { mode, setMode } = useAppMode();
+  return (
+    <PillToggle
+      options={[
+        { value: "basic", label: "Basique" },
+        { value: "advanced", label: "Avancé" },
+      ]}
+      value={mode}
+      onChange={setMode}
+    />
+  );
+}
 
-  // Même commande que Clair/Sombre (ThemePicker) : une pastille d'accent glisse derrière l'option active.
+// Réglage Icônes : cookie lu par le layout (data-icons sur <html>, rendu serveur sans flash), et
+// attribut basculé à chaud ici — le CSS affiche la bonne version de chaque icône (voir MUSCLE_ICONS).
+export function IconStyleToggle({ initialStyle }: { initialStyle: IconStyle }) {
+  const [style, setStyle] = useState(initialStyle);
+  return (
+    <PillToggle
+      options={[
+        { value: "basic", label: "Basique" },
+        { value: "simple", label: "Simplifié" },
+      ]}
+      value={style}
+      onChange={(next) => {
+        document.cookie = `${ICON_STYLE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+        document.documentElement.dataset.icons = next;
+        setStyle(next);
+      }}
+    />
+  );
+}
+
+// Même commande que Clair/Sombre (ThemePicker) : une pastille d'accent glisse derrière l'option active.
+function PillToggle<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: [{ value: T; label: string }, { value: T; label: string }];
+  value: T;
+  onChange: (value: T) => void;
+}) {
   return (
     <div className="relative grid shrink-0 grid-cols-2 rounded-full bg-neutral-200 p-[3px]">
       <span
         aria-hidden="true"
         className={cn(
           "absolute inset-y-[3px] left-[3px] w-[calc(50%-3px)] rounded-full bg-accent shadow-sm transition-transform duration-300 motion-reduce:transition-none",
-          mode === "advanced" && "translate-x-full"
+          value === options[1].value && "translate-x-full"
         )}
       />
-      {OPTIONS.map((option) => (
+      {options.map((option) => (
         <button
           key={option.value}
           type="button"
-          onClick={() => setMode(option.value)}
-          aria-pressed={mode === option.value}
+          onClick={() => onChange(option.value)}
+          aria-pressed={value === option.value}
           className={cn(
             "relative rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-            mode === option.value ? "text-accent-contrast" : "text-neutral-500"
+            value === option.value ? "text-accent-contrast" : "text-neutral-500"
           )}
         >
           {option.label}

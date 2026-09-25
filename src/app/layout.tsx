@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { auth } from "@/lib/auth";
-import { APP_MODE_COOKIE, parseAppMode } from "@/lib/app-mode";
+import { APP_MODE_COOKIE, ICON_STYLE_COOKIE, parseAppMode, parseIconStyle } from "@/lib/app-mode";
 import { appIconUrl, PAGE_BACKGROUND, parseTheme, serializeTheme, THEME_COOKIE, themeVariables } from "@/lib/theme";
 import { AppModeProvider } from "@/components/app-mode";
 import { BottomNav } from "@/components/nav/bottom-nav";
@@ -52,6 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
   const cookieStore = await cookies();
   const appMode = parseAppMode(cookieStore.get(APP_MODE_COOKIE)?.value);
+  const iconStyle = parseIconStyle(cookieStore.get(ICON_STYLE_COOKIE)?.value);
   // Thème posé dès le rendu serveur (mode + couleurs d'accent) : pas de flash de l'ancien thème.
   const theme = parseTheme(cookieStore.get(THEME_COOKIE)?.value);
 
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="fr"
       data-mode={theme.mode}
+      data-icons={iconStyle}
       style={themeVariables(theme) as React.CSSProperties}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >

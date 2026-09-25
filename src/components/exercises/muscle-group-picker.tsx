@@ -1,4 +1,12 @@
-import { HeartPulse, MoreHorizontal, type LucideIcon } from "lucide-react";
+import {
+  BicepsFlexed,
+  Footprints,
+  GripVertical,
+  HandFist,
+  HeartPulse,
+  MoreHorizontal,
+  type LucideIcon,
+} from "lucide-react";
 import {
   PectorauxIcon,
   DosIcon,
@@ -8,6 +16,10 @@ import {
   AvantBrasIcon,
   AbdominauxIcon,
   JambesIcon,
+  PectorauxLineIcon,
+  DosLineIcon,
+  EpaulesLineIcon,
+  TricepsLineIcon,
 } from "@/components/exercises/muscle-icons";
 import { cn } from "@/lib/utils";
 import { MUSCLE_GROUPS } from "@/lib/constants";
@@ -24,15 +36,29 @@ const CardioIcon: MuscleIcon = ({ className }) => (
   <HeartPulse className={cn(className, "text-accent-deep group-aria-pressed:text-accent-contrast")} />
 );
 
+// Réglage Icônes (Paramètres) : les deux versions sont rendues, le CSS n'affiche que celle choisie
+// (attribut data-icons sur <html>, voir globals.css) — marche aussi depuis un Server Component,
+// sans contexte. Simplifié = au trait, tracé en accent-deep comme Cardio.
+function withSimple(Detailed: MuscleIcon | LucideIcon, Simple: MuscleIcon | LucideIcon): MuscleIcon {
+  return function DualIcon({ className }) {
+    return (
+      <>
+        <Detailed className={cn(className, "icons-detailed")} />
+        <Simple className={cn(className, "icons-simple text-accent-deep group-aria-pressed:text-accent-contrast")} />
+      </>
+    );
+  };
+}
+
 export const MUSCLE_ICONS: Record<(typeof MUSCLE_GROUPS)[number], MuscleIcon | LucideIcon> = {
-  Pectoraux: PectorauxIcon,
-  Dos: DosIcon,
-  Épaules: EpaulesIcon,
-  Biceps: BicepsIcon,
-  Triceps: TricepsIcon,
-  "Avant-bras": AvantBrasIcon,
-  Abdominaux: AbdominauxIcon,
-  Jambes: JambesIcon,
+  Pectoraux: withSimple(PectorauxIcon, PectorauxLineIcon),
+  Dos: withSimple(DosIcon, DosLineIcon),
+  Épaules: withSimple(EpaulesIcon, EpaulesLineIcon),
+  Biceps: withSimple(BicepsIcon, BicepsFlexed),
+  Triceps: withSimple(TricepsIcon, TricepsLineIcon),
+  "Avant-bras": withSimple(AvantBrasIcon, HandFist),
+  Abdominaux: withSimple(AbdominauxIcon, GripVertical),
+  Jambes: withSimple(JambesIcon, Footprints),
   Cardio: CardioIcon,
   Autres: AutresIcon,
 };

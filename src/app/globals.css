@@ -89,6 +89,13 @@
   color-scheme: dark;
 }
 
+/* Réglage Icônes (Paramètres) : chaque icône de muscle est rendue en deux versions (voir
+   MUSCLE_ICONS), seule celle choisie s'affiche. Basique (silhouettes) par défaut. */
+:root:not([data-icons="simple"]) .icons-simple,
+:root[data-icons="simple"] .icons-detailed {
+  display: none;
+}
+
 /* Mode clair : même rampe, dans le sens naturel (50 = le plus clair). */
 :root[data-mode="light"] {
   --white: #ffffff;

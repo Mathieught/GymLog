@@ -5,12 +5,15 @@ import { Container } from "@/components/ui/container";
 import { PageTitle } from "@/components/ui/page-title";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AppModeToggle } from "@/components/app-mode";
+import { AppModeToggle, IconStyleToggle } from "@/components/app-mode";
+import { ICON_STYLE_COOKIE, parseIconStyle } from "@/lib/app-mode";
 import { ThemePicker } from "@/components/theme-picker";
 
 export default async function SettingsPage() {
   const session = await auth();
-  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  const cookieStore = await cookies();
+  const theme = parseTheme(cookieStore.get(THEME_COOKIE)?.value);
+  const iconStyle = parseIconStyle(cookieStore.get(ICON_STYLE_COOKIE)?.value);
 
   return (
     <Container topSafeArea>
@@ -48,6 +51,13 @@ export default async function SettingsPage() {
       </h2>
       <Card className="mt-2">
         <ThemePicker initialTheme={theme} />
+      </Card>
+      <Card className="mt-2 flex items-center justify-between gap-4">
+        <div>
+          <p className="font-medium">Icônes</p>
+          <p className="text-sm text-neutral-500">Simplifié : pictogrammes au trait</p>
+        </div>
+        <IconStyleToggle initialStyle={iconStyle} />
       </Card>
     </Container>
   );

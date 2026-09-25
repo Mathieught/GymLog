@@ -209,3 +209,65 @@ export function AvantBrasIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+// Icônes "Simplifié" (réglage Icônes, voir MUSCLE_ICONS) : au trait, même grammaire que les icônes
+// lucide (grille 24, trait 2, bouts arrondis). Lucide couvre déjà Biceps, Avant-bras, Abdominaux et
+// Jambes ; ces quatre-là n'y ont pas d'équivalent.
+function LineIcon({ children, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      {children}
+    </svg>
+  );
+}
+
+export function PectorauxLineIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <LineIcon {...props}>
+      <path d="M4 9.5C6 8 9 8 12 9.5C15 8 18 8 20 9.5" />
+      <path d="M4 9.5V14c0 2 1.8 3.2 4 3.2 1.8 0 3.2-.8 4-2.2.8 1.4 2.2 2.2 4 2.2 2.2 0 4-1.2 4-3.2V9.5" />
+      <path d="M12 9.5V15" />
+    </LineIcon>
+  );
+}
+
+export function DosLineIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <LineIcon {...props}>
+      <path d="M4 5c2.5 1 5.5 1.5 8 1.5S17.5 6 20 5" />
+      <path d="M4 5l3 14h10l3-14" />
+      <path d="M12 9.5v6" />
+      <path d="M8 9l2 2.5" />
+      <path d="M16 9l-2 2.5" />
+    </LineIcon>
+  );
+}
+
+export function EpaulesLineIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <LineIcon {...props}>
+      <circle cx="12" cy="5" r="2.5" />
+      <path d="M4 20v-5a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v5" />
+      <path d="M8 15v5" />
+      <path d="M16 15v5" />
+    </LineIcon>
+  );
+}
+
+export function TricepsLineIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <LineIcon {...props}>
+      <path d="M3 8h14a3.5 3.5 0 0 1 0 7h-2c-1 3-5 3-6 0H3" />
+      <path d="M10 11.5h5" />
+    </LineIcon>
+  );
+}
