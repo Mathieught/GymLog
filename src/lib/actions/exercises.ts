@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/current-user";
 import { exerciseSchema, inlineExerciseSchema } from "@/lib/validations/exercise";
 import type { ActionState } from "@/lib/action-state";
+import * as mutations from "@/lib/session-mutations";
 
 export async function createExercise(
   _prevState: ActionState,
@@ -56,6 +57,18 @@ export async function updateExercise(
   updateTag("exercises");
   revalidatePath(`/exercises/${exerciseId}`);
   return { nonce: Date.now() };
+}
+
+// Édition de la seule note depuis la fiche exercice (voir ExerciseNote), sans rouvrir tout le
+// formulaire.
+export async function updateExerciseNote(exerciseId: string, note: string | null) {
+  const parsed = exerciseSchema.shape.description.safeParse(note ?? "");
+  if (!parsed.success) return;
+
+  await mutations.updateExerciseNote(await getCurrentUserId(), { exerciseId, note: parsed.data || null });
+
+  updateTag("exercises");
+  revalidatePath(`/exercises/${exerciseId}`);
 }
 
 export type CreateExerciseInlineState = {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Play, Timer } from "lucide-react";
+import { Check, FileText, Play, Timer } from "lucide-react";
 import { PageHeader } from "@/components/nav/page-header";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SessionCarousel } from "@/components/sessions/session-carousel";
 import { SessionProgressRail } from "@/components/sessions/session-progress-rail";
 import { SessionTimer } from "@/components/sessions/session-timer";
-import { useHideNav } from "@/components/nav/nav-visibility";
+import { NoteSheet } from "@/components/sessions/note-sheet";import { useHideNav } from "@/components/nav/nav-visibility";
 import { useSessionEngine, type SessionSeed } from "@/lib/offline/session-engine";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +55,7 @@ export function SessionTracker({
   // session-carousel.tsx) — un simple filtrage par chemin (l'ancienne approche) réaffichait la nav
   // pile à ce moment-là, puisque /sessions/[id] reste normalement visible (séance déjà terminée).
   useHideNav(!completedAt);
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
 
   // Confirmation brève quand la toute première série crée la séance — déclenchée par le geste de
   // l'utilisateur, pas par la reprise d'une séance locale au montage (qui change aussi sessionId).
@@ -104,6 +105,9 @@ export function SessionTracker({
     );
   }
 
+  const activeGroup = groups[activeIndex];
+  const exerciseNote = activeGroup.exercise.description;
+
   return (
     <>
       <PageHeader
@@ -126,30 +130,49 @@ export function SessionTracker({
           </span>
         }
         right={
-          sessionId && completedAt ? null : sessionId ? (
-            <div className="flex items-center gap-2">
-              {engine.startedAt && <SessionTimer startedAt={engine.startedAt} />}
-              <Button
+          <div className="flex items-center gap-2">
+            {(exerciseNote || !completedAt) && (
+              // Pleine quand l'exercice a une note, en contour sinon (pour en ajouter une) ; absente
+              // d'une séance terminée sans note, où il n'y a rien à lire ni à modifier.
+              <button
                 type="button"
-                variant="secondary"
-                size="sm"
-                className="border-0"
-                onClick={() => setPendingComplete(true)}
+                onClick={() => setNoteSheetOpen(true)}
+                aria-label={exerciseNote ? "Note de l'exercice" : "Ajouter une note à l'exercice"}
+                className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                  exerciseNote
+                    ? "bg-accent-soft text-accent-deep hover:brightness-110 active:brightness-95"
+                    : "text-neutral-400 ring-1 ring-inset ring-neutral-300 hover:bg-neutral-100 hover:text-neutral-600"
+                )}
               >
-                Terminer
-              </Button>
-            </div>
-          ) : (
-            // Chrono en attente : même pastille que SessionTimer, en pointillés, pour annoncer
-            // qu'il partira tout seul à la première série (voir le bandeau plus bas).
-            <span
-              aria-label="Chrono en attente de la première série"
-              className="flex items-center gap-1 rounded-full border border-dashed border-neutral-300 px-2.5 py-1 font-mono text-xs font-medium tabular-nums text-neutral-500"
-            >
-              <Timer className="h-3.5 w-3.5" aria-hidden="true" />
-              0:00
-            </span>
-          )
+                <FileText className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {sessionId && completedAt ? null : sessionId ? (
+              <>
+                {engine.startedAt && <SessionTimer startedAt={engine.startedAt} />}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="border-0"
+                  onClick={() => setPendingComplete(true)}
+                >
+                  Terminer
+                </Button>
+              </>
+            ) : (
+              // Chrono en attente : même pastille que SessionTimer, en pointillés, pour annoncer
+              // qu'il partira tout seul à la première série (voir le bandeau plus bas).
+              <span
+                aria-label="Chrono en attente de la première série"
+                className="flex items-center gap-1 rounded-full border border-dashed border-neutral-300 px-2.5 py-1 font-mono text-xs font-medium tabular-nums text-neutral-500"
+              >
+                <Timer className="h-3.5 w-3.5" aria-hidden="true" />
+                0:00
+              </span>
+            )}
+          </div>
         }
         below={
           <SessionProgressRail
@@ -217,6 +240,18 @@ export function SessionTracker({
             <p className="text-xs text-neutral-500">Chrono lancé</p>
           </div>
         </div>
+      )}
+
+      {noteSheetOpen && (
+        <NoteSheet
+          title="Note de l'exercice"
+          initialNote={exerciseNote ?? ""}
+          onClose={() => setNoteSheetOpen(false)}
+          // Séance terminée : lecture seule, comme les notes de série.
+          onSave={
+            completedAt ? undefined : (note) => engine.updateExerciseNote(activeGroup.exerciseId, note)
+          }
+        />
       )}
 
       {pendingComplete && (

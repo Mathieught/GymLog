@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { ExerciseEditTrigger } from "@/components/exercises/exercise-edit-trigger";
 import { ExerciseDeleteButton } from "@/components/exercises/exercise-delete-button";
+import { ExerciseNote } from "@/components/exercises/exercise-note";
 import { MUSCLE_ICONS } from "@/components/exercises/muscle-group-picker";
 import { HistorySetList } from "@/components/sessions/history-set-list";
 
@@ -157,11 +158,7 @@ export default async function ExerciseDetailPage({
               </p>
             </div>
           </div>
-          {exercise.description && (
-            <p className="border-t border-neutral-200 pt-3 text-sm leading-relaxed text-neutral-600">
-              {exercise.description}
-            </p>
-          )}
+          <ExerciseNote exerciseId={exercise.id} note={exercise.description} />
         </Card>
 
         <dl className="grid grid-cols-3 gap-2">

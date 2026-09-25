@@ -12,7 +12,8 @@ export type LocalSet = {
   note: string | null;
 };
 
-export type LocalExercise = { name: string; muscle: string[]; targetSets: number };
+// description : note de l'exercice, facultative pour les instantanés antérieurs à son ajout.
+export type LocalExercise = { name: string; muscle: string[]; targetSets: number; description?: string | null };
 
 export type LocalSession = {
   id: string;
@@ -77,6 +78,8 @@ export type OutboxOp =
     }
   | { type: "removeSet"; setId: string; sessionId: string; exerciseId: string }
   | { type: "updateSetNote"; setId: string; note: string | null }
+  // Note de l'exercice lui-même (pas de la séance) : modifiable depuis l'en-tête de la séance.
+  | { type: "updateExerciseNote"; exerciseId: string; note: string | null }
   | { type: "completeSession"; sessionId: string }
   // Séance quittée sans aucune série validée : elle n'a jamais existé (voir discardSession).
   | { type: "discardSession"; sessionId: string };

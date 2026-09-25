@@ -135,6 +135,17 @@ export async function updateSetNote(userId: string, params: { setId: string; not
   if (!set.workoutSession.completedAt) await touchSessionActivity(set.workoutSessionId);
 }
 
+// Partagée avec l'action de la fiche exercice (voir updateExerciseNote dans actions/exercises.ts).
+export async function updateExerciseNote(userId: string, params: { exerciseId: string; note: string | null }) {
+  const { count } = await prisma.exercise.updateMany({
+    where: { id: params.exerciseId, userId },
+    data: { description: params.note?.trim() || null },
+  });
+  if (count === 0) {
+    throw new InvalidMutationError("Exercice introuvable ou non autorisé");
+  }
+}
+
 export async function removeSet(
   userId: string,
   params: { setId: string; sessionId: string; exerciseId: string }

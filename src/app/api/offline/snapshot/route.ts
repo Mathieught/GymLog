@@ -25,6 +25,7 @@ export async function GET() {
           name: workoutExercise.exercise.name,
           muscle: workoutExercise.exercise.muscle,
           targetSets: workoutExercise.targetSets,
+          description: workoutExercise.exercise.description,
         },
       })),
     })),

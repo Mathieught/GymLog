@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { auth } from "@/lib/auth";
 import * as mutations from "@/lib/session-mutations";
 import { InvalidMutationError } from "@/lib/session-mutations";
@@ -19,6 +20,12 @@ async function applyOp(userId: string, op: OutboxOp) {
       return mutations.removeSet(userId, op);
     case "updateSetNote":
       return mutations.updateSetNote(userId, op);
+    case "updateExerciseNote":
+      await mutations.updateExerciseNote(userId, op);
+      // Fiche exercice et instantané hors ligne (voir /api/offline/snapshot) sont mis en cache
+      // sous ce tag ; updateTag n'existe qu'en Server Action, d'où l'expiration immédiate.
+      revalidateTag("exercises", { expire: 0 });
+      return;
     case "completeSession":
       return mutations.completeSession(userId, op.sessionId);
     case "discardSession":

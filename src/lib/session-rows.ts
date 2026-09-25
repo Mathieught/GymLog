@@ -1,4 +1,5 @@
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
+import type { LocalExercise } from "@/lib/offline/types";
 
 export type SessionRowSet = {
   id: string;
@@ -12,7 +13,7 @@ export type SessionRowSet = {
 export type SessionRowGroup = {
   exerciseId: string;
   exerciseOrder: number;
-  exercise: { name: string; muscle: string[]; targetSets: number };
+  exercise: LocalExercise;
   sets: SessionRowSet[];
   // Numéros (dans l'historique) des séries suggérées supprimées avant d'être renseignées (voir
   // dismissSuggestion dans session-engine.ts) : les suggestions suivantes remontent d'un cran en

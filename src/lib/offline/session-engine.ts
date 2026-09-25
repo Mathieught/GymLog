@@ -13,6 +13,8 @@ import {
   putLocalHistory,
   enqueueOp,
   getOutbox,
+  getLocalTemplates,
+  replaceLocalTemplates,
   setMeta,
 } from "@/lib/offline/db";
 import { seedToLocalSession, reconcileLocalGroups } from "@/lib/offline/local-seed";
@@ -319,6 +321,36 @@ export function useSessionEngine(seed: SessionSeed) {
     [applyMutation]
   );
 
+  // Note de l'exercice (voir la pastille de SessionTracker) : elle appartient à l'exercice, pas à
+  // la séance — possible dès l'aperçu, et recopiée dans l'instantané des programmes pour rester
+  // à jour dans une prochaine séance démarrée hors ligne.
+  const updateExerciseNote = useCallback(
+    (exerciseId: string, note: string | null) => {
+      void applyMutation((current) => ({
+        next: {
+          ...current,
+          groups: current.groups.map((g) =>
+            g.exerciseId === exerciseId ? { ...g, exercise: { ...g.exercise, description: note } } : g
+          ),
+        },
+        ops: [{ type: "updateExerciseNote" as const, exerciseId, note }],
+        sessionId: current.sessionId,
+      }));
+      void (async () => {
+        const templates = await getLocalTemplates();
+        await replaceLocalTemplates(
+          templates.map((t) => ({
+            ...t,
+            exercises: t.exercises.map((e) =>
+              e.exerciseId === exerciseId ? { ...e, exercise: { ...e.exercise, description: note } } : e
+            ),
+          }))
+        );
+      })();
+    },
+    [applyMutation]
+  );
+
   const removeSet = useCallback(
     (setId: string) => {
       void applyMutation((current) => {
@@ -427,6 +459,7 @@ export function useSessionEngine(seed: SessionSeed) {
     logSet,
     updateSet,
     updateNote,
+    updateExerciseNote,
     resetSet,
     removeSet,
     dismissSuggestion,

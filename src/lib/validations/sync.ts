@@ -45,6 +45,7 @@ const outboxOpSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("removeSet"), setId: id, sessionId: id, exerciseId: id }),
   z.object({ type: z.literal("updateSetNote"), setId: id, note: z.string().max(500).nullable() }),
+  z.object({ type: z.literal("updateExerciseNote"), exerciseId: id, note: z.string().max(500).nullable() }),
   z.object({ type: z.literal("completeSession"), sessionId: id }),
   z.object({ type: z.literal("discardSession"), sessionId: id }),
 ]);
