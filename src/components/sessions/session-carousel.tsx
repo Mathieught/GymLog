@@ -200,7 +200,9 @@ export function SessionCarousel({
   return (
     <div className="relative">
       <div
-        className="relative touch-pan-y select-none overflow-hidden"
+        // Débord de 12 px (repris en padding par chaque panneau) : overflow-hidden coupait le
+        // halo animé de la série à renseigner (animate-ring-pulse, 10 px) sur les bords.
+        className="relative -m-3 touch-pan-y select-none overflow-hidden"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -230,7 +232,7 @@ export function SessionCarousel({
         </div>
       </div>
 
-      <div className="mt-6 flex justify-between">
+      <div className="mt-9 flex justify-between">
         {activeIndex > 0 ? (
           <Button variant="ghost" size="sm" onClick={() => goTo(activeIndex - 1)}>
             ← Précédent
@@ -295,7 +297,7 @@ function ExercisePanel({
   // Nom de l'exercice et muscles : affichés dans l'en-tête et le rail (voir SessionTracker,
   // SessionProgressRail), plus répétés ici.
   return (
-    <div className="pr-1">
+    <div className="p-3">
       {rows.length === 0 ? (
         <p className="text-sm text-neutral-500">Aucune série pour l&apos;instant.</p>
       ) : (

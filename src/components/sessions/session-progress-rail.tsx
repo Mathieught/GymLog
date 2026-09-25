@@ -62,13 +62,19 @@ export function SessionProgressRail({
                 muscles={group.exercise.muscle}
                 className={cn(
                   "h-[22px] w-[22px]",
-                  isActive ? "h-6 w-6 " + RAIL_TONES.active : isDone ? RAIL_TONES.done : RAIL_TONES.todo
+                  isActive ? RAIL_TONES.active : isDone ? RAIL_TONES.done : RAIL_TONES.todo
                 )}
               />
               <span
                 className={cn(
                   "h-1 w-full rounded-full transition-colors",
-                  isActive ? "bg-neutral-900" : isDone ? "bg-accent" : "bg-neutral-300"
+                  // Même gradation que les icônes (RAIL_TONES) : en cours = accent plein, fait =
+                  // accent dilué dans le fond, à venir = neutre.
+                  isActive
+                    ? "bg-accent-deep"
+                    : isDone
+                      ? "bg-[color:color-mix(in_srgb,var(--accent-deep)_45%,var(--n-50))]"
+                      : "bg-neutral-300"
                 )}
               />
             </button>
