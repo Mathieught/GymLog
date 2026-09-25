@@ -157,7 +157,7 @@ export function WorkoutProgramBody({
                         <div className="flex items-center gap-3">
                           <span
                             className={cn(
-                              "flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-neutral-100",
+                              "flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-muscle-tile",
                               state === "done" && "opacity-60"
                             )}
                           >

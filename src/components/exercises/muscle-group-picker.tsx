@@ -15,7 +15,12 @@ import { MUSCLE_GROUPS } from "@/lib/constants";
 type MuscleIcon = (props: { className?: string }) => React.ReactElement;
 
 // "Autres" n'a pas d'illustration dédiée dans le design (contrairement aux 8 groupes
-// anatomiques) : on retombe sur une icône générique de la bibliothèque déjà utilisée ailleurs.
+// anatomiques) : on retombe sur une icône générique de la bibliothèque déjà utilisée ailleurs,
+// tracée en accent-deep comme la zone ciblée des autres (la silhouette discrète la rendrait illisible).
+const AutresIcon: MuscleIcon = ({ className }) => (
+  <MoreHorizontal className={cn(className, "text-accent-deep group-aria-pressed:text-accent-contrast")} />
+);
+
 export const MUSCLE_ICONS: Record<(typeof MUSCLE_GROUPS)[number], MuscleIcon | LucideIcon> = {
   Pectoraux: PectorauxIcon,
   Dos: DosIcon,
@@ -25,15 +30,15 @@ export const MUSCLE_ICONS: Record<(typeof MUSCLE_GROUPS)[number], MuscleIcon | L
   "Avant-bras": AvantBrasIcon,
   Abdominaux: AbdominauxIcon,
   Jambes: JambesIcon,
-  Autres: MoreHorizontal,
+  Autres: AutresIcon,
 };
 
 // Icône discrète du groupe musculaire principal d'un exercice (liste d'un programme, rail de
-// séance) : silhouette "crème adouci" (même teinte que le sélecteur), zone ciblée en accent adouci.
+// séance) : silhouette ton sur ton (même teinte que le sélecteur), zone ciblée en accent-deep.
 export function ExerciseMuscleIcon({ muscles, className }: { muscles: string[]; className?: string }) {
   const Icon = MUSCLE_ICONS[muscles[0] as keyof typeof MUSCLE_ICONS];
   if (!Icon) return null;
-  return <Icon className={cn("text-neutral-700 [&_.fill-accent]:opacity-75", className)} />;
+  return <Icon className={cn("text-muscle", className)} />;
 }
 
 export function MuscleGroupPicker({
@@ -74,9 +79,9 @@ export function MuscleGroupPicker({
                 // actif, série faite, rail de progression) : cette sélection suit la même
                 // convention plutôt que le remplissage noir/blanc réservé aux boutons d'action.
                 selected
-                  ? "border-accent bg-accent text-accent-contrast/40"
-                  : // Corps des icônes (currentColor) en "crème adouci" : présent sans éblouir, la zone ciblée ressort.
-                    "border-neutral-200 text-neutral-700 hover:border-accent-deep/50 hover:bg-accent-soft/40"
+                  ? "border-accent bg-accent text-accent-contrast/30"
+                  : // Même vignette "ton sur ton" que partout ailleurs (voir muscle-tile dans globals.css).
+                    "border-neutral-200 bg-muscle-tile text-muscle hover:border-accent-deep/50"
               )}
             >
               <Icon className="h-11 w-11" />

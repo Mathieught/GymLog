@@ -30,6 +30,12 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-contrast: var(--accent-contrast);
 
+  /* Icônes de groupe musculaire "ton sur ton" : vignette teintée d'accent (muscle-tile), silhouette
+     dans la même teinte (muscle), zone ciblée en accent-deep. Dérivées de l'accent, donc de chaque
+     thème, en clair comme en sombre. */
+  --color-muscle-tile: var(--muscle-tile);
+  --color-muscle: color-mix(in srgb, var(--accent-deep) 45%, var(--muscle-tile));
+
   /* Couleurs de sens, indépendantes du thème : suppression/alerte (corail) et progression (vert).
      Fixes pour qu'un thème rouge ou vert ne rende jamais ambiguë une hausse ou une suppression. */
   --color-danger: var(--danger);
@@ -73,6 +79,8 @@
   --accent-soft: #2a3308;
   --accent-contrast: #10150a;
 
+  --muscle-tile: color-mix(in srgb, var(--accent) 30%, #131310);
+
   --danger: #e2694e;
   --success: #8fd14f;
   --success-soft: #20300f;
@@ -95,6 +103,8 @@
   --n-800: #2c2b26;
   --n-900: #1a1a17;
   --n-950: #0f0f0d;
+
+  --muscle-tile: color-mix(in srgb, var(--accent) 40%, #ffffff);
 
   --danger: #c2410c;
   --success: #2f7d1f;

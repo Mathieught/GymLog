@@ -11,6 +11,19 @@ import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 // passer par le swipe. L'état "fait" utilise `buildSessionRows(..., 0)` (comme le prompt de fin de
 // séance) pour tenir compte des séries encore seulement suggérées par l'historique/l'objectif, pas
 // seulement des séries réellement enregistrées.
+
+// Icônes posées directement sur le fond de page (pas de vignette) : silhouette et zone ciblée
+// sont des mélanges de accent-deep et du fond (neutral-50), plus ou moins dilués selon l'état.
+// Les états jouent sur la teinte plutôt que sur l'opacité, qui rendait les exercices à venir
+// illisibles en mode clair.
+const RAIL_TONES = {
+  active: "text-[color:color-mix(in_srgb,var(--accent-deep)_50%,var(--n-50))]",
+  done:
+    "text-[color:color-mix(in_srgb,var(--accent-deep)_38%,var(--n-50))] [&_.fill-accent-deep]:fill-[color-mix(in_srgb,var(--accent-deep)_80%,var(--n-50))]",
+  todo:
+    "text-[color:color-mix(in_srgb,var(--accent-deep)_22%,var(--n-50))] [&_.fill-accent-deep]:fill-[color-mix(in_srgb,var(--accent-deep)_50%,var(--n-50))]",
+};
+
 export function SessionProgressRail({
   groups,
   history,
@@ -43,16 +56,13 @@ export function SessionProgressRail({
               title={group.exercise.name}
               aria-current={isActive ? "step" : undefined}
               aria-label={`Aller à l'exercice ${index + 1} : ${group.exercise.name}`}
-              className={cn(
-                "flex min-w-0 flex-1 flex-col items-center gap-1.5 pt-1 transition-opacity",
-                isActive ? "opacity-100" : isDone ? "opacity-80" : "opacity-45"
-              )}
+              className="flex min-w-0 flex-1 flex-col items-center gap-1.5 pt-1"
             >
               <ExerciseMuscleIcon
                 muscles={group.exercise.muscle}
                 className={cn(
                   "h-[22px] w-[22px]",
-                  isActive && "h-6 w-6 [&_.fill-accent]:opacity-100"
+                  isActive ? "h-6 w-6 " + RAIL_TONES.active : isDone ? RAIL_TONES.done : RAIL_TONES.todo
                 )}
               />
               <span
