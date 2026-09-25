@@ -30,10 +30,10 @@ type MuscleIcon = (props: { className?: string }) => React.ReactElement;
 // anatomiques) : on retombe sur une icône générique de la bibliothèque déjà utilisée ailleurs,
 // tracée en accent-deep comme la zone ciblée des autres (la silhouette discrète la rendrait illisible).
 const AutresIcon: MuscleIcon = ({ className }) => (
-  <MoreHorizontal className={cn(className, "text-accent-deep group-aria-pressed:text-accent-contrast")} />
+  <MoreHorizontal className={cn(className, "icon-line text-accent-deep group-aria-pressed:text-accent-contrast")} />
 );
 const CardioIcon: MuscleIcon = ({ className }) => (
-  <HeartPulse className={cn(className, "text-accent-deep group-aria-pressed:text-accent-contrast")} />
+  <HeartPulse className={cn(className, "icon-line text-accent-deep group-aria-pressed:text-accent-contrast")} />
 );
 
 // Réglage Icônes (Paramètres) : les deux versions sont rendues, le CSS n'affiche que celle choisie
@@ -44,7 +44,7 @@ function withSimple(Detailed: MuscleIcon | LucideIcon, Simple: MuscleIcon | Luci
     return (
       <>
         <Detailed className={cn(className, "icons-detailed")} />
-        <Simple className={cn(className, "icons-simple text-accent-deep group-aria-pressed:text-accent-contrast")} />
+        <Simple className={cn(className, "icons-simple icon-line text-accent-deep group-aria-pressed:text-accent-contrast")} />
       </>
     );
   };

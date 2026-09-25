@@ -16,13 +16,14 @@ import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 // Icônes posées directement sur le fond de page (pas de vignette) : silhouette et zone ciblée
 // sont des mélanges de accent-deep et du fond (neutral-50), plus ou moins dilués selon l'état.
 // Les états jouent sur la teinte plutôt que sur l'opacité, qui rendait les exercices à venir
-// illisibles en mode clair.
+// illisibles en mode clair. Icônes au trait (icon-line : Cardio, Autres, réglage Icônes Simplifié) :
+// tout le tracé suit la teinte de la zone ciblée des silhouettes.
 const RAIL_TONES = {
   active: "text-[color:color-mix(in_srgb,var(--accent-deep)_50%,var(--n-50))]",
   done:
-    "text-[color:color-mix(in_srgb,var(--accent-deep)_38%,var(--n-50))] [&_.fill-accent-deep]:fill-[color-mix(in_srgb,var(--accent-deep)_80%,var(--n-50))]",
+    "text-[color:color-mix(in_srgb,var(--accent-deep)_38%,var(--n-50))] [&_.fill-accent-deep]:fill-[color-mix(in_srgb,var(--accent-deep)_80%,var(--n-50))] [&.icon-line]:text-[color:color-mix(in_srgb,var(--accent-deep)_80%,var(--n-50))]",
   todo:
-    "text-[color:color-mix(in_srgb,var(--accent-deep)_22%,var(--n-50))] [&_.fill-accent-deep]:fill-[color-mix(in_srgb,var(--accent-deep)_50%,var(--n-50))]",
+    "text-[color:color-mix(in_srgb,var(--accent-deep)_22%,var(--n-50))] [&_.fill-accent-deep]:fill-[color-mix(in_srgb,var(--accent-deep)_50%,var(--n-50))] [&.icon-line]:text-[color:color-mix(in_srgb,var(--accent-deep)_50%,var(--n-50))]",
 };
 
 export function SessionProgressRail({
