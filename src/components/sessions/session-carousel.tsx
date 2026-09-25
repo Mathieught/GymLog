@@ -86,6 +86,10 @@ export function SessionCarousel({
     }
   }
 
+  // "Commencer la séance" crée la séance avant toute série : on reste sur "Commence ici" tant
+  // qu'aucune série n'est validée, pas seulement tant que la séance n'existe pas.
+  const started = groups.some((g) => g.sets.some((s) => s.completed));
+
   const trackRef = useRef<HTMLDivElement>(null);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const dragging = useRef(false);
@@ -212,7 +216,7 @@ export function SessionCarousel({
                 removedCount={removedSetCounts[group.exerciseId] ?? 0}
                 allowRemove={allowRemove}
                 readOnly={readOnly}
-                started={sessionId !== null}
+                started={started}
                 onAddSet={onAddSet}
                 onLogSet={onLogSet}
                 onUpdateSet={onUpdateSet}
