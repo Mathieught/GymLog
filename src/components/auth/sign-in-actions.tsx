@@ -44,8 +44,12 @@ export function SignInActions({
   return (
     <div className="flex w-full flex-col gap-2">
       <form action={onGoogleSignIn}>
-        <Button type="submit" variant="secondary" className="w-full gap-3 border border-neutral-200">
-          <GoogleLogo />
+        <Button type="submit" size="lg" className="w-full gap-3 rounded-[14px] font-semibold">
+          {/* Pastille blanche fixe (pas le token "white", sombre en mode sombre) : le logo Google
+              garde ses couleurs sur l'aplat d'accent. */}
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#fff]">
+            <GoogleLogo />
+          </span>
           Continuer avec Google
         </Button>
       </form>
