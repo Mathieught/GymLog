@@ -6,19 +6,22 @@ import { ExercisePickerSheet } from "@/components/workouts/exercise-picker-sheet
 import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Input } from "@/components/ui/field";
-import { cn, formatReps, formatWeight } from "@/lib/utils";
+import { cn, formatReps, formatWeight, isCardio } from "@/lib/utils";
 import type { SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
 import type { LibraryExercise } from "@/lib/offline/types";
 
 // Dernière perf d'une variante (1re série de sa dernière séance) : de quoi savoir avec quelle
 // charge reprendre avant même de la choisir.
-function lastPerformance(history: PreviousPerformance[] | undefined) {
+function lastPerformance(history: PreviousPerformance[] | undefined, cardio: boolean) {
   const last = history?.[0];
   const set = last?.sets.find((s) => s.actualReps != null && s.actualWeight != null);
   if (!last || !set) return "Jamais faite";
   const date = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(last.sessionDate);
-  return `Dernière fois ${formatReps(set.actualReps!)} × ${formatWeight(set.actualWeight!)} kg · ${date}`;
+  const value = cardio
+    ? `${formatReps(set.actualReps!)} min`
+    : `${formatReps(set.actualReps!)} × ${formatWeight(set.actualWeight!)} kg`;
+  return `Dernière fois ${value} · ${date}`;
 }
 
 // Choix d'une variante pour un exercice du programme (mode Avancé) : même popup que l'ajout
@@ -86,7 +89,7 @@ export function VariantPicker({
                     )}
                   >
                     <p className="font-medium">{exercise.name}</p>
-                    <p className="font-mono text-xs text-neutral-500">{lastPerformance(history[exercise.id])}</p>
+                    <p className="font-mono text-xs text-neutral-500">{lastPerformance(history[exercise.id], isCardio(exercise.muscle))}</p>
                   </button>
                 </li>
               ))}

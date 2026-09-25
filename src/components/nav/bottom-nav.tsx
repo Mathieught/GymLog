@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useNavHidden } from "@/components/nav/nav-visibility";
 
 const navItems = [
-  { href: "/workouts", label: "Séances", icon: ListChecks },
+  { href: "/workouts", label: "Entraînement", icon: ListChecks },
   { href: "/history", label: "Historique", icon: History },
   { href: "/exercises", label: "Exercices", icon: Dumbbell },
   { href: "/settings", label: "Paramètres", icon: Settings },

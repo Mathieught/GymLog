@@ -10,7 +10,7 @@ import { getCurrentUserId } from "@/lib/current-user";
 import { getExerciseDetail } from "@/lib/queries/exercises";
 import { parseTimeZone, TIME_ZONE_COOKIE } from "@/lib/time-zone";
 import { WEEKDAYS } from "@/lib/constants";
-import { cn, formatDaysAgo, formatReps, formatSetCount, formatWeight } from "@/lib/utils";
+import { cn, formatDaysAgo, formatExerciseTarget, formatReps, formatWeight, isCardio } from "@/lib/utils";
 import { PageHeader } from "@/components/nav/page-header";
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
@@ -69,7 +69,8 @@ export default async function ExerciseDetailPage({
   // d'une séance de l'historique).
   const doneSets = (session: (typeof sessions)[number]) =>
     session.sets.filter((set) => set.completed && set.actualWeight != null && set.actualReps != null);
-  // Meilleure série = la plus lourde, départagée par le nombre de reps.
+  // Meilleure série = la plus lourde, départagée par le nombre de reps (cardio : poids toujours 0,
+  // donc la plus longue).
   const best = sessions
     .flatMap(doneSets)
     .reduce<{ weight: number; reps: number } | null>((acc, set) => {
@@ -80,6 +81,7 @@ export default async function ExerciseDetailPage({
       return acc;
     }, null);
   const last = sessions[0];
+  const cardio = isCardio(exercise.muscle);
 
   // Dates dans le fuseau de l'utilisateur (rendu serveur en UTC sur Vercel).
   const zone = tz(parseTimeZone(cookieStore.get(TIME_ZONE_COOKIE)?.value));
@@ -101,6 +103,7 @@ export default async function ExerciseDetailPage({
         </Link>
         <HistorySetList
           sets={session.sets}
+          cardio={cardio}
           previous={
             new Map(
               (previous ? doneSets(previous) : []).map((set) => [
@@ -154,7 +157,7 @@ export default async function ExerciseDetailPage({
               </div>
               <p className="text-[13px] text-neutral-500">
                 Objectif à l&apos;ajout :{" "}
-                <span className="font-semibold text-neutral-900">{formatSetCount(exercise.targetSets)}</span>
+                <span className="font-semibold text-neutral-900">{formatExerciseTarget(exercise)}</span>
               </p>
             </div>
           </div>
@@ -172,10 +175,10 @@ export default async function ExerciseDetailPage({
             {best ? (
               <>
                 <dd className="mt-1 font-mono text-xl font-semibold tabular-nums text-accent-deep">
-                  {formatWeight(best.weight)}
-                  <span className="text-xs"> kg</span>
+                  {cardio ? formatReps(best.reps) : formatWeight(best.weight)}
+                  <span className="text-xs"> {cardio ? "min" : "kg"}</span>
                 </dd>
-                <dd className="font-mono text-[11px] text-neutral-500">× {formatReps(best.reps)} reps</dd>
+                {!cardio && <dd className="font-mono text-[11px] text-neutral-500">× {formatReps(best.reps)} reps</dd>}
               </>
             ) : (
               <dd className="mt-1 font-mono text-xl font-semibold text-neutral-400">—</dd>
@@ -221,7 +224,12 @@ export default async function ExerciseDetailPage({
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{workoutTemplate.name}</span>
                         <span className="block truncate text-xs text-neutral-500">
-                          {[...days, `${targetSets} série${targetSets > 1 ? "s" : ""} prévue${targetSets > 1 ? "s" : ""}`].join(" · ")}
+                          {[
+                            ...days,
+                            cardio
+                              ? formatExerciseTarget({ ...exercise, targetSets })
+                              : `${targetSets} série${targetSets > 1 ? "s" : ""} prévue${targetSets > 1 ? "s" : ""}`,
+                          ].join(" · ")}
                         </span>
                       </span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400" />

@@ -1,4 +1,4 @@
-import { MoreHorizontal, type LucideIcon } from "lucide-react";
+import { HeartPulse, MoreHorizontal, type LucideIcon } from "lucide-react";
 import {
   PectorauxIcon,
   DosIcon,
@@ -20,6 +20,9 @@ type MuscleIcon = (props: { className?: string }) => React.ReactElement;
 const AutresIcon: MuscleIcon = ({ className }) => (
   <MoreHorizontal className={cn(className, "text-accent-deep group-aria-pressed:text-accent-contrast")} />
 );
+const CardioIcon: MuscleIcon = ({ className }) => (
+  <HeartPulse className={cn(className, "text-accent-deep group-aria-pressed:text-accent-contrast")} />
+);
 
 export const MUSCLE_ICONS: Record<(typeof MUSCLE_GROUPS)[number], MuscleIcon | LucideIcon> = {
   Pectoraux: PectorauxIcon,
@@ -30,6 +33,7 @@ export const MUSCLE_ICONS: Record<(typeof MUSCLE_GROUPS)[number], MuscleIcon | L
   "Avant-bras": AvantBrasIcon,
   Abdominaux: AbdominauxIcon,
   Jambes: JambesIcon,
+  Cardio: CardioIcon,
   Autres: AutresIcon,
 };
 

@@ -7,12 +7,18 @@ export const MUSCLE_GROUPS = [
   "Avant-bras",
   "Abdominaux",
   "Jambes",
+  "Cardio",
   "Autres",
 ] as const;
 
 // Nombre de séries proposées en raccourci dans le sélecteur de séries (au-delà, l'utilisateur
 // passe par "Valeur personnalisée").
 export const QUICK_SET_COUNTS = [1, 2, 3, 4, 5, 6] as const;
+
+// Durées rapides (minutes) d'un exercice cardio : un seul bloc en Basique, une durée par série
+// (fractionné, plus court) en Avancé. Au-delà, stepper par pas de 5 min.
+export const QUICK_MINUTES = [10, 15, 20, 30, 45, 60] as const;
+export const QUICK_MINUTES_PER_SET = [5, 10, 20, 30, 45, 60] as const;
 
 export const WEEKDAYS = [
   { value: 1, label: "Lundi" },

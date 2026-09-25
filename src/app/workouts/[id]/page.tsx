@@ -69,6 +69,7 @@ export default async function WorkoutTemplateDetailPage({
         name: workoutExercise.exercise.name,
         muscles: workoutExercise.exercise.muscle,
         targetSets: workoutExercise.targetSets,
+        targetMinutes: workoutExercise.exercise.targetMinutes,
       }))}
       emptyState={
         <div className="rounded-2xl border border-dashed border-neutral-300 p-4 text-center">

@@ -16,7 +16,7 @@ import { SessionTimer } from "@/components/sessions/session-timer";
 import { getActiveLocalSessionForTemplate, getLocalHistory } from "@/lib/offline/db";
 import { localSessionToGroups } from "@/lib/offline/local-seed";
 import { buildSessionRows } from "@/lib/session-rows";
-import { cn, formatSetCount } from "@/lib/utils";
+import { cn, formatExerciseTarget } from "@/lib/utils";
 
 type ExerciseItem = {
   id: string;
@@ -24,6 +24,7 @@ type ExerciseItem = {
   name: string;
   muscles: string[];
   targetSets: number;
+  targetMinutes: number | null;
 };
 
 type Progress = { done: number; total: number };
@@ -188,7 +189,7 @@ export function WorkoutProgramBody({
                               {exercise.name}
                             </p>
                             <p className="truncate text-[13px] text-neutral-500">
-                              {formatSetCount(exercise.targetSets || null)}
+                              {formatExerciseTarget({ muscle: exercise.muscles, targetSets: exercise.targetSets || null, targetMinutes: exercise.targetMinutes })}
                               {exercise.muscles.length > 0 && ` · ${exercise.muscles.join(", ")}`}
                             </p>
                           </div>

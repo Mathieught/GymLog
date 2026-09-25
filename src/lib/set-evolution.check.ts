@@ -17,5 +17,6 @@ assert.deepEqual(tones(6, 57.5, 8, 60), ["down", "down"]); // 8. poids ↓ reps 
 assert.deepEqual(tones(8, 57.5, 8, 60), ["down"]); // 9. poids ↓
 assert.deepEqual(setEvolution({ reps: 8, weight: 60 }, undefined), [{ tone: "neutral", label: "Nouvelle" }]);
 assert.deepEqual(setEvolution({ reps: 8, weight: 60 }, { reps: 8, weight: 60 }), [{ tone: "neutral", label: "=" }]);
+assert.deepEqual(setEvolution({ reps: 25, weight: 0 }, { reps: 20, weight: 0 }, true), [{ tone: "up", label: "+5 min" }]);
 
 console.log("setEvolution : OK");

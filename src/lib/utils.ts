@@ -16,7 +16,26 @@ export function formatReps(reps: number) {
   return Number.isInteger(reps) ? String(reps) : reps.toFixed(2);
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+// Cardio : se mesure en temps, pas en répétitions. La durée (en minutes) est rangée dans
+// actualReps et le poids reste à 0 — pas de champ ni de migration en plus.
+// ponytail: durée dans actualReps ; une colonne dédiée si on veut aussi distance/vitesse.
+export function isCardio(muscles: string[]) {
+  return muscles.includes("Cardio");
+}
+
+// Objectif affiché dans les listes : "3 séries", ou pour le cardio "20 min" / "4 × 5 min".
+export function formatExerciseTarget(exercise: {
+  muscle: string[];
+  targetSets: number | null;
+  targetMinutes?: number | null;
+}) {
+  const { muscle, targetSets, targetMinutes } = exercise;
+  if (!isCardio(muscle)) return formatSetCount(targetSets);
+  if (targetMinutes == null) return "Durée libre";
+  return targetSets && targetSets > 1 ? `${targetSets} × ${targetMinutes} min` : `${targetMinutes} min`;
+}
+
+const DAY_MS =24 * 60 * 60 * 1000;
 
 export function formatDaysAgo(date: Date) {
   const days = Math.floor((Date.now() - date.getTime()) / DAY_MS);

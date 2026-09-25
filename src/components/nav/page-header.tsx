@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 // (mêmes libellés que BottomNav) : chaque page dit ainsi d'où elle vient, sans que chaque appelant
 // ait à le répéter. Un parent qui n'est pas un onglet (ex. un programme) passe `backLabel`.
 const SECTION_LABELS: Record<string, string> = {
-  "/workouts": "Séances",
+  "/workouts": "Entraînement",
   "/history": "Historique",
   "/exercises": "Exercices",
   "/settings": "Paramètres",

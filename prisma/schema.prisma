@@ -76,6 +76,9 @@ model Exercise {
   // Facultatif : nombre de séries recopié dans une séance au moment où l'exercice y est ajouté
   // (voir WorkoutExercise.targetSets). null = aucune série proposée d'office.
   targetSets   Int?
+  // Cardio (voir isCardio) : durée visée par série, en minutes. Proposée en séance tant que
+  // l'exercice n'a pas d'historique. null = aucune durée proposée d'office.
+  targetMinutes Int?
   description  String?
   isArchived   Boolean  @default(false)
   createdAt    DateTime @default(now())

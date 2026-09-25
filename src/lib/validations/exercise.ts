@@ -18,6 +18,17 @@ export const exerciseSchema = z.object({
     .pipe(z.array(z.enum(MUSCLE_GROUPS)).min(1, "Choisissez au moins un muscle")),
   // Facultatif depuis l'onglet Exercices : champ vide = aucune série proposée d'office.
   targetSets: z.preprocess((value) => (value === "" ? null : value), targetSetsNumber.nullable()),
+  // Cardio seulement (voir isCardio) : durée visée par série, en minutes. Vide = aucune.
+  // Plafond = actualReps max accepté à la synchro, où la durée est rangée (voir validations/sync.ts).
+  targetMinutes: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.coerce
+      .number({ error: "Doit être un nombre" })
+      .int("Doit être un nombre entier")
+      .min(1, "Doit être au moins 1")
+      .max(200, "Valeur trop élevée")
+      .nullable()
+  ),
   description: z
     .string()
     .trim()

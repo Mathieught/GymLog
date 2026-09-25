@@ -7,6 +7,8 @@ import { PreviousSetRow } from "@/components/sessions/previous-set-row";
 import { SessionCompletionPrompt } from "@/components/sessions/session-completion-prompt";
 import { buildSessionRows, type SessionRowGroup } from "@/lib/session-rows";
 import type { PreviousPerformance } from "@/lib/queries/exercise-history";
+import { cn, isCardio } from "@/lib/utils";
+import { useAppMode } from "@/components/app-mode";
 
 const SWIPE_THRESHOLD_PX = 60;
 const DEADZONE_PX = 8;
@@ -213,8 +215,11 @@ export function SessionCarousel({
         onClickCapture={handleClickCapture}
       >
         <div ref={trackRef} className="flex items-start">
-          {groups.map((group) => (
-            <div key={group.exerciseId} className="w-full shrink-0">
+          {groups.map((group, index) => (
+            // Hauteur nulle hors panneau actif (contenu toujours visible en débord, donc pendant un
+            // swipe) : sinon le rail prend la hauteur du plus long exercice, et un exercice court
+            // (ex. cardio, une seule ligne) laisse un grand vide avant "Précédent/Suivant".
+            <div key={group.exerciseId} className={cn("w-full shrink-0", index !== activeIndex && "h-0")}>
               <ExercisePanel
                 group={group}
                 history={history}
@@ -296,7 +301,13 @@ function ExercisePanel({
   onDismissSuggestion: (exerciseId: string, sourceSetNumber: number) => void;
   onUpdateNote: (setId: string, note: string | null) => void;
 }) {
-  const rows = buildSessionRows(group, history, removedCount);
+  const advanced = useAppMode().mode === "advanced";
+  const allRows = buildSessionRows(group, history, removedCount);
+  const cardio = isCardio(group.exercise.muscle);
+  // Cardio en Basique : un seul bloc de durée, ni ajout ni retrait de série (le fractionné, plusieurs
+  // séries, est réservé au mode Avancé).
+  const singleBlock = cardio && !advanced;
+  const rows = singleBlock ? allRows.slice(0, 1) : allRows;
   const nextSetNumber = readOnly
     ? undefined
     : rows.find((row) => row.unlocked && !row.current?.completed)?.setNumber;
@@ -322,7 +333,8 @@ function ExercisePanel({
                 {separator}
                 <SetRow
                   set={row.current}
-                  canRemove={allowRemove}
+                  // Série validée : ce bouton annule le résultat (toujours permis) ; vierge : il la supprime.
+                  canRemove={allowRemove && (!singleBlock || row.current.completed)}
                   previousSet={row.previous}
                   recap={row.recap}
                   locked={readOnly || !row.unlocked}
@@ -330,6 +342,7 @@ function ExercisePanel({
                   onReset={onResetSet}
                   onRemove={onRemoveSet}
                   onUpdateNote={onUpdateNote}
+                  cardio={cardio}
                 />
               </li>
             ) : (
@@ -348,10 +361,11 @@ function ExercisePanel({
                   exerciseOrder={group.exerciseOrder}
                   recap={row.recap}
                   locked={readOnly || !row.unlocked}
-                  canRemove={allowRemove}
+                  canRemove={allowRemove && !singleBlock}
                   highlight={row.setNumber === nextSetNumber ? (started ? "next" : "start") : undefined}
                   onLog={onLogSet}
                   onDismiss={onDismissSuggestion}
+                  cardio={cardio}
                 />
               </li>
             );
@@ -359,7 +373,7 @@ function ExercisePanel({
         </ul>
       )}
 
-      {!readOnly && (
+      {!readOnly && !(singleBlock && rows.length > 0) && (
         <Button
           type="button"
           variant="secondary"

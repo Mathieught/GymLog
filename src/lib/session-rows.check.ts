@@ -28,4 +28,12 @@ assert.equal(variantOfSlot([set(1, "hack"), set(2, "presse")], "hack"), "presse"
 assert.equal(variantOfSlot([set(1, "presse")], "hack", "hack"), null); // retour explicite à l'exercice prévu
 assert.equal(variantOfSlot([], "hack"), null);
 
+// Cardio jamais fait : chaque série proposée part de la durée visée de l'exercice.
+rows = buildSessionRows(
+  { exerciseId: "velo", exerciseOrder: 0, exercise: { name: "Vélo", muscle: ["Cardio"], targetSets: 2, targetMinutes: 20 }, sets: [] },
+  {},
+  0
+);
+assert.deepEqual(rows.map((r) => r.previous?.actualReps), [20, 20]);
+
 console.log("buildSessionRows (variantes) : OK");

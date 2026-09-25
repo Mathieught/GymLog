@@ -18,6 +18,7 @@ export function ExerciseEditTrigger({
     name: string;
     muscle: string[];
     targetSets: number | null;
+    targetMinutes?: number | null;
     description: string | null;
   };
 }) {

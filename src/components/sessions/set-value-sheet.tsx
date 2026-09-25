@@ -12,6 +12,8 @@ const MICRO_REPS_VALUES = Array.from({ length: 10 }, (_, i) => i / 10);
 const WEIGHT_VALUES = Array.from({ length: 1001 }, (_, i) => i);
 const MICRO_WEIGHT_VALUES = [0, 0.25, 0.5, 0.75];
 const MAX_WEIGHT = 1000;
+// Plafond = actualReps max accepté à la synchro (voir validations/sync.ts).
+const MINUTES_VALUES = Array.from({ length: 201 }, (_, i) => i);
 
 function formatMicro(value: number) {
   return String(Math.round(value * 100)).padStart(2, "0");
@@ -44,8 +46,10 @@ export function SetValueSheet({
   onChangeReps,
   onClose,
   onValidate,
+  cardio = false,
 }: {
   open: boolean;
+  cardio?: boolean;
   label: string;
   weight: number;
   reps: number;
@@ -92,10 +96,22 @@ export function SetValueSheet({
             Valider
           </button>
         </div>
-        {/* Une seule grille pour les libellés et les molettes : les séparateurs "×" et "." font lire
+        {cardio ? (
+          // Cardio : une seule molette, la durée en minutes (rangée dans `reps`, voir isCardio).
+          <div className="mx-auto w-1/3 px-2 py-2">
+            <p className="pb-1 text-center text-[11px] text-neutral-400">minutes</p>
+            <div className="relative grid" style={{ height: WHEEL_HEIGHT }}>
+              <div aria-hidden className={`${BAND_CLASS} col-start-1`} style={{ height: WHEEL_ITEM_HEIGHT }} />
+              <div className="col-start-1 row-start-1">
+                <WheelPicker values={MINUTES_VALUES} value={Math.floor(reps)} onChange={onChangeReps} format={String} align="center" />
+              </div>
+            </div>
+          </div>
+        ) : (
+        /* Une seule grille pour les libellés et les molettes : les séparateurs "×" et "." font lire
             la sélection comme une ligne, ex. "10 × 30.50". Deux bandeaux — reps, puis poids (chacun
             avec ses décimales reliées) — laissent le "×" dehors, entre les deux. Placement en
-            gridColumn inline : les numéros de colonne dépendent du mode. */}
+            gridColumn inline : les numéros de colonne dépendent du mode. */
         <div
           className="grid px-2 py-2"
           style={{
@@ -190,6 +206,7 @@ export function SetValueSheet({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>,
     document.body

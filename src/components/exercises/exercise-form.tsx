@@ -6,6 +6,9 @@ import { Input, Textarea, FieldError } from "@/components/ui/field";
 import { MuscleGroupPicker } from "@/components/exercises/muscle-group-picker";
 import { SetCountPicker } from "@/components/exercises/set-count-picker";
 import { initialActionState, type ActionState } from "@/lib/action-state";
+import { useAppMode } from "@/components/app-mode";
+import { isCardio } from "@/lib/utils";
+import { QUICK_MINUTES, QUICK_MINUTES_PER_SET } from "@/lib/constants";
 
 // Formulaire nu (pas d'en-tête ni de conteneur de page, pas de bouton de validation) : toujours
 // ouvert dans une popup (ExerciseFormSheet), qui fournit son propre en-tête/scroll et dont le
@@ -24,6 +27,7 @@ export function ExerciseForm<S extends ActionState>({
     name: string;
     muscle: string[];
     targetSets: number | null;
+    targetMinutes?: number | null;
     description: string | null;
   };
   // Appelé après un enregistrement réussi (voir ActionState.nonce) pour refermer la popup : les
@@ -53,6 +57,13 @@ export function ExerciseForm<S extends ActionState>({
   const [targetSets, setTargetSets] = useState<number | null>(
     defaultValues ? defaultValues.targetSets : setsOptional ? null : 3
   );
+  const [targetMinutes, setTargetMinutes] = useState<number | null>(defaultValues?.targetMinutes ?? null);
+  // Cardio : se règle en durée. Basique = un seul bloc (1 série d'office, l'étape Séries disparaît) ;
+  // Avancé = séries × durée par série (fractionné).
+  const cardio = isCardio(muscle);
+  const advanced = useAppMode().mode === "advanced";
+  const showSets = !cardio || advanced;
+  const noteStep = cardio && advanced ? 5 : 4;
 
   // Ids préfixés : cette popup s'ouvre aussi par-dessus le formulaire de séance, qui a déjà ses
   // propres champs "name"/"description" (un label pointerait sinon vers le champ de derrière).
@@ -87,25 +98,55 @@ export function ExerciseForm<S extends ActionState>({
         <FieldError messages={state.fieldErrors?.muscle} />
       </Step>
 
-      <Step
-        n={3}
-        title="Séries"
-        htmlFor={`${ids}-targetSets`}
-        aside={targetSets === null ? "Facultatif" : `${targetSets} série${targetSets > 1 ? "s" : ""}`}
-        last={!noteOpen}
-      >
-        <SetCountPicker
-          id={`${ids}-targetSets`}
-          name="targetSets"
-          value={targetSets}
-          onChange={setTargetSets}
-          optional={setsOptional}
-        />
-        <FieldError messages={state.fieldErrors?.targetSets} />
-      </Step>
+      {showSets ? (
+        <Step
+          n={3}
+          title="Séries"
+          htmlFor={`${ids}-targetSets`}
+          aside={targetSets === null ? "Facultatif" : `${targetSets} série${targetSets > 1 ? "s" : ""}`}
+          last={!noteOpen && !cardio}
+        >
+          <SetCountPicker
+            id={`${ids}-targetSets`}
+            name="targetSets"
+            value={targetSets}
+            onChange={setTargetSets}
+            optional={setsOptional}
+          />
+          <FieldError messages={state.fieldErrors?.targetSets} />
+        </Step>
+      ) : (
+        // Cardio en Basique : un seul bloc de durée (voir ExercisePanel en séance).
+        <input type="hidden" name="targetSets" value={1} />
+      )}
+
+      {cardio ? (
+        <Step
+          n={showSets ? 4 : 3}
+          title={showSets ? "Durée par série" : "Durée"}
+          htmlFor={`${ids}-targetMinutes`}
+          aside={targetMinutes === null ? "Facultatif" : `${targetMinutes} min`}
+          last={!noteOpen}
+        >
+          <SetCountPicker
+            id={`${ids}-targetMinutes`}
+            name="targetMinutes"
+            value={targetMinutes}
+            onChange={setTargetMinutes}
+            optional={setsOptional}
+            quickValues={showSets ? QUICK_MINUTES_PER_SET : QUICK_MINUTES}
+            step={5}
+            max={200}
+            unit="minutes"
+          />
+          <FieldError messages={state.fieldErrors?.targetMinutes} />
+        </Step>
+      ) : (
+        <input type="hidden" name="targetMinutes" value="" />
+      )}
 
       {noteOpen ? (
-        <Step n={4} title="Note" htmlFor={`${ids}-description`} aside="Facultatif" last>
+        <Step n={noteStep} title="Note" htmlFor={`${ids}-description`} aside="Facultatif" last>
           <Textarea
             id={`${ids}-description`}
             name="description"

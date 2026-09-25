@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { ArrowLeftRight, Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { HistorySetList } from "@/components/sessions/history-set-list";
+import { isCardio } from "@/lib/utils";
 import { parseTimeZone, TIME_ZONE_COOKIE } from "@/lib/time-zone";
 import { getSessionExerciseData } from "@/lib/queries/exercise-history";
 import { resolveSessionCompletion } from "@/lib/queries/session-status";
@@ -230,7 +231,11 @@ export default async function SessionDetailPage({
                     variante, qui fausserait l'évolution affichée.
                     ponytail: un exercice mélangé (prévu puis variante) compare encore toutes ses
                     séries à l'exercice prévu ; comparer série par série si ça gêne. */}
-                <HistorySetList sets={group.sets} previous={onlySubstitutes ? null : previousSetsFor(group.exerciseId)} />
+                <HistorySetList
+                  sets={group.sets}
+                  previous={onlySubstitutes ? null : previousSetsFor(group.exerciseId)}
+                  cardio={isCardio(group.exercise.muscle)}
+                />
               </Card>
             );
           })}

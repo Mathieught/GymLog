@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { cn, formatReps, formatWeight } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { SetValueText } from "@/components/sessions/set-row";
 import { SetValueSheet } from "@/components/sessions/set-value-sheet";
 import { SetRecap } from "@/components/sessions/set-recap";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -31,6 +32,7 @@ export function PreviousSetRow({
   highlight,
   onLog,
   onDismiss,
+  cardio = false,
 }: {
   // Numéro affiché ; `previousSet.setNumber` est le numéro source (historique), qui peut différer
   // une fois des suggestions supprimées (voir skippedSuggestions dans session-rows.ts).
@@ -44,6 +46,7 @@ export function PreviousSetRow({
   highlight?: "start" | "next";
   onLog: (exerciseId: string, exerciseOrder: number, actualWeight: number, actualReps: number) => void;
   onDismiss: (exerciseId: string, sourceSetNumber: number) => void;
+  cardio?: boolean;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pendingRemove, setPendingRemove] = useState(false);
@@ -55,12 +58,7 @@ export function PreviousSetRow({
     onLog(exerciseId, exerciseOrder, weight, reps);
   }
 
-  const value = (
-    <>
-      {formatReps(reps)} <span className="text-xs font-normal">×</span> {formatWeight(weight)}{" "}
-      <span className="text-xs font-normal">kg</span>
-    </>
-  );
+  const value = <SetValueText reps={reps} weight={weight} cardio={cardio} />;
 
   return (
     <>
@@ -117,7 +115,7 @@ export function PreviousSetRow({
           </button>
         </div>
         <div className={cn(locked && "opacity-45")}>
-          <SetRecap entries={recap} />
+          <SetRecap entries={recap} cardio={cardio} />
         </div>
       </div>
 
@@ -131,6 +129,7 @@ export function PreviousSetRow({
           onChangeReps={setReps}
           onClose={() => setSheetOpen(false)}
           onValidate={validate}
+          cardio={cardio}
         />
       )}
 

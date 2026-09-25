@@ -24,6 +24,7 @@ export function ExerciseFormSheet<S extends ActionState>({
     name: string;
     muscle: string[];
     targetSets: number | null;
+    targetMinutes?: number | null;
     description: string | null;
   };
   onClose: () => void;

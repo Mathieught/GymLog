@@ -31,6 +31,7 @@ export async function GET() {
           name: workoutExercise.exercise.name,
           muscle: workoutExercise.exercise.muscle,
           targetSets: workoutExercise.targetSets,
+          targetMinutes: workoutExercise.exercise.targetMinutes,
           description: workoutExercise.exercise.description,
         },
       })),

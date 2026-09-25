@@ -15,7 +15,14 @@ export type LocalSet = {
 };
 
 // description : note de l'exercice, facultative pour les instantanés antérieurs à son ajout.
-export type LocalExercise = { name: string; muscle: string[]; targetSets: number; description?: string | null };
+// targetMinutes : durée visée par série d'un exercice cardio (voir Exercise.targetMinutes).
+export type LocalExercise = {
+  name: string;
+  muscle: string[];
+  targetSets: number;
+  targetMinutes?: number | null;
+  description?: string | null;
+};
 
 // Bibliothèque d'exercices, pour choisir une variante en séance (voir VariantPicker).
 export type LibraryExercise = LocalExercise & { id: string };

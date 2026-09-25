@@ -6,12 +6,14 @@ import { Plus, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ExerciseFormSheet } from "@/components/exercises/exercise-form-sheet";
 import { createExercise } from "@/lib/actions/exercises";
-import { formatSetCount } from "@/lib/utils";
+import { formatExerciseTarget } from "@/lib/utils";
 
 type ExerciseListItem = {
   id: string;
   name: string;
+  muscle: string[];
   targetSets: number | null;
+  targetMinutes: number | null;
 };
 
 type ExerciseGroup = {
@@ -75,7 +77,7 @@ export function ExerciseSearchList({ groups }: { groups: ExerciseGroup[] }) {
                     <Card className="transition-colors hover:border-neutral-400">
                       <p className="font-medium">{exercise.name}</p>
                       <p className="text-sm text-neutral-500">
-                        {formatSetCount(exercise.targetSets)}
+                        {formatExerciseTarget(exercise)}
                       </p>
                     </Card>
                   </Link>

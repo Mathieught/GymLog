@@ -61,7 +61,7 @@ export function HistorySearchList({ groups }: { groups: HistoryGroup[] }) {
                 <li key={session.id}>
                   <Link href={`/sessions/${session.id}`}>
                     {/* Colonne date à gauche (numéro + jour) séparée par un filet : le numéro passe en
-                        accent sur les 7 derniers jours, comme "Dernière séance" sur la page Séances. */}
+                        accent sur les 7 derniers jours, comme "Dernière séance" sur la page Entraînement. */}
                     <Card className="flex items-center gap-3.5 py-3 pl-3 pr-4 transition-colors hover:border-neutral-400">
                       <div className="grid w-[52px] shrink-0 justify-items-center gap-[3px] border-r border-neutral-200 pr-3">
                         <span

@@ -25,6 +25,7 @@ export async function createExercise(
       name: parsed.data.name,
       muscle: parsed.data.muscle,
       targetSets: parsed.data.targetSets,
+      targetMinutes: parsed.data.targetMinutes,
       description: parsed.data.description || null,
     },
   });
@@ -50,6 +51,7 @@ export async function updateExercise(
       name: parsed.data.name,
       muscle: parsed.data.muscle,
       targetSets: parsed.data.targetSets,
+      targetMinutes: parsed.data.targetMinutes,
       description: parsed.data.description || null,
     },
   });
@@ -108,6 +110,7 @@ export async function createExerciseInline(
       name: parsed.data.name,
       muscle: parsed.data.muscle,
       targetSets: parsed.data.targetSets,
+      targetMinutes: parsed.data.targetMinutes,
       description: parsed.data.description || null,
     },
   });

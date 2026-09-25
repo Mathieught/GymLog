@@ -37,6 +37,7 @@ export function SetRow({
   onReset,
   onRemove,
   onUpdateNote,
+  cardio = false,
 }: {
   set: SetForRow;
   canRemove: boolean;
@@ -47,6 +48,7 @@ export function SetRow({
   onReset: (setId: string) => void;
   onRemove: (setId: string) => void;
   onUpdateNote: (setId: string, note: string | null) => void;
+  cardio?: boolean;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -98,8 +100,7 @@ export function SetRow({
           </span>
           {locked ? (
             <span className="flex-1 font-mono text-sm font-medium tabular-nums text-neutral-400">
-              {formatReps(reps)} <span className="text-xs font-normal text-neutral-300">×</span> {formatWeight(weight)}{" "}
-              <span className="text-xs font-normal text-neutral-300">kg</span>
+              <SetValueText reps={reps} weight={weight} cardio={cardio} unitClassName="text-neutral-300" />
             </span>
           ) : (
             <button
@@ -114,8 +115,7 @@ export function SetRow({
                 !set.completed && "text-neutral-400"
               )}
             >
-              {formatReps(reps)} <span className="text-xs font-normal text-neutral-400">×</span> {formatWeight(weight)}{" "}
-              <span className="text-xs font-normal text-neutral-400">kg</span>
+              <SetValueText reps={reps} weight={weight} cardio={cardio} unitClassName="text-neutral-400" />
             </button>
           )}
           {!locked && (
@@ -164,7 +164,7 @@ export function SetRow({
             {set.completed ? <RotateCcw className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
           </button>
         </div>
-        <SetRecap entries={recap} />
+        <SetRecap entries={recap} cardio={cardio} />
       </div>
 
       {!locked && (
@@ -177,6 +177,7 @@ export function SetRow({
           onChangeReps={setReps}
           onClose={() => setSheetOpen(false)}
           onValidate={validate}
+          cardio={cardio}
         />
       )}
 
@@ -199,6 +200,30 @@ export function SetRow({
           onCancel={() => setPendingRemove(false)}
         />
       )}
+    </>
+  );
+}
+
+// "10 × 30.00 kg", ou "25 min" pour le cardio (durée rangée dans `reps`, voir isCardio).
+export function SetValueText({
+  reps,
+  weight,
+  cardio,
+  unitClassName,
+}: {
+  reps: number;
+  weight: number;
+  cardio: boolean;
+  unitClassName?: string;
+}) {
+  const unit = cn("text-xs font-normal", unitClassName);
+  return cardio ? (
+    <>
+      {formatReps(reps)} <span className={unit}>min</span>
+    </>
+  ) : (
+    <>
+      {formatReps(reps)} <span className={unit}>×</span> {formatWeight(weight)} <span className={unit}>kg</span>
     </>
   );
 }

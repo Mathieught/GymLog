@@ -22,13 +22,14 @@ import { ExercisePickerSheet } from "@/components/workouts/exercise-picker-sheet
 import { ExerciseFormSheet } from "@/components/exercises/exercise-form-sheet";
 import { initialActionState, type ActionState } from "@/lib/action-state";
 import { createExerciseInline } from "@/lib/actions/exercises";
-import { formatSetCount } from "@/lib/utils";
+import { formatExerciseTarget } from "@/lib/utils";
 
 type ExerciseOption = {
   id: string;
   name: string;
   muscle: string[];
   targetSets: number | null;
+  targetMinutes?: number | null;
 };
 
 // useSyncExternalStore sans source externe : false au rendu serveur/hydratation, true ensuite.
@@ -363,7 +364,7 @@ function ExerciseSearch({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{exercise.name}</span>
                   <span className="block truncate text-xs text-neutral-500">
-                    {[exercise.muscle.join(", "), formatSetCount(exercise.targetSets)]
+                    {[exercise.muscle.join(", "), formatExerciseTarget(exercise)]
                       .filter(Boolean)
                       .join(" · ")}
                   </span>

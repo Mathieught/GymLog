@@ -16,8 +16,10 @@ type HistorySet = {
 export function HistorySetList({
   sets,
   previous,
+  cardio = false,
 }: {
   sets: HistorySet[];
+  cardio?: boolean;
   previous: Map<number, { reps: number; weight: number }> | null;
 }) {
   return (
@@ -35,9 +37,15 @@ export function HistorySetList({
             <span className="text-xs text-neutral-500">{set.setNumber}</span>
             <span>
               {set.actualReps != null ? formatReps(set.actualReps) : "—"}
-              <span className="mx-0.5 text-neutral-500"> × </span>
-              {set.actualWeight != null ? formatWeight(set.actualWeight) : "—"}
-              <span className="ml-0.5 text-xs text-neutral-500">kg</span>
+              {cardio ? (
+                <span className="ml-0.5 text-xs text-neutral-500"> min</span>
+              ) : (
+                <>
+                  <span className="mx-0.5 text-neutral-500"> × </span>
+                  {set.actualWeight != null ? formatWeight(set.actualWeight) : "—"}
+                  <span className="ml-0.5 text-xs text-neutral-500">kg</span>
+                </>
+              )}
             </span>
             {!set.completed ? (
               <span className="text-[10px] font-semibold uppercase tracking-wide">
@@ -49,7 +57,8 @@ export function HistorySetList({
                 <span className="flex gap-1">
                   {setEvolution(
                     { reps: set.actualReps!, weight: set.actualWeight! },
-                    previous.get(set.setNumber)
+                    previous.get(set.setNumber),
+                    cardio
                   ).map((badge) => (
                     <span
                       key={badge.label}

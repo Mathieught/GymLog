@@ -5,26 +5,33 @@ import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QUICK_SET_COUNTS } from "@/lib/constants";
 
-const MAX_SETS = 50;
-
-// Barre segmentée 1 à 6 (cas courant), dont le "+" bascule sur un stepper −/+ pour les plus
-// grandes valeurs, avec un lien pour revenir aux valeurs rapides.
+// Barre segmentée de valeurs rapides (cas courant), dont le "+" bascule sur un stepper −/+ pour les
+// autres valeurs, avec un lien pour revenir aux valeurs rapides. Par défaut : séries 1 à 6 ; sert
+// aussi à la durée d'un exercice cardio (minutes, pas de 5 — voir ExerciseForm).
 export function SetCountPicker({
   id,
   name,
   value,
   onChange,
   optional,
+  quickValues = QUICK_SET_COUNTS,
+  step = 1,
+  max = 50,
+  unit = "séries",
 }: {
   id?: string;
   name: string;
   value: number | null;
-  onChange: (sets: number | null) => void;
+  onChange: (value: number | null) => void;
   // Re-toucher la valeur sélectionnée la désélectionne (champ facultatif, voir ExerciseForm).
   optional?: boolean;
+  quickValues?: readonly number[];
+  step?: number;
+  max?: number;
+  unit?: string;
 }) {
-  const maxQuick = QUICK_SET_COUNTS[QUICK_SET_COUNTS.length - 1];
-  const [stepperMode, setStepperMode] = useState(value !== null && value > maxQuick);
+  const maxQuick = quickValues[quickValues.length - 1];
+  const [stepperMode, setStepperMode] = useState(value !== null && !quickValues.includes(value));
 
   return (
     <div>
@@ -35,20 +42,20 @@ export function SetCountPicker({
           <div className="flex items-center justify-between rounded-2xl border border-neutral-200 p-2">
             <button
               type="button"
-              onClick={() => onChange(Math.max(1, (value ?? 1) - 1))}
-              aria-label="Une série de moins"
+              onClick={() => onChange(Math.max(step, (value ?? step) - step))}
+              aria-label="Diminuer"
               className="flex h-14 w-14 items-center justify-center rounded-xl bg-neutral-200 transition-colors hover:bg-neutral-300"
             >
               <Minus className="h-6 w-6" />
             </button>
             <div className="text-center">
               <div className="text-4xl font-bold tabular-nums leading-none">{value}</div>
-              <div className="mt-1 text-xs text-neutral-500">séries</div>
+              <div className="mt-1 text-xs text-neutral-500">{unit}</div>
             </div>
             <button
               type="button"
-              onClick={() => onChange(Math.min(MAX_SETS, (value ?? 0) + 1))}
-              aria-label="Une série de plus"
+              onClick={() => onChange(Math.min(max, (value ?? 0) + step))}
+              aria-label="Augmenter"
               className="flex h-14 w-14 items-center justify-center rounded-xl bg-neutral-200 transition-colors hover:bg-neutral-300"
             >
               <Plus className="h-6 w-6" />
@@ -58,16 +65,16 @@ export function SetCountPicker({
             type="button"
             onClick={() => {
               setStepperMode(false);
-              onChange(Math.min(value ?? maxQuick, maxQuick));
+              onChange(value !== null && quickValues.includes(value) ? value : maxQuick);
             }}
             className="mt-2 text-sm font-medium text-accent-deep hover:underline"
           >
-            ← Valeurs rapides 1 à {maxQuick}
+            ← Valeurs rapides {quickValues[0]} à {maxQuick}
           </button>
         </>
       ) : (
         <div className="flex gap-1 rounded-2xl border border-neutral-200 p-1">
-          {QUICK_SET_COUNTS.map((count) => {
+          {quickValues.map((count) => {
             const selected = value === count;
             return (
               <button
@@ -90,9 +97,9 @@ export function SetCountPicker({
             type="button"
             onClick={() => {
               setStepperMode(true);
-              onChange(Math.max(value ?? 0, maxQuick + 1));
+              onChange(Math.max(value ?? 0, maxQuick + step));
             }}
-            aria-label="Plus de séries"
+            aria-label={`Autre valeur (${unit})`}
             className="flex h-12 flex-1 items-center justify-center rounded-xl text-neutral-600 transition-colors hover:bg-neutral-200"
           >
             <Plus className="h-5 w-5" />

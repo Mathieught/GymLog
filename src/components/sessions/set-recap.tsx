@@ -19,7 +19,7 @@ function formatSessionDate(date: Date): string {
 // rôle du fond blanc qui l'isolait dans la barre de nav. Seules ces pastilles-là sont cliquables,
 // pour rouvrir la note en LECTURE SEULE (voir NoteSheet, `onSave` omis) — seule la série de la
 // séance en cours se modifie (voir SetRow), pas l'historique.
-export function SetRecap({ entries }: { entries: SessionRowRecapEntry[] }) {
+export function SetRecap({ entries, cardio = false }: { entries: SessionRowRecapEntry[]; cardio?: boolean }) {
   const [viewing, setViewing] = useState<{ setNumber: number; note: string } | null>(null);
 
   if (entries.length === 0) return null;
@@ -66,7 +66,11 @@ export function SetRecap({ entries }: { entries: SessionRowRecapEntry[] }) {
                   hasValue ? "text-neutral-600" : "font-medium text-neutral-400"
                 )}
               >
-                {hasValue ? `${formatReps(entry.set!.actualReps!)}×${formatWeight(entry.set!.actualWeight!)}` : "—"}
+                {hasValue
+                  ? cardio
+                    ? `${formatReps(entry.set!.actualReps!)} min`
+                    : `${formatReps(entry.set!.actualReps!)}×${formatWeight(entry.set!.actualWeight!)}`
+                  : "—"}
               </span>
             </div>
           );

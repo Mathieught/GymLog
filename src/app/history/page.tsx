@@ -76,7 +76,7 @@ export default async function HistoryPage() {
       {sessions.length === 0 ? (
         <p className="text-neutral-500">
           Aucune séance enregistrée pour l&apos;instant. Démarrez-en une depuis l&apos;onglet
-          Séances.
+          Entraînement.
         </p>
       ) : (
         <HistorySearchList groups={groups} />

@@ -1,5 +1,5 @@
 import { ListPageSkeleton } from "@/components/ui/list-page-skeleton";
 
 export default function Loading() {
-  return <ListPageSkeleton title="Séances" withAction />;
+  return <ListPageSkeleton title="Entraînement" withAction />;
 }

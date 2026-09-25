@@ -22,10 +22,11 @@ export function toLibraryExercise(exercise: {
   name: string;
   muscle: string[];
   targetSets: number | null;
+  targetMinutes: number | null;
   description: string | null;
 }): LibraryExercise {
-  const { id, name, muscle, targetSets, description } = exercise;
-  return { id, name, muscle, targetSets: targetSets ?? 0, description };
+  const { id, name, muscle, targetSets, targetMinutes, description } = exercise;
+  return { id, name, muscle, targetSets: targetSets ?? 0, targetMinutes, description };
 }
 
 // Page détail/édition consultée sur (presque) chaque tape sur un exercice : sans cache, chaque

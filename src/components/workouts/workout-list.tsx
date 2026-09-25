@@ -78,7 +78,7 @@ export function WorkoutList({
           </div>
         }
       >
-        Séances
+        Entraînement
       </PageTitle>
 
       {items.length === 0 ? (
